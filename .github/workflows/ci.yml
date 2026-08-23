@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install validation-only test dependency
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+      - name: Compile Python
+        run: python -m compileall -q scripts skills/agentic-reporting/scripts tests
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Evaluation harness smoke
+        run: python scripts/presentation_benchmark.py smoke
+      - name: Route bundle smoke
+        run: >-
+          python skills/agentic-reporting/scripts/reportctl.py bundle
+          --task "five-seed experiment with a result table"
+          --mode experiment-report --module tables --max-chars 16000
+          > /tmp/agentic-reporting-bundle.md
+      - name: Distribution reproducibility
+        run: |
+          SAP_DIST_CHECK="$(mktemp -d)"
+          python skills/agentic-reporting/scripts/reportctl.py build-dist \
+            --output "$SAP_DIST_CHECK" --force
+          diff -qr dist "$SAP_DIST_CHECK"

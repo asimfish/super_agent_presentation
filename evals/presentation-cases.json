@@ -1,0 +1,314 @@
+{
+  "$schema": "schema/presentation-cases.schema.json",
+  "schema_version": "1.0",
+  "benchmark_id": "agentic-reporting-presentation-v1",
+  "claim_boundary": "Checked-in fixtures exercise the evaluator only. They do not measure a model and cannot support a framework-improvement claim.",
+  "suites": [
+    {
+      "id": "harness-smoke",
+      "kind": "harness_only",
+      "case_ids": [
+        "short-direct-status",
+        "engineering-late-failure",
+        "experiment-null-result",
+        "image-anomaly-boundary",
+        "multi-table-incomparable",
+        "paper-summary-bounded",
+        "incident-rollback-not-resolved"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "short-direct-status",
+      "scenario": "short_answer",
+      "request": "Answer in at most two compact sentences: Did the corpus build succeed, and what remains?",
+      "facts": [
+        "The corpus build succeeded.",
+        "Direct paper linkage is 88 of the 100-paper target.",
+        "Twelve papers remain to reach the target."
+      ],
+      "evidence_boundary": "State only the supplied build result and coverage gap. Do not call the entire project complete.",
+      "artifacts": [],
+      "report_profile": "concise-answer",
+      "expected_route": {"mode": "concise-answer", "modules": []},
+      "required_semantic_slots": ["direct_answer", "remaining_boundary"],
+      "visual_oracle": {
+        "necessity": "forbidden",
+        "allowed_types": [],
+        "rationale": "Two scalar facts are clearer as two sentences than as a display."
+      },
+      "budgets": {"max_output_words": 70},
+      "machine_checks": [
+        {
+          "id": "answer-first",
+          "type": "required_regex",
+          "pattern": "\\A(?:yes\\b|the corpus build succeeded|build succeeded)",
+          "message": "Lead with the direct build result."
+        },
+        {
+          "id": "preserve-coverage",
+          "type": "required_regex",
+          "pattern": "88\\s*/\\s*100|88 (?:of|out of) (?:the )?100",
+          "message": "Preserve the 88-of-100 coverage state."
+        },
+        {
+          "id": "preserve-gap",
+          "type": "required_regex",
+          "pattern": "(?:twelve|12) papers? remain",
+          "message": "State the remaining twelve-paper gap."
+        },
+        {
+          "id": "avoid-false-completion",
+          "type": "forbidden_regex",
+          "pattern": "all (?:work|coverage|the work) is complete|nothing remains|fully complete",
+          "message": "Do not report the full project as complete."
+        },
+        {"id": "short-budget", "type": "max_words", "value": 70, "message": "Keep the short answer proportionate."},
+        {"id": "no-headings", "type": "max_headings", "value": 0, "message": "Do not add headings to a two-sentence answer."},
+        {"id": "no-table", "type": "max_markdown_tables", "value": 0, "message": "Do not add a table for two scalar facts."},
+        {"id": "no-image", "type": "forbidden_image", "message": "Do not add an image to this short answer."}
+      ]
+    },
+    {
+      "id": "engineering-late-failure",
+      "scenario": "long_engineering",
+      "request": "Give the final engineering handoff after the parser change and the late integration-test failure.",
+      "facts": [
+        "The parser change was implemented in parser.py.",
+        "All 42 unit tests passed.",
+        "The final integration test exited with status 1 because the registry credential was rejected.",
+        "The work is not complete until the integration test can run successfully.",
+        "The next action is to renew the registry credential and rerun the integration test."
+      ],
+      "evidence_boundary": "Report the successful unit evidence and the later blocking failure. Do not let the earlier success overwrite the final state.",
+      "artifacts": [],
+      "report_profile": "implementation-handoff+evidence",
+      "expected_route": {"mode": "implementation-handoff", "modules": ["evidence"]},
+      "required_semantic_slots": ["current_status", "changes", "verification", "blocker", "next_action"],
+      "visual_oracle": {
+        "necessity": "forbidden",
+        "allowed_types": [],
+        "rationale": "A compact handoff communicates this single change and blocker without a visual."
+      },
+      "budgets": {"max_output_words": 320},
+      "machine_checks": [
+        {
+          "id": "not-complete",
+          "type": "required_regex",
+          "pattern": "blocked|not complete|partially complete|integration (?:test )?failed",
+          "message": "Make the final blocked state explicit."
+        },
+        {
+          "id": "changed-file",
+          "type": "required_regex",
+          "pattern": "parser\\.py",
+          "message": "Name the changed file."
+        },
+        {
+          "id": "unit-evidence",
+          "type": "required_regex",
+          "pattern": "(?:all\\s+42\\s+unit tests?\\s+passed|unit tests?:?\\s+(?:all\\s+)?42\\s+passed|42(?:/42)?\\s+unit tests?\\s+passed)",
+          "message": "Preserve the passing unit-test evidence."
+        },
+        {
+          "id": "integration-failure",
+          "type": "required_regex",
+          "pattern": "integration test.*(?:exit(?:ed)? (?:with )?(?:status )?1|failed)|(?:exit(?:ed)? (?:with )?(?:status )?1|failed).*integration test",
+          "message": "Report the late integration-test failure and status."
+        },
+        {
+          "id": "credential-boundary",
+          "type": "required_regex",
+          "pattern": "registry credential.*(?:rejected|renew)|(?:renew|rejected).*registry credential",
+          "message": "Report the credential blocker or its next action."
+        },
+        {
+          "id": "next-action",
+          "type": "required_regex",
+          "pattern": "renew.*credential.*rerun|rerun.*after.*credential",
+          "message": "State the concrete recovery action."
+        },
+        {
+          "id": "no-false-pass",
+          "type": "forbidden_regex",
+          "pattern": "all tests (?:now )?pass(?:ed)?|completed successfully|implementation is complete",
+          "message": "Do not erase the late integration failure."
+        },
+        {"id": "engineering-budget", "type": "max_words", "value": 320, "message": "Keep the handoff bounded."},
+        {"id": "no-engineering-image", "type": "forbidden_image", "message": "Do not add a decorative image."},
+        {"id": "no-placeholders", "type": "forbidden_placeholder", "message": "Do not leave handoff placeholders unresolved."}
+      ]
+    },
+    {
+      "id": "experiment-null-result",
+      "scenario": "experiment_analysis",
+      "request": "Present the benchmark in one self-contained quantitative table and give a calibrated conclusion about the accuracy/latency trade-off.",
+      "facts": [
+        "Accuracy is higher-is-better and is reported as mean plus or minus standard deviation over five seeds.",
+        "Method A accuracy is 72.4 plus or minus 1.1 percent and latency is 31 milliseconds.",
+        "Method B accuracy is 74.0 plus or minus 1.0 percent and latency is 38 milliseconds.",
+        "Method C accuracy is 73.9 plus or minus 0.9 percent and latency is 29 milliseconds.",
+        "Latency is lower-is-better.",
+        "No significance test was run, so B and C cannot be declared statistically different."
+      ],
+      "evidence_boundary": "Describe observed means and the accuracy/latency trade-off. Do not claim statistical significance, causality, or a universal winner.",
+      "artifacts": [],
+      "report_profile": "experiment-report+tables+conclusions",
+      "expected_route": {"mode": "experiment-report", "modules": ["tables", "conclusions"]},
+      "required_semantic_slots": ["protocol", "quantitative_display", "verified_result", "uncertainty_boundary", "tradeoff_conclusion"],
+      "visual_oracle": {
+        "necessity": "required",
+        "allowed_types": ["quantitative_table"],
+        "rationale": "Three methods on two metrics are most accurately compared in one compact table."
+      },
+      "budgets": {"max_output_words": 400},
+      "machine_checks": [
+        {"id": "one-table-min", "type": "min_markdown_tables", "value": 1, "message": "Present the quantitative comparison in a table."},
+        {"id": "one-table-max", "type": "max_markdown_tables", "value": 1, "message": "Use exactly one compact table."},
+        {"id": "five-seeds", "type": "required_regex", "pattern": "(?:five|5) seeds", "message": "Report the five-seed protocol."},
+        {"id": "method-a-values", "type": "required_regex", "pattern": "72\\.4\\s*(?:±|\\+/-|\\+\\s*or\\s*-).*1\\.1.*31", "message": "Preserve Method A values."},
+        {"id": "method-b-values", "type": "required_regex", "pattern": "74\\.0\\s*(?:±|\\+/-|\\+\\s*or\\s*-).*1\\.0.*38", "message": "Preserve Method B values."},
+        {"id": "method-c-values", "type": "required_regex", "pattern": "73\\.9\\s*(?:±|\\+/-|\\+\\s*or\\s*-).*0\\.9.*29", "message": "Preserve Method C values."},
+        {"id": "metric-directions", "type": "required_regex", "pattern": "higher.{0,20}better.*lower.{0,20}better|accuracy.{0,20}↑.*latency.{0,20}↓", "message": "Make both metric directions clear."},
+        {"id": "significance-boundary", "type": "required_regex", "pattern": "no (?:statistical )?significance test|significance (?:was )?not (?:tested|assessed)|cannot be declared statistically", "message": "State that significance was not tested."},
+        {"id": "no-significant-claim", "type": "forbidden_regex", "pattern": "statistically significant|significantly (?:better|higher|outperforms?)", "message": "Do not claim an untested significant difference."},
+        {"id": "experiment-budget", "type": "max_words", "value": 400, "message": "Keep the analysis bounded."}
+      ]
+    },
+    {
+      "id": "image-anomaly-boundary",
+      "scenario": "image_presentation",
+      "request": "Show the supplied curve and report the visible late-training anomaly without inventing its cause.",
+      "facts": [
+        "The mean return rises through step 80 and drops at step 90.",
+        "The shaded band denotes one standard deviation over five seeds.",
+        "The plot alone cannot identify the cause of the drop."
+      ],
+      "evidence_boundary": "Describe only the visible trend, aggregation, and causal limitation. The figure does not diagnose an implementation or hardware cause.",
+      "artifacts": ["evals/fixtures/assets/return-curve.svg"],
+      "report_profile": "experiment-report+visuals+evidence",
+      "expected_route": {"mode": "experiment-report", "modules": ["visuals", "evidence"]},
+      "required_semantic_slots": ["figure", "caption", "verified_observation", "causal_boundary"],
+      "visual_oracle": {
+        "necessity": "required",
+        "allowed_types": ["line_chart"],
+        "rationale": "The temporal trend and localized drop are materially easier to inspect in the supplied curve."
+      },
+      "budgets": {"max_output_words": 240},
+      "machine_checks": [
+        {"id": "show-image", "type": "required_image", "must_exist": true, "message": "Embed the supplied local figure with nonempty alt text."},
+        {"id": "caption", "type": "required_regex", "pattern": "Figure 1|Fig\\. 1", "message": "Give the figure a visible caption."},
+        {"id": "observed-drop", "type": "required_regex", "pattern": "step 80.*(?:drop|declin).*step 90|(?:drop|declin).*step 90", "message": "Report the observed late-training drop."},
+        {"id": "five-seed-band", "type": "required_regex", "pattern": "(?:one )?standard deviation.*(?:five|5) seeds|(?:five|5) seeds.*(?:one )?standard deviation", "message": "Explain the uncertainty band."},
+        {"id": "causal-boundary", "type": "required_regex", "pattern": "cannot (?:identify|establish|determine|diagnose).*cause|cause (?:is )?(?:unknown|cannot be inferred)", "message": "State that the cause cannot be inferred from the figure."},
+        {"id": "no-invented-cause", "type": "forbidden_regex", "pattern": "caused by (?:a )?(?:GPU|memory|implementation|optimizer)|proves? (?:a )?bug", "message": "Do not invent a cause."},
+        {"id": "image-budget", "type": "max_words", "value": 240, "message": "Keep the visual explanation compact."}
+      ]
+    },
+    {
+      "id": "multi-table-incomparable",
+      "scenario": "multi_table",
+      "request": "Present the three protocol groups as compact tables and explain why they must not be globally ranked.",
+      "facts": [
+        "Simulation protocol S reports success rate: Alpha 82 percent and Beta 79 percent.",
+        "Real-robot protocol R reports success rate: Gamma 61 percent and Delta 64 percent.",
+        "Efficiency protocol E reports latency: Alpha 32 milliseconds and Gamma 41 milliseconds; the other methods were not reported.",
+        "The protocols use different tasks and evaluation conditions and are not directly comparable.",
+        "An em dash denotes not reported, not zero."
+      ],
+      "evidence_boundary": "Preserve protocol grouping and units. Do not combine the groups into an overall leaderboard or treat missing values as zero.",
+      "artifacts": [],
+      "report_profile": "experiment-report+tables+conclusions",
+      "expected_route": {"mode": "experiment-report", "modules": ["tables", "conclusions"]},
+      "required_semantic_slots": ["protocol_separation", "tables", "missing_value_semantics", "comparison_boundary"],
+      "visual_oracle": {
+        "necessity": "required",
+        "allowed_types": ["multiple_quantitative_tables"],
+        "rationale": "Separate tables make the incompatible protocols and their different metrics explicit."
+      },
+      "budgets": {"max_output_words": 420},
+      "machine_checks": [
+        {"id": "separate-tables-min", "type": "min_markdown_tables", "value": 2, "message": "Use separate tables for incompatible protocol groups."},
+        {"id": "separate-tables-max", "type": "max_markdown_tables", "value": 3, "message": "Do not fragment the three protocol groups further."},
+        {"id": "sim-values", "type": "required_regex", "pattern": "Alpha.*82.*Beta.*79|Alpha.*82[\\s\\S]*Beta.*79", "message": "Preserve simulation values."},
+        {"id": "real-values", "type": "required_regex", "pattern": "Gamma.*61.*Delta.*64|Gamma.*61[\\s\\S]*Delta.*64", "message": "Preserve real-robot values."},
+        {"id": "efficiency-values", "type": "required_regex", "pattern": "Alpha.*32.*Gamma.*41|Alpha.*32[\\s\\S]*Gamma.*41", "message": "Preserve latency values."},
+        {"id": "not-comparable", "type": "required_regex", "pattern": "not directly comparable|cannot be (?:globally |directly )?ranked|must not be (?:globally )?ranked", "message": "State the comparison boundary."},
+        {"id": "missing-semantics", "type": "required_regex", "pattern": "(?:em dash|—).*(?:not reported|does not mean zero)|not reported.*(?:not zero|rather than zero)", "message": "Define missing values explicitly."},
+        {"id": "no-global-winner", "type": "forbidden_regex", "pattern": "overall winner|ranks? first overall|best method overall", "message": "Do not create a global ranking."},
+        {"id": "multi-table-budget", "type": "max_words", "value": 420, "message": "Keep the multi-table report bounded."}
+      ]
+    },
+    {
+      "id": "paper-summary-bounded",
+      "scenario": "academic_paper_summary",
+      "request": "Summarize the synthetic paper's problem, method, main evidence, and limitations in a compact academic synthesis using only citation [P1].",
+      "facts": [
+        "LatentPlan addresses model-based control with an action-conditioned latent transition model.",
+        "It is evaluated on two simulated control benchmarks.",
+        "Its mean return is 4.1 points above a behavioral-cloning baseline over three seeds.",
+        "No statistical significance test or real-robot experiment is reported.",
+        "Only source [P1] is supplied."
+      ],
+      "evidence_boundary": "Use only [P1]. Do not infer state of the art, statistical significance, real-robot validation, or broader generalization.",
+      "artifacts": [],
+      "report_profile": "academic-synthesis+evidence+academic-display",
+      "expected_route": {"mode": "academic-synthesis", "modules": ["evidence", "academic-display"]},
+      "required_semantic_slots": ["problem", "method", "main_evidence", "limitations", "citation_boundary"],
+      "visual_oracle": {
+        "necessity": "forbidden",
+        "allowed_types": [],
+        "rationale": "A four-part synthesis of one paper does not need a display."
+      },
+      "budgets": {"max_output_words": 300},
+      "allowed_citations": ["P1"],
+      "machine_checks": [
+        {"id": "citation-p1", "type": "required_regex", "pattern": "\\[P1\\]", "message": "Cite the supplied source."},
+        {"id": "citation-allowlist", "type": "citation_allowlist", "message": "Use only supplied citation IDs."},
+        {"id": "method", "type": "required_regex", "pattern": "action[- ]conditioned latent transition", "message": "Preserve the method description."},
+        {"id": "evaluation", "type": "required_regex", "pattern": "two simulated control benchmarks?", "message": "Preserve the evaluation scope."},
+        {"id": "mean-gain", "type": "required_regex", "pattern": "4\\.1 points?.*(?:three|3) seeds|(?:three|3) seeds.*4\\.1 points?", "message": "Preserve the mean gain and seed count."},
+        {"id": "limitations", "type": "required_regex", "pattern": "no (?:statistical )?significance test.*no real[- ]robot|no real[- ]robot.*no (?:statistical )?significance test|neither.*significance.*nor.*real[- ]robot|(?:absence|lack) of (?:a )?(?:statistical )?significance test.*(?:and|,).*?(?:a )?real[- ]robot experiment|no (?:statistical )?significance test (?:or|and) (?:a )?real[- ]robot experiment", "message": "State both supplied limitations."},
+        {"id": "no-sota", "type": "forbidden_regex", "pattern": "(?:achieves?|attains?|sets?|establishes?|delivers?|is) (?:a |the )?(?:new )?(?:state[- ]of[- ]the[- ]art|SOTA)|best (?:published )?method", "message": "Do not invent a ranking claim."},
+        {"id": "no-real-validation", "type": "forbidden_regex", "pattern": "validated on (?:a )?real robot|real[- ]robot experiments? confirm", "message": "Do not invent real-robot validation."},
+        {"id": "no-paper-image", "type": "forbidden_image", "message": "Do not add a decorative image."},
+        {"id": "paper-budget", "type": "max_words", "value": 300, "message": "Keep the synthesis compact."}
+      ]
+    },
+    {
+      "id": "incident-rollback-not-resolved",
+      "scenario": "failure_risk",
+      "request": "Give a current incident update after the failed deployment and rollback.",
+      "facts": [
+        "The new deployment failed with HTTP 401.",
+        "Rollback to the previous version succeeded and user traffic is healthy.",
+        "The new version is not deployed.",
+        "A rotated credential is a suspected cause, but the root cause is unverified.",
+        "The incident remains blocked pending credential validation and a safe redeploy."
+      ],
+      "evidence_boundary": "Separate service recovery from incident resolution. Do not present the suspected credential cause as confirmed.",
+      "artifacts": [],
+      "report_profile": "incident-update+evidence",
+      "expected_route": {"mode": "incident-update", "modules": ["evidence"]},
+      "required_semantic_slots": ["current_status", "user_impact", "verified_evidence", "uncertain_cause", "next_action"],
+      "visual_oracle": {
+        "necessity": "forbidden",
+        "allowed_types": [],
+        "rationale": "One failed deployment and rollback can be communicated more directly in prose."
+      },
+      "budgets": {"max_output_words": 280},
+      "machine_checks": [
+        {"id": "blocked-first", "type": "required_regex", "pattern": "\\A(?:blocked|status:\\s*blocked|the (?:deployment|incident) (?:is|remains) blocked)", "message": "Lead with the blocked current state."},
+        {"id": "http-status", "type": "required_regex", "pattern": "(?:HTTP )?401", "message": "Preserve the deployment error."},
+        {"id": "rollback-impact", "type": "required_regex", "pattern": "rollback.*(?:succeeded|successful).*traffic.*healthy|traffic.*healthy.*rollback.*(?:succeeded|successful)", "message": "Report rollback and current user impact."},
+        {"id": "new-version-absent", "type": "required_regex", "pattern": "new version (?:is )?not deployed|deployment of the new version remains blocked", "message": "State that the new version is not deployed."},
+        {"id": "cause-uncertain", "type": "required_regex", "pattern": "credential.*suspect.*(?:unverified|not confirmed|not yet confirmed)|suspect.*credential.*(?:unverified|not confirmed|not yet confirmed)", "message": "Calibrate the suspected cause."},
+        {"id": "next-action", "type": "required_regex", "pattern": "validat.*credential.*(?:redeploy|deployment)|(?:redeploy|deployment).*after.*validat.*credential", "message": "State the recovery action."},
+        {"id": "no-false-resolution", "type": "forbidden_regex", "pattern": "incident (?:is|has been) resolved|root cause (?:is )?confirmed|fully resolved", "message": "Do not confuse rollback with resolution."},
+        {"id": "no-incident-image", "type": "forbidden_image", "message": "Do not add a decorative incident image."},
+        {"id": "incident-budget", "type": "max_words", "value": 280, "message": "Keep the incident update bounded."}
+      ]
+    }
+  ]
+}

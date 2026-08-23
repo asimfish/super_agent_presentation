@@ -1,0 +1,437 @@
+{
+  "schema_version": 1,
+  "modes": {
+      "concise-answer": {
+        "summary": "A direct, proportional answer for a bounded question or small handoff.",
+        "intent_signals": ["short answer", "answer in at most", "in one sentence", "in two sentences", "answer yes or no"],
+      "file": "modes/concise-answer.md",
+      "signals": [
+        "bounded question",
+        "quick factual result",
+        "short final status",
+        "at most two compact sentences",
+        "answer in at most two",
+        "no durable report requested",
+        "简短回答",
+        "直接回答",
+        "一句话",
+        "简要结果"
+      ],
+      "default_modules": [],
+      "required_semantics": [
+        "outcome",
+        "boundary"
+      ],
+      "template": "assets/templates/concise-answer.md"
+    },
+      "implementation-handoff": {
+        "summary": "A completed, partial, or blocked engineering handoff with verification and changed artifacts.",
+        "intent_signals": ["implementation handoff", "final engineering handoff", "give me a handoff", "report changed files"],
+      "file": "modes/implementation-handoff.md",
+      "signals": [
+        "implemented",
+        "fixed",
+        "built",
+        "changed files",
+        "tests run",
+        "final engineering handoff",
+        "实现",
+        "修复",
+        "构建",
+        "修改文件",
+        "测试结果",
+        "代码交付"
+      ],
+      "default_modules": [
+        "evidence"
+      ],
+      "required_semantics": [
+        "outcome",
+        "changes",
+        "verification",
+        "boundary",
+        "next_action"
+      ],
+      "template": "assets/templates/implementation-handoff.md"
+    },
+      "status-update": {
+        "summary": "A time-bounded progress report that separates completed work, active work, blockers, and next priorities.",
+        "intent_signals": ["status update", "progress report", "weekly update", "current project status"],
+      "file": "modes/status-update.md",
+      "signals": [
+        "status update",
+        "weekly update",
+        "progress report",
+        "what is done",
+        "what remains",
+        "current project health",
+        "状态汇报",
+        "进度更新",
+        "已完成",
+        "剩余工作",
+        "项目状态"
+      ],
+      "default_modules": [],
+      "required_semantics": [
+        "current_status",
+        "evidence",
+        "boundary",
+        "next_action"
+      ],
+      "template": "assets/templates/status-update.md"
+    },
+      "investigation-report": {
+        "summary": "A findings-first account of a diagnosis, analysis, or research investigation.",
+        "intent_signals": ["investigate", "diagnose", "root cause", "why did", "find the cause"],
+      "file": "modes/investigation-report.md",
+      "signals": [
+        "investigate",
+        "diagnose",
+        "root cause",
+        "why did this happen",
+        "analysis findings",
+        "failed hypotheses",
+        "调研",
+        "调查",
+        "诊断",
+        "根因",
+        "为什么失败",
+        "分析发现"
+      ],
+      "default_modules": [
+        "evidence"
+      ],
+      "required_semantics": [
+        "findings",
+        "evidence",
+        "cause",
+        "boundary",
+        "next_action"
+      ],
+      "template": "assets/templates/investigation-report.md"
+    },
+      "experiment-report": {
+        "summary": "A reproducible experimental report with protocol, quantitative results, uncertainty, and bounded conclusions.",
+        "intent_signals": ["experiment report", "benchmark report", "present the benchmark", "analyze the experiment", "ablation report"],
+      "file": "modes/experiment-report.md",
+      "signals": [
+        "experiment",
+        "benchmark",
+        "ablation",
+        "multiple seeds",
+        "evaluation results",
+        "statistical analysis",
+        "protocol groups",
+        "evaluation protocols",
+        "success rate",
+        "mean return",
+        "late-training",
+        "training curve",
+        "实验",
+        "基准",
+        "消融",
+        "随机种子",
+        "评估结果",
+        "统计分析"
+      ],
+      "default_modules": [
+        "tables",
+        "conclusions"
+      ],
+      "required_semantics": [
+        "question",
+        "method",
+        "metrics",
+        "uncertainty",
+        "boundary"
+      ],
+      "template": "assets/templates/experiment-report.md"
+    },
+      "decision-brief": {
+        "summary": "A decision-ready brief that states the recommendation, alternatives, trade-offs, confidence, and revisit conditions.",
+        "intent_signals": ["decision brief", "recommend which", "recommend a choice", "choose between", "approval decision"],
+      "file": "modes/decision-brief.md",
+      "signals": [
+        "decision",
+        "recommendation",
+        "choose between",
+        "trade-off",
+        "architecture decision",
+        "approval needed",
+        "决策",
+        "推荐",
+        "选择方案",
+        "权衡",
+        "架构决定",
+        "需要批准"
+      ],
+      "default_modules": [
+        "conclusions"
+      ],
+      "required_semantics": [
+        "decision",
+        "evidence",
+        "options",
+        "boundary",
+        "next_action"
+      ],
+      "template": "assets/templates/decision-brief.md"
+    },
+      "academic-synthesis": {
+        "summary": "A source-grounded synthesis of one or more scholarly works, with claims, evidence, disagreements, and limits kept distinct.",
+        "intent_signals": ["academic synthesis", "paper summary", "literature synthesis", "related work", "compare papers"],
+      "file": "modes/academic-synthesis.md",
+      "signals": [
+        "paper summary",
+        "literature synthesis",
+        "related work",
+        "research landscape",
+        "compare papers",
+        "academic brief",
+        "academic synthesis",
+        "synthetic paper",
+        "using only citation",
+        "论文总结",
+        "文献综述",
+        "相关工作",
+        "研究版图",
+        "比较论文",
+        "学术汇报"
+      ],
+      "default_modules": [
+        "evidence",
+        "academic-display"
+      ],
+      "required_semantics": [
+        "paper_identity",
+        "method",
+        "evidence",
+        "limitations"
+      ],
+      "template": "assets/templates/academic-synthesis.md"
+    },
+      "review-report": {
+        "summary": "An evidence-driven review of code, a document, a design, or a scholarly work, ordered by actionable significance.",
+        "intent_signals": ["review this", "review report", "critique", "audit this", "paper review", "code review"],
+      "file": "modes/review-report.md",
+      "signals": [
+        "review",
+        "critique",
+        "audit",
+        "findings",
+        "pre-merge assessment",
+        "paper review",
+        "审查",
+        "评审",
+        "审计",
+        "问题发现",
+        "合并前评估",
+        "论文评审"
+      ],
+      "default_modules": [
+        "evidence"
+      ],
+      "required_semantics": [
+        "findings",
+        "evidence",
+        "boundary",
+        "next_action"
+      ],
+      "template": "assets/templates/review-report.md"
+    },
+      "incident-update": {
+        "summary": "A timestamped live-incident update centered on impact, current state, mitigation, and the next communication point.",
+        "intent_signals": ["incident update", "live incident", "service outage update", "operational incident update"],
+      "file": "modes/incident-update.md",
+      "signals": [
+        "incident ongoing",
+        "service outage",
+        "degradation",
+        "live operational update",
+        "mitigation in progress",
+        "next update",
+        "incident update",
+        "failed deployment",
+        "rollback",
+        "事故进行中",
+        "服务中断",
+        "服务降级",
+        "实时故障更新",
+        "正在缓解",
+        "下次更新"
+      ],
+      "default_modules": [
+        "evidence"
+      ],
+      "required_semantics": [
+        "impact",
+        "current_status",
+        "evidence",
+        "next_action"
+      ],
+      "template": "assets/templates/incident-update.md"
+    },
+      "postmortem": {
+        "summary": "A blameless record of incident impact, timeline, causes, response, and owned preventive actions.",
+        "intent_signals": ["postmortem", "incident retrospective", "incident root cause analysis", "lessons learned"],
+      "file": "modes/postmortem.md",
+      "signals": [
+        "postmortem",
+        "retrospective after incident",
+        "incident root cause analysis",
+        "lessons learned",
+        "prevent recurrence",
+        "事后复盘",
+        "事故复盘",
+        "事故根因分析",
+        "经验教训",
+        "防止复发"
+      ],
+      "default_modules": [
+        "evidence"
+      ],
+      "required_semantics": [
+        "impact",
+        "timeline",
+        "cause",
+        "next_action"
+      ],
+      "template": "assets/templates/postmortem.md"
+    },
+      "risk-report": {
+        "summary": "A prioritized risk assessment with explicit rationale, controls, ownership, triggers, and residual exposure.",
+        "intent_signals": ["risk assessment", "risk report", "risk register", "what could go wrong"],
+      "file": "modes/risk-report.md",
+      "signals": [
+        "risk assessment",
+        "risk register",
+        "what could go wrong",
+        "likelihood and impact",
+        "mitigation plan",
+        "residual risk",
+        "风险评估",
+        "风险登记",
+        "可能出错",
+        "概率和影响",
+        "缓解计划",
+        "残余风险"
+      ],
+      "default_modules": [
+        "tables",
+        "conclusions"
+      ],
+      "required_semantics": [
+        "risk",
+        "evidence",
+        "boundary",
+        "next_action"
+      ],
+      "template": "assets/templates/risk-report.md"
+    }
+  },
+  "modules": {
+    "visuals": {
+      "summary": "Select, caption, describe, and validate figures, charts, screenshots, diagrams, or qualitative image sets.",
+      "file": "modules/visuals.md",
+      "signals": [
+        "figure",
+        "chart",
+        "plot",
+        "image",
+        "screenshot",
+        "diagram",
+        "curve",
+        "training curve",
+        "qualitative examples",
+        "图片",
+        "图表",
+        "曲线图",
+        "截图",
+        "流程图",
+        "定性样例"
+      ]
+    },
+    "tables": {
+      "summary": "Present exact values, comparisons, settings, registers, or audit details in compact and accessible tables.",
+      "file": "modules/tables.md",
+      "signals": [
+        "table",
+        "matrix",
+        "exact values",
+        "comparison rows",
+        "risk register",
+        "experimental settings",
+        "表格",
+        "矩阵",
+        "精确数值",
+        "对比行",
+        "风险登记表",
+        "实验设置"
+      ]
+    },
+    "conclusions": {
+      "summary": "Calibrate conclusions, separate observation from inference, and state scope, confidence, trade-offs, and action.",
+      "file": "modules/conclusions.md",
+      "signals": [
+        "conclusion",
+        "recommendation",
+        "decision",
+        "interpret results",
+        "claim scope",
+        "confidence",
+        "结论",
+        "建议",
+        "决策",
+        "解释结果",
+        "结论范围",
+        "置信度"
+      ]
+    },
+    "evidence": {
+      "summary": "Bind consequential claims to inspectable sources or artifacts and preserve uncertainty and provenance.",
+      "file": "modules/evidence.md",
+      "signals": [
+        "citations",
+        "sources",
+        "logs",
+        "test output",
+        "file locations",
+        "claim verification",
+        "provenance",
+        "cannot identify the cause",
+        "causal limitation",
+        "引用",
+        "来源",
+        "日志",
+        "测试输出",
+        "文件位置",
+        "主张验证",
+        "出处"
+      ]
+    },
+    "academic-display": {
+      "summary": "Display scholarly identity, thesis, method, claim-evidence links, limitations, and relationships without fabricating literature claims.",
+      "file": "modules/academic-display.md",
+      "signals": [
+        "paper card",
+        "DOI",
+        "venue and year",
+        "table or figure locator",
+        "claim evidence map",
+        "literature comparison",
+        "论文卡片",
+        "出版信息",
+        "表图定位",
+        "主张证据映射",
+        "文献比较"
+      ]
+    }
+  },
+  "surfaces": [
+    "chat",
+    "markdown",
+    "issue-pr",
+    "document",
+    "slide"
+  ]
+}

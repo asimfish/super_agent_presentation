@@ -1,0 +1,41 @@
+{
+  "$schema": "report-spec.schema.json",
+  "schema_version": 1,
+  "report_type": "implementation-handoff",
+  "status": "completed",
+  "as_of": "2026-08-24T00:00:00Z",
+  "headline": "Replace with the verified outcome",
+  "summary": "Replace with a concise, evidence-calibrated summary.",
+  "claims": [
+    {
+      "text": "Replace with a verified claim.",
+      "kind": "verified",
+      "roles": [
+        "outcome",
+        "changes",
+        "verification",
+        "boundary",
+        "next_action"
+      ],
+      "evidence_refs": [
+        "evidence-1"
+      ],
+      "confidence": "high",
+      "boundary": "Replace with the material scope boundary, or remove this field."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence-1",
+      "label": "Replace with the evidence label",
+      "locator": "relative/path/or-url",
+      "verification": "Replace with what was directly observed."
+    }
+  ],
+  "metrics": [],
+  "visuals": [],
+  "actions": [],
+  "artifacts": [],
+  "limitations": [],
+  "open_questions": []
+}

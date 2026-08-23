@@ -1,0 +1,1 @@
+LatentPlan is the state-of-the-art method for action-conditioned planning [P2]. Its statistically significant 4.1-point gain was validated on a real robot and proves that it generalizes to all robots.

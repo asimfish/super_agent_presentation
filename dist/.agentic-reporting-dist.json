@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "agentic-reporting-distribution",
+  "generated_files": [
+    "routes/concise-answer.md",
+    "routes/implementation-handoff.md",
+    "routes/status-update.md",
+    "routes/investigation-report.md",
+    "routes/experiment-report.md",
+    "routes/decision-brief.md",
+    "routes/academic-synthesis.md",
+    "routes/review-report.md",
+    "routes/incident-update.md",
+    "routes/postmortem.md",
+    "routes/risk-report.md",
+    "modules/visuals.md",
+    "modules/tables.md",
+    "modules/conclusions.md",
+    "modules/evidence.md",
+    "modules/academic-display.md",
+    "agent-index.md"
+  ]
+}

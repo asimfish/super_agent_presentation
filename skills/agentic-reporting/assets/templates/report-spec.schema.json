@@ -1,0 +1,436 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/asimfish/super_agent_presentation/report-spec.schema.json",
+  "title": "Agentic Reporting strict intermediate representation",
+  "description": "Optional presentation source for deterministic Markdown rendering. This schema is a portable structural and conditional preflight; reportctl validate-spec is authoritative for identifier uniqueness, cross-record references, and catalog-derived semantics. It does not replace original evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_type",
+    "status",
+    "headline",
+    "summary",
+    "claims",
+    "evidence",
+    "metrics",
+    "visuals",
+    "actions",
+    "artifacts",
+    "limitations",
+    "open_questions"
+  ],
+  "properties": {
+    "$schema": {"$ref": "#/$defs/scalarString"},
+    "schema_version": {"const": 1},
+    "report_type": {
+      "enum": [
+        "concise-answer", "implementation-handoff", "status-update",
+        "investigation-report", "experiment-report", "decision-brief",
+        "academic-synthesis", "review-report", "incident-update",
+        "postmortem", "risk-report"
+      ]
+    },
+    "status": {
+      "enum": ["informational", "completed", "partial", "blocked", "failed"]
+    },
+    "as_of": {"$ref": "#/$defs/nonBlankString"},
+    "headline": {"$ref": "#/$defs/nonBlankString"},
+    "summary": {"$ref": "#/$defs/nonBlankString"},
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "metrics": {"type": "array", "items": {"$ref": "#/$defs/metric"}},
+    "visuals": {"type": "array", "items": {"$ref": "#/$defs/visual"}},
+    "actions": {"type": "array", "items": {"$ref": "#/$defs/action"}},
+    "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
+    "limitations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/nonBlankString"}
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/nonBlankString"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "report_type": {
+            "enum": [
+              "implementation-handoff", "status-update", "investigation-report",
+              "experiment-report", "decision-brief", "academic-synthesis",
+              "review-report", "incident-update", "postmortem", "risk-report"
+            ]
+          }
+        },
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {
+          "claims": {"minItems": 1},
+          "evidence": {"minItems": 1}
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "report_type": {"enum": ["incident-update", "postmortem", "risk-report"]}
+            },
+            "required": ["report_type"]
+          },
+          {
+            "properties": {"status": {"enum": ["partial", "blocked", "failed"]}},
+            "required": ["status"]
+          }
+        ]
+      },
+      "then": {"properties": {"actions": {"minItems": 1}}}
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "experiment-report"}},
+        "required": ["report_type"]
+      },
+      "then": {"properties": {"metrics": {
+        "minItems": 1,
+        "items": {"required": ["uncertainty"]}
+      }}}
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "concise-answer"}},
+        "required": ["report_type"]
+      },
+      "then": {"anyOf": [
+        {"properties": {"limitations": {"minItems": 1}}},
+        {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+      ]}
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "implementation-handoff"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"allOf": [
+          {"contains": {"properties": {"roles": {"contains": {"const": "changes"}}}}},
+          {"contains": {"properties": {"roles": {"contains": {"const": "verification"}}}}}
+        ]}},
+        "allOf": [
+          {"anyOf": [
+            {"properties": {"limitations": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+          ]},
+          {"anyOf": [
+            {"properties": {"actions": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "next_action"}}}}}}}
+          ]}
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "status-update"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"contains": {
+          "properties": {"roles": {"contains": {"const": "current_status"}}}
+        }}},
+        "allOf": [
+          {"anyOf": [
+            {"properties": {"limitations": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+          ]},
+          {"anyOf": [
+            {"properties": {"actions": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "next_action"}}}}}}}
+          ]}
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "investigation-report"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"allOf": [
+          {"contains": {"properties": {"roles": {"contains": {"const": "findings"}}}}},
+          {"contains": {"properties": {"roles": {"contains": {"const": "cause"}}}}}
+        ]}},
+        "allOf": [
+          {"anyOf": [
+            {"properties": {"limitations": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+          ]},
+          {"anyOf": [
+            {"properties": {"actions": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "next_action"}}}}}}}
+          ]}
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "experiment-report"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"allOf": [
+          {"contains": {"properties": {"roles": {"contains": {"const": "question"}}}}},
+          {"contains": {"properties": {"roles": {"contains": {"const": "method"}}}}}
+        ]}},
+        "anyOf": [
+          {"properties": {"limitations": {"minItems": 1}}},
+          {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "decision-brief"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"allOf": [
+          {"contains": {"properties": {"roles": {"contains": {"const": "decision"}}}}},
+          {"contains": {"properties": {"roles": {"contains": {"const": "options"}}}}}
+        ]}},
+        "allOf": [
+          {"anyOf": [
+            {"properties": {"limitations": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+          ]},
+          {"anyOf": [
+            {"properties": {"actions": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "next_action"}}}}}}}
+          ]}
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "academic-synthesis"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"allOf": [
+          {"contains": {"properties": {"roles": {"contains": {"const": "paper_identity"}}}}},
+          {"contains": {"properties": {"roles": {"contains": {"const": "method"}}}}}
+        ]}},
+        "anyOf": [
+          {"properties": {"limitations": {"minItems": 1}}},
+          {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "limitations"}}}}}}}
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "review-report"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"contains": {
+          "properties": {"roles": {"contains": {"const": "findings"}}}
+        }}},
+        "allOf": [
+          {"anyOf": [
+            {"properties": {"limitations": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+          ]},
+          {"anyOf": [
+            {"properties": {"actions": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "next_action"}}}}}}}
+          ]}
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "incident-update"}},
+        "required": ["report_type"]
+      },
+      "then": {"properties": {"claims": {"allOf": [
+        {"contains": {"properties": {"roles": {"contains": {"const": "impact"}}}}},
+        {"contains": {"properties": {"roles": {"contains": {"const": "current_status"}}}}}
+      ]}}}
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "postmortem"}},
+        "required": ["report_type"]
+      },
+      "then": {"properties": {"claims": {"allOf": [
+        {"contains": {"properties": {"roles": {"contains": {"const": "impact"}}}}},
+        {"contains": {"properties": {"roles": {"contains": {"const": "timeline"}}}}},
+        {"contains": {"properties": {"roles": {"contains": {"const": "cause"}}}}}
+      ]}}}
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "risk-report"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"contains": {
+          "properties": {"roles": {"contains": {"const": "risk"}}}
+        }}},
+        "anyOf": [
+          {"properties": {"limitations": {"minItems": 1}}},
+          {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "scalarString": {
+      "type": "string",
+      "pattern": "^(?![\\s\\S]*[\\uD800-\\uDFFF])[\\s\\S]*$"
+    },
+    "nonBlankString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![\\s\\S]*[\\uD800-\\uDFFF])(?=[\\s\\S]*\\S)[\\s\\S]+$"
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "kind", "roles", "evidence_refs", "confidence"],
+      "properties": {
+        "text": {"$ref": "#/$defs/nonBlankString"},
+        "kind": {"enum": ["verified", "inference", "recommendation"]},
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "outcome", "current_status", "evidence", "verification", "changes",
+              "boundary", "next_action", "question", "method", "metrics",
+              "uncertainty", "impact", "timeline", "cause", "options", "decision",
+              "paper_identity", "limitations", "findings", "risk"
+            ]
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonBlankString"}
+        },
+        "confidence": {"enum": ["high", "medium", "low", "unknown"]},
+        "boundary": {"$ref": "#/$defs/nonBlankString"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "verified"}}, "required": ["kind"]},
+          "then": {"properties": {"evidence_refs": {"minItems": 1}}}
+        }
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "locator", "verification"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u2028-\\u202E\\u2060-\\u206F\\uD800-\\uDFFF\\uE000-\\uF8FF\\uFEFF\\uFFF9-\\uFFFB])[A-Za-z][A-Za-z0-9._-]*$"},
+        "label": {"$ref": "#/$defs/nonBlankString"},
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u2028-\\u202E\\u2060-\\u206F\\uD800-\\uDFFF\\uE000-\\uF8FF\\uFEFF\\uFFF9-\\uFFFB])(?=\\S)(?:[Hh][Tt][Tt][Pp][Ss]?://[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(?::(?:[0-9]{1,4}|[0-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?(?:[/?#][^\\s<>]*)?|(?![A-Za-z][A-Za-z0-9+.-]*:)(?!//)[^\\u0000\\r\\n<>]+)(?<!\\s)$"
+        },
+        "verification": {"$ref": "#/$defs/nonBlankString"}
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value", "unit"],
+      "properties": {
+        "name": {"$ref": "#/$defs/nonBlankString"},
+        "value": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": -1.7976931348623157e308,
+              "maximum": 1.7976931348623157e308
+            },
+            {"$ref": "#/$defs/scalarString"},
+            {"type": "null"}
+          ]
+        },
+        "unit": {"$ref": "#/$defs/nonBlankString"},
+        "direction": {
+          "enum": ["higher-is-better", "lower-is-better", "target-is-better", "descriptive", "not-applicable"]
+        },
+        "denominator": {"$ref": "#/$defs/scalarString"},
+        "time_window": {"$ref": "#/$defs/scalarString"},
+        "baseline": {"$ref": "#/$defs/scalarString"},
+        "independent_observations": {"type": "integer", "minimum": 0},
+        "uncertainty": {"$ref": "#/$defs/nonBlankString"},
+        "evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonBlankString"}
+        }
+      }
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "alt_text", "caption", "takeaway", "source"],
+      "properties": {
+        "id": {"$ref": "#/$defs/scalarString"},
+        "type": {"$ref": "#/$defs/scalarString"},
+        "purpose": {"$ref": "#/$defs/scalarString"},
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u2028-\\u202E\\u2060-\\u206F\\uD800-\\uDFFF\\uE000-\\uF8FF\\uFEFF\\uFFF9-\\uFFFB])(?=\\S)(?:[Hh][Tt][Tt][Pp][Ss]?://[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(?::(?:[0-9]{1,4}|[0-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?(?:[/?#][^\\s<>]*)?|(?![?#])(?![A-Za-z][A-Za-z0-9+.-]*:)(?!//)[^\\u0000\\r\\n<>]+)(?<!\\s)$"
+        },
+        "alt_text": {"$ref": "#/$defs/nonBlankString"},
+        "caption": {"$ref": "#/$defs/nonBlankString"},
+        "takeaway": {"$ref": "#/$defs/nonBlankString"},
+        "source": {"$ref": "#/$defs/nonBlankString"},
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/scalarString"}}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "owner", "status"],
+      "properties": {
+        "text": {"$ref": "#/$defs/nonBlankString"},
+        "owner": {"$ref": "#/$defs/nonBlankString"},
+        "status": {"enum": ["proposed", "accepted", "in-progress", "blocked", "completed", "deferred"]},
+        "deadline": {"$ref": "#/$defs/nonBlankString"},
+        "acceptance_check": {"$ref": "#/$defs/nonBlankString"}
+      },
+      "anyOf": [{"required": ["deadline"]}, {"required": ["acceptance_check"]}]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "properties": {
+        "label": {"$ref": "#/$defs/nonBlankString"},
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u2028-\\u202E\\u2060-\\u206F\\uD800-\\uDFFF\\uE000-\\uF8FF\\uFEFF\\uFFF9-\\uFFFB])(?=\\S)(?![A-Za-z][A-Za-z0-9+.-]*:)(?!//)[^\\u0000\\r\\n<>]+(?<!\\s)$"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F\\u00AD\\u0600-\\u0605\\u061C\\u06DD\\u070F\\u0890-\\u0891\\u08E2\\u180E\\u200B-\\u200F\\u2028-\\u202E\\u2060-\\u206F\\uD800-\\uDFFF\\uE000-\\uF8FF\\uFEFF\\uFFF9-\\uFFFB])[Hh][Tt][Tt][Pp][Ss]?://[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*(?::(?:[0-9]{1,4}|[0-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?(?:[/?#][^\\s<>]*)?$"
+        }
+      },
+      "oneOf": [{"required": ["path"]}, {"required": ["url"]}]
+    }
+  }
+}

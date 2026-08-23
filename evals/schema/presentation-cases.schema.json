@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/super-agent-presentation/presentation-cases.schema.json",
+  "title": "Agentic reporting presentation cases",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "benchmark_id", "claim_boundary", "suites", "cases"],
+  "properties": {
+    "$schema": {"type": "string", "minLength": 1},
+    "schema_version": {"const": "1.0"},
+    "benchmark_id": {"type": "string", "minLength": 1},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "suites": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "case_ids"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "kind": {"enum": ["harness_only", "generation"]},
+          "case_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id", "scenario", "request", "facts", "evidence_boundary",
+          "artifacts", "report_profile", "required_semantic_slots",
+          "expected_route", "visual_oracle", "budgets", "machine_checks"
+        ],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "scenario": {"type": "string", "minLength": 1},
+          "request": {"type": "string", "minLength": 1},
+          "facts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "evidence_boundary": {"type": "string", "minLength": 1},
+          "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "report_profile": {"type": "string", "minLength": 1},
+          "expected_route": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["mode", "modules"],
+            "properties": {
+              "mode": {
+                "enum": [
+                  "concise-answer", "implementation-handoff", "status-update",
+                  "investigation-report", "experiment-report", "decision-brief",
+                  "academic-synthesis", "review-report", "incident-update",
+                  "postmortem", "risk-report"
+                ]
+              },
+              "modules": {
+                "type": "array",
+                "maxItems": 2,
+                "uniqueItems": true,
+                "items": {
+                  "enum": ["visuals", "tables", "conclusions", "evidence", "academic-display"]
+                }
+              }
+            }
+          },
+          "required_semantic_slots": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "visual_oracle": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["necessity", "allowed_types", "rationale"],
+            "properties": {
+              "necessity": {"enum": ["required", "optional", "forbidden"]},
+              "allowed_types": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+              "rationale": {"type": "string", "minLength": 1}
+            }
+          },
+          "budgets": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["max_output_words"],
+            "properties": {"max_output_words": {"type": "integer", "minimum": 1}}
+          },
+          "allowed_citations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+          "machine_checks": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "type", "message"],
+              "properties": {
+                "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+                "type": {
+                  "enum": [
+                    "required_regex", "forbidden_regex", "max_words", "max_headings",
+                    "min_markdown_tables", "max_markdown_tables", "required_image",
+                    "forbidden_image", "citation_allowlist", "forbidden_placeholder"
+                  ]
+                },
+                "pattern": {"type": "string", "minLength": 1},
+                "value": {"type": "integer", "minimum": 0},
+                "must_exist": {"type": "boolean"},
+                "message": {"type": "string", "minLength": 1}
+              },
+              "allOf": [
+                {
+                  "if": {"properties": {"type": {"enum": ["required_regex", "forbidden_regex"]}}, "required": ["type"]},
+                  "then": {"required": ["pattern"]}
+                },
+                {
+                  "if": {"properties": {"type": {"enum": ["max_words", "max_headings", "min_markdown_tables", "max_markdown_tables"]}}, "required": ["type"]},
+                  "then": {"required": ["value"]}
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

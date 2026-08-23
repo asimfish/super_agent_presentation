@@ -1,0 +1,177 @@
+{
+  "disclosure": "This is the second same-model reviewer on the development set; it is not a human blind evaluation.",
+  "review_context": {
+    "role": "independent adversarial reviewer",
+    "review_type": "static evidence-bounded review",
+    "human_blind_evaluation": false,
+    "scope": [
+      "BENCHMARK.md critical-error policy and seven-dimension rubric",
+      "visible facts and evidence_boundary fields for experiment-null-result, engineering-late-failure, and paper-summary-bounded",
+      "evals/runs/forward/experiment-framework-v2.md",
+      "evals/runs/forward/engineering-long-framework.md",
+      "evals/runs/forward/paper-format-framework.md"
+    ],
+    "excluded": [
+      "good fixtures",
+      "bad fixtures",
+      "other judge outputs",
+      "candidate modification"
+    ],
+    "score_scale": "1-5 per dimension; critical errors are reported independently and are not averaged away"
+  },
+  "reviews": [
+    {
+      "case_id": "experiment-null-result",
+      "artifact": "evals/runs/forward/experiment-framework-v2.md",
+      "dimension_scores": {
+        "task_fidelity": 4,
+        "information_architecture": 5,
+        "readability_and_scannability": 5,
+        "completeness_and_actionability": 4,
+        "evidence_calibration": 3,
+        "visual_display_fitness": 5,
+        "concision_and_proportionality": 4
+      },
+      "critical_errors": [
+        {
+          "id": "EXP-CR-001",
+          "category": "unsupported_ranking",
+          "locator": "evals/runs/forward/experiment-framework-v2.md:17",
+          "evidence": "The conclusion says that C offers the stronger observed accuracy-latency balance whenever latency matters. The visible evidence supplies no utility function, weighting, constraint, or preference threshold that combines accuracy and latency. A nonzero concern for latency does not by itself make C preferable to B.",
+          "impact": "The sentence turns a supported Pareto trade-off into a conditional winner that the measurements do not establish.",
+          "minimum_correction": "Remove the balance ranking and state only that C trades 0.1 percentage points of observed mean accuracy for 9 ms lower latency than B, with preference depending on an explicitly chosen trade-off."
+        }
+      ],
+      "evidence_notes": [
+        {
+          "check": "numbers, units, and metric direction",
+          "result": "pass",
+          "evidence": "Lines 3 and 9-17 preserve all three accuracy means and SDs, five seeds, percent units, all latency values in milliseconds, and the correct 0.1-percentage-point, 9-ms, 1.5-percentage-point, and 2-ms differences. Lines 7 and 15 identify higher-is-better accuracy, lower-is-better latency, and SD."
+        },
+        {
+          "check": "negation, significance, causality, and universal or SOTA claims",
+          "result": "pass except for EXP-CR-001",
+          "evidence": "Line 19 explicitly says no significance test was run and disclaims statistical difference, causality, and a universal winner. No state-of-the-art claim appears."
+        },
+        {
+          "check": "comparison and ranking calibration",
+          "result": "fail",
+          "evidence": "Line 3 correctly frames B versus C as a trade-off, but line 17 oversteps that framing by calling C the stronger balance without a supplied cross-metric decision rule."
+        },
+        {
+          "check": "visual necessity and correctness",
+          "result": "pass",
+          "evidence": "The table at lines 9-15 materially improves exact comparison across three methods and two differently directed metrics; it includes units, direction arrows, and the uncertainty definition. No decorative visual is added."
+        },
+        {
+          "check": "explicit structure and next step",
+          "result": "pass with proportionality reservation",
+          "evidence": "The main result is followed by the research question, protocol, evidence table, conclusion, and evidence boundary. The visible case facts provide no separate operational next action, so none is invented. The main result and conclusion repeat the same B-versus-C trade-off, which slightly reduces proportionality."
+        }
+      ]
+    },
+    {
+      "case_id": "engineering-late-failure",
+      "artifact": "evals/runs/forward/engineering-long-framework.md",
+      "dimension_scores": {
+        "task_fidelity": 5,
+        "information_architecture": 5,
+        "readability_and_scannability": 5,
+        "completeness_and_actionability": 5,
+        "evidence_calibration": 5,
+        "visual_display_fitness": 5,
+        "concision_and_proportionality": 5
+      },
+      "critical_errors": [],
+      "evidence_notes": [
+        {
+          "check": "false completion and stale status",
+          "result": "pass",
+          "evidence": "Line 5 leads with Status: blocked and says the work is not complete. Lines 10 and 14 preserve the later integration failure as the terminal state rather than allowing the earlier unit-test success to overwrite it."
+        },
+        {
+          "check": "numbers, negation, and failure cause",
+          "result": "pass",
+          "evidence": "Lines 9-10 report exactly 42 passing unit tests, integration exit status 1, and the rejected registry credential. No number, polarity, or modality is changed."
+        },
+        {
+          "check": "explicit three-part reporting spine and next action",
+          "result": "pass",
+          "evidence": "Outcome appears at lines 3-5, verification plus boundary at lines 7-14, and the next action at lines 16-18. The next action exactly matches the visible facts: renew the credential and rerun the integration test before reporting completion."
+        },
+        {
+          "check": "visual necessity",
+          "result": "pass",
+          "evidence": "The status, two test observations, boundary, and one next action are clearer as short prose and bullets; a table or figure would not materially improve this small sequence."
+        },
+        {
+          "check": "significance, causality, ranking, and SOTA",
+          "result": "pass",
+          "evidence": "The handoff makes none of these unsupported claim types."
+        }
+      ]
+    },
+    {
+      "case_id": "paper-summary-bounded",
+      "artifact": "evals/runs/forward/paper-format-framework.md",
+      "dimension_scores": {
+        "task_fidelity": 4,
+        "information_architecture": 5,
+        "readability_and_scannability": 5,
+        "completeness_and_actionability": 4,
+        "evidence_calibration": 3,
+        "visual_display_fitness": 5,
+        "concision_and_proportionality": 5
+      },
+      "critical_errors": [
+        {
+          "id": "PAPER-CR-001",
+          "category": "modality_drift_and_unsupported_source_characterization",
+          "locator": "evals/runs/forward/paper-format-framework.md:5",
+          "evidence": "The visible fact is only that no significance test or real-robot experiment is reported. The phrase 'The reported limitations are the absence of' strengthens non-reporting into asserted absence and also implies that P1 itself reported these items as limitations, neither of which is supplied.",
+          "impact": "The summary claims stronger knowledge about what was done and how P1 characterized its limitations than the bounded evidence supports.",
+          "minimum_correction": "Replace that phrase with: 'P1 does not report a statistical significance test or a real-robot experiment.'"
+        }
+      ],
+      "evidence_notes": [
+        {
+          "check": "method, setting, numbers, units, and seeds",
+          "result": "pass",
+          "evidence": "Lines 1 and 3 preserve model-based control, the action-conditioned latent transition model, two simulated control benchmarks, a 4.1-point mean-return difference over three seeds, and the behavioral-cloning baseline."
+        },
+        {
+          "check": "citation and evidence boundary",
+          "result": "pass except for PAPER-CR-001",
+          "evidence": "Only [P1] is used. Line 5 correctly disclaims real-robot validation, leading performance against a broader comparison set, generalization beyond the two benchmarks, and statistical interpretation of the 4.1-point descriptive difference."
+        },
+        {
+          "check": "negation and modality",
+          "result": "fail",
+          "evidence": "Line 5 changes 'is not reported' to 'absence' and labels the items 'reported limitations'; this is the bounded-evidence drift recorded as PAPER-CR-001."
+        },
+        {
+          "check": "significance, causality, ranking, and SOTA",
+          "result": "pass",
+          "evidence": "No causal or state-of-the-art claim appears, and the comparison is described as a reported mean difference rather than a statistically established superiority."
+        },
+        {
+          "check": "explicit three-paragraph format, visual necessity, and next step",
+          "result": "pass",
+          "evidence": "Lines 1, 3, and 5 form exactly three visible paragraphs covering problem and method, quantitative evidence, and boundary. No visual is needed for this short single-paper summary. The visible facts provide no operational next action, so omitting one avoids invention while the final paragraph supplies the required limitation."
+        }
+      ]
+    }
+  ],
+  "cross_case_summary": {
+    "critical_error_count": 2,
+    "artifacts_with_critical_errors": [
+      "evals/runs/forward/experiment-framework-v2.md",
+      "evals/runs/forward/paper-format-framework.md"
+    ],
+    "no_critical_error_found_within_scope": [
+      "evals/runs/forward/engineering-long-framework.md"
+    ],
+    "decision": "The engineering handoff passes within the visible evidence boundary. The experiment and paper-summary artifacts require the stated minimal wording corrections before they can pass the benchmark's zero-critical-error gate.",
+    "boundary": "This judgment covers only the specified development-set facts, evidence boundaries, critical-error policy, and candidate text. It is a same-model second review, not an independent human blind test."
+  }
+}

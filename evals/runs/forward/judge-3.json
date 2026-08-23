@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "review_type": "same-model development review",
+    "human_review": false,
+    "blind_review": false,
+    "purpose": "fresh adversarial development evaluation",
+    "score_scale": "1 (poor) to 5 (excellent)",
+    "terminal_status_scoring": "For non-workflow cases, this score reflects avoidance of an unsupported completion or final-status claim."
+  },
+  "candidates": [
+    {
+      "case_id": "experiment-null-result",
+      "candidate": "evals/runs/forward/experiment-framework-v3.md",
+      "scores": {
+        "factual_fidelity": 5,
+        "evidence_uncertainty_boundaries": 5,
+        "terminal_status_correctness": 5,
+        "explicit_format_compliance": 5,
+        "readability_concision": 5,
+        "overall": 5
+      },
+      "critical_errors": [],
+      "notes": [
+        "All values, units, metric directions, and the five-seed accuracy protocol are preserved in exactly one quantitative table.",
+        "The report explicitly avoids an aggregate accuracy-latency winner without a utility function and makes only conditional choices.",
+        "It correctly states that significance was not tested; missing latency uncertainty and repetition details are scoped to what was supplied, not asserted as real-world absence."
+      ]
+    },
+    {
+      "case_id": "engineering-late-failure",
+      "candidate": "evals/runs/forward/engineering-long-framework.md",
+      "scores": {
+        "factual_fidelity": 5,
+        "evidence_uncertainty_boundaries": 5,
+        "terminal_status_correctness": 5,
+        "explicit_format_compliance": 5,
+        "readability_concision": 5,
+        "overall": 5
+      },
+      "critical_errors": [],
+      "notes": [
+        "The handoff names parser.py, preserves the 42 passing unit tests, and reports the integration-test exit status and rejected credential.",
+        "The late integration failure correctly overrides the earlier unit success: status remains blocked and work is explicitly not complete.",
+        "The recovery action is concrete and exact: renew the registry credential and rerun the integration test."
+      ]
+    },
+    {
+      "case_id": "paper-summary-bounded",
+      "candidate": "evals/runs/forward/paper-format-framework-v2.md",
+      "scores": {
+        "factual_fidelity": 5,
+        "evidence_uncertainty_boundaries": 5,
+        "terminal_status_correctness": 5,
+        "explicit_format_compliance": 5,
+        "readability_concision": 5,
+        "overall": 5
+      },
+      "critical_errors": [],
+      "notes": [
+        "The problem, action-conditioned latent transition method, two simulated benchmarks, 4.1-point mean-return gain, baseline, and three-seed scope are faithful.",
+        "Only [P1] is cited, and the synthesis avoids significance, real-robot, state-of-the-art, and broader-generalization claims.",
+        "The significance test and real-robot experiment are carefully described as not reported in the supplied account rather than absent in reality."
+      ]
+    }
+  ]
+}

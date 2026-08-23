@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-23T19:08:44.111959+00:00",
+  "task": "Produce the user-visible engineering handoff for the engineering-late-failure benchmark, preserving the latest terminal task state after a long read-only inspection chain",
+  "task_sha256": "df899ae3615db2fe44cac4cb002687e52dc11382d694dc1a844c8ef20041ff7b",
+  "mode": "implementation-handoff",
+  "surface": "markdown",
+  "audience": "user",
+  "modules": [
+    "evidence"
+  ],
+  "must_show": []
+}

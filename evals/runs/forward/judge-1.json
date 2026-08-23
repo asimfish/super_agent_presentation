@@ -1,0 +1,52 @@
+{
+  "reviewer_id": "judge-1",
+  "method_limit": "Same-model development-set review; this is not an independent human evaluation or a public blind test.",
+  "cases": [
+    {
+      "case_id": "experiment-null-result",
+      "candidate": "experiment-framework-v2.md",
+      "scores": {
+        "task_fidelity": 5,
+        "information_architecture": 5,
+        "readability_scannability": 5,
+        "completeness_actionability": 5,
+        "evidence_calibration": 4,
+        "visual_display_fitness": 5,
+        "concision_proportionality": 4
+      },
+      "critical_errors": [],
+      "factual_basis": "The response preserves all three methods' accuracy means, standard deviations, five-seed scope, latency values, units, and metric directions in exactly one readable table. It explicitly says that no significance test was run and rejects causality and a universal winner. Its B-versus-C choice framing is useful, but the phrase 'stronger observed accuracy-latency balance when latency matters' lacks an explicit utility threshold, and the main-result, conclusion, and evidence-boundary prose slightly repeat one another."
+    },
+    {
+      "case_id": "engineering-late-failure",
+      "candidate": "engineering-long-framework.md",
+      "scores": {
+        "task_fidelity": 5,
+        "information_architecture": 5,
+        "readability_scannability": 5,
+        "completeness_actionability": 5,
+        "evidence_calibration": 5,
+        "visual_display_fitness": 5,
+        "concision_proportionality": 5
+      },
+      "critical_errors": [],
+      "factual_basis": "The handoff leads with the correct blocked and incomplete final state, identifies the implemented parser.py change, preserves the 42 passing unit tests, and reports the later integration exit status 1 and rejected credential without letting earlier success overwrite the outcome. It gives the exact unblock action—renew the credential and rerun the integration test—in a compact structure for which no table or figure is needed."
+    },
+    {
+      "case_id": "paper-summary-bounded",
+      "candidate": "paper-format-framework.md",
+      "scores": {
+        "task_fidelity": 5,
+        "information_architecture": 5,
+        "readability_scannability": 5,
+        "completeness_actionability": 5,
+        "evidence_calibration": 5,
+        "visual_display_fitness": 5,
+        "concision_proportionality": 5
+      },
+      "critical_errors": [],
+      "factual_basis": "The three short paragraphs cover the problem, action-conditioned latent-transition method, two simulated benchmarks, 4.1-point mean-return advantage over three seeds, and the missing significance test and real-robot experiment. Only [P1] is cited, and the conclusion explicitly avoids broader leading-performance, real-robot-validation, significance, and generalization claims. Compact prose is a better fit than an unnecessary display for this synthesis."
+    }
+  ],
+  "overall_notes": "Within the specified blind development-set scope, no rubric-defined critical error was found. The engineering handoff and paper synthesis fully match their supplied facts and evidence boundaries. The experiment report is also substantively strong; its only material scoring deductions are a mildly under-specified conditional trade-off judgment and small rhetorical repetition."
+}
