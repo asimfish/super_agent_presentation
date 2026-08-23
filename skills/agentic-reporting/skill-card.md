@@ -4,7 +4,7 @@
 
 - Owner: `asimfish`
 - Version: `0.1.0`
-- Status: release candidate
+- Status: released
 - License: MIT
 - Source: `skills/agentic-reporting/SKILL.md`
 

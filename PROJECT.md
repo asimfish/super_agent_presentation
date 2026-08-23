@@ -34,7 +34,7 @@ long work sessions without keeping a large reporting manual in active context.
 | M1 Research and architecture | Source notes, trade-off matrix, ADRs | Completed |
 | M2 Canonical framework | Skill, protocols, modules, adapters, CLI | Completed |
 | M3 Evaluation | Unit tests, declarative activation contract, route/fixture smoke, fresh-agent development record; comparative effectiveness remains unclaimed | Completed for v0.1 structural scope |
-| M4 Release | Validation, review, commit, public GitHub URL | Pending |
+| M4 Release | Validation, review, commit, public GitHub URL | Completed |
 
 ## Decisions
 
@@ -60,6 +60,6 @@ long work sessions without keeping a large reporting manual in active context.
 
 ## Current frontier
 
-Close final review findings, verify a clean installation journey, publish the
-reviewed commit, and reproduce the release gates from the public SHA. A future blind
-baseline-versus-framework study remains separate from the v0.1 structural release.
+The public `v0.1.0` structural release is complete. A future preregistered, blind
+baseline-versus-framework study remains a separate evaluation frontier and is
+required before any general effectiveness claim.
