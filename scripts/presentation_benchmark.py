@@ -8,13 +8,13 @@ It never calls a model and therefore cannot establish framework effectiveness.
 from __future__ import annotations
 
 import argparse
-import html
+import importlib.util
 import json
 import re
 import subprocess
 import sys
-import unicodedata
 from pathlib import Path
+from types import ModuleType
 from typing import Any, Iterable
 from urllib.parse import unquote, urlsplit
 
@@ -44,46 +44,54 @@ DISCLAIMER = (
 )
 REGEX_FLAGS = re.IGNORECASE | re.MULTILINE | re.DOTALL
 MAX_BENCHMARK_BYTES = 2 * 1024 * 1024
+MAX_JSON_NUMBER_CHARS = 128
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 MAX_RESPONSE_LINES = 100_000
 RENDERABLE_IMAGE_SUFFIXES = {".avif", ".gif", ".jpeg", ".jpg", ".png", ".svg", ".webp"}
-COMMONMARK_ENTITY_PATTERN = re.compile(
-    r"&(?:#[Xx][0-9A-Fa-f]{1,6}|#[0-9]{1,7}|[A-Za-z][A-Za-z0-9]{1,31});"
-)
-PORTABLE_MARKDOWN_WHITESPACE = frozenset(" \t\r\n")
 UNSAFE_MARKDOWN_FORMAT_CONTROLS = frozenset(
     {
         0x061C, 0x200E, 0x200F, 0x2028, 0x2029,
         *range(0x202A, 0x202F), *range(0x2066, 0x206A),
     }
 )
-HTML_BLOCK_TAGS = frozenset(
-    {
-        "address", "article", "aside", "base", "basefont", "blockquote", "body",
-        "caption", "center", "col", "colgroup", "dd", "details", "dialog", "dir",
-        "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form",
-        "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head",
-        "header", "hr", "html", "iframe", "legend", "li", "link", "main", "menu",
-        "menuitem", "nav", "noframes", "ol", "optgroup", "option", "p", "param",
-        "search", "section", "summary", "table", "tbody", "td", "tfoot", "th",
-        "thead", "title", "tr", "track", "ul",
-    }
-)
-HTML_RAW_UNTIL_CLOSE_TAGS = frozenset({"pre", "script", "style", "textarea"})
-COMPLETE_HTML_TAG_PATTERN = (
-    r"(?:"
-    r"</[A-Za-z][A-Za-z0-9-]*[ \t]*>"
-    r"|"
-    r"<[A-Za-z][A-Za-z0-9-]*"
-    r"(?:[ \t]+[A-Za-z_:][A-Za-z0-9_.:-]*"
-    r"(?:[ \t]*=[ \t]*(?:[^ \t\"'=<>`]+|'[^']*'|\"[^\"]*\"))?"
-    r")*[ \t]*/?>"
-    r")[ \t]*"
-)
 
 
 class BenchmarkError(ValueError):
     """Raised for invalid benchmark data or CLI inputs."""
+
+
+_MARKDOWN_IMAGE_SCANNER: ModuleType | None = None
+
+
+def _load_markdown_image_scanner() -> ModuleType:
+    """Load the Skill-owned scanner by fixed path without changing ``sys.path``."""
+
+    global _MARKDOWN_IMAGE_SCANNER
+    if _MARKDOWN_IMAGE_SCANNER is not None:
+        return _MARKDOWN_IMAGE_SCANNER
+    scanner_path = REPORTCTL_PATH.with_name("markdown_image_scanner.py")
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "_agentic_reporting_benchmark_markdown_image_scanner",
+            scanner_path,
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError("no module loader is available")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        for name in (
+            "decode_commonmark_entities",
+            "has_visible_alt_text",
+            "scan_markdown_images",
+        ):
+            if not callable(getattr(module, name, None)):
+                raise ImportError(f"scanner export is missing: {name}")
+    except Exception as exc:
+        raise BenchmarkError(
+            f"Cannot load shared Markdown image scanner {scanner_path}: {exc}"
+        ) from exc
+    _MARKDOWN_IMAGE_SCANNER = module
+    return module
 
 
 def _is_unsafe_terminal_codepoint(codepoint: int) -> bool:
@@ -146,6 +154,20 @@ def _read_json(path: Path) -> dict[str, Any]:
     def reject_nonstandard_constant(value: str) -> None:
         raise ValueError(f"non-standard numeric constant {value}")
 
+    def parse_bounded_int(value: str) -> int:
+        if len(value) > MAX_JSON_NUMBER_CHARS:
+            raise ValueError(
+                f"integer literal exceeds {MAX_JSON_NUMBER_CHARS} characters"
+            )
+        return int(value)
+
+    def parse_bounded_float(value: str) -> float:
+        if len(value) > MAX_JSON_NUMBER_CHARS:
+            raise ValueError(
+                f"floating-point literal exceeds {MAX_JSON_NUMBER_CHARS} characters"
+            )
+        return float(value)
+
     try:
         size = path.stat().st_size
     except OSError as exc:
@@ -155,7 +177,12 @@ def _read_json(path: Path) -> dict[str, Any]:
     if size > MAX_BENCHMARK_BYTES:
         raise BenchmarkError(f"Benchmark JSON exceeds {MAX_BENCHMARK_BYTES} bytes: {path}")
     try:
-        value = json.loads(path.read_text(encoding="utf-8"), parse_constant=reject_nonstandard_constant)
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            parse_constant=reject_nonstandard_constant,
+            parse_float=parse_bounded_float,
+            parse_int=parse_bounded_int,
+        )
     except UnicodeDecodeError as exc:
         raise BenchmarkError(f"Benchmark JSON must be UTF-8: {path}") from exc
     except OSError as exc:
@@ -591,559 +618,32 @@ def markdown_table_count(text: str) -> int:
     return count
 
 
-MAX_MARKDOWN_IMAGE_ALT_CHARS = 2_048
-MAX_MARKDOWN_IMAGE_TARGET_CHARS = 4_096
 MAX_MARKDOWN_IMAGES = 1_000
 
 
-def _markdown_character_is_escaped(text: str, index: int) -> bool:
-    backslashes = 0
-    cursor = index - 1
-    while cursor >= 0 and text[cursor] == "\\":
-        backslashes += 1
-        cursor -= 1
-    return backslashes % 2 == 1
-
-
-def _markdown_range_has_unescaped(
-    text: str,
-    start: int,
-    end: int,
-    characters: str,
-) -> bool:
-    cursor = start
-    while cursor < end:
-        if text[cursor] == "\\" and cursor + 1 < end:
-            cursor += 2
-            continue
-        if text[cursor] in characters:
-            return True
-        cursor += 1
-    return False
-
-
-def _portable_markdown_line_ranges(text: str) -> Iterable[tuple[int, int]]:
-    """Yield LF, CRLF, or CR lines without treating other controls as breaks."""
-
-    start = 0
-    for ending in re.finditer(r"\r\n|[\r\n]", text):
-        yield start, ending.end()
-        start = ending.end()
-    if start < len(text):
-        yield start, len(text)
-
-
-def _commonmark_blank_line(body: str) -> bool:
-    return re.fullmatch(r"[ \t]*", body) is not None
-
-
-def _commonmark_list_content_indent(body: str, active_indent: int = 0) -> int:
-    """Return the raw-space continuation indent for a CommonMark list marker."""
-
-    marker = re.match(r"^( *)([*+-]|[0-9]{1,9}[.)])(?:( +)(.*)|$)", body)
-    if marker is None:
-        return 0
-    leading = len(marker.group(1))
-    if leading > 3 and not (
-        active_indent and leading >= active_indent and leading - active_indent <= 3
-    ):
-        return 0
-    padding = len(marker.group(3) or "")
-    continuation_padding = padding if 1 <= padding <= 4 else 1
-    return leading + len(marker.group(2)) + continuation_padding
-
-
-
-
-def _commonmark_image_block_mask(text: str) -> bytearray:
-    """Mask fenced-code and CommonMark HTML blocks for canonical image credit."""
-
-    markdown_mask = bytearray(len(text))
-
-    def mark(start: int, end: int) -> None:
-        if end > start:
-            markdown_mask[start:end] = b"\x01" * (end - start)
-
-    block_mode: str | None = None
-    block_marker = ""
-    fence_character = ""
-    fence_length = 0
-    fence_container_indent = 0
-    paragraph_open = False
-    list_content_indent = 0
-    list_had_blank = False
-    for offset, line_end in _portable_markdown_line_ranges(text):
-        line = text[offset:line_end]
-        body = line.rstrip("\r\n")
-        if block_mode == "fence":
-            mark(offset, line_end)
-            container_body = body[fence_container_indent:]
-            stripped = container_body.lstrip(" ")
-            indentation = len(container_body) - len(stripped)
-            closer = re.fullmatch(
-                re.escape(fence_character) + "{" + str(fence_length) + r",}[ \t]*",
-                stripped,
-            )
-            if indentation <= 3 and closer:
-                block_mode = None
-                fence_character = ""
-                fence_length = 0
-                fence_container_indent = 0
-            paragraph_open = False
-            offset = line_end
-            continue
-
-        if block_mode is not None:
-            if block_mode == "html-blank" and _commonmark_blank_line(body):
-                block_mode = None
-                block_marker = ""
-                paragraph_open = False
-            else:
-                if (
-                    block_mode in {"html-comment", "html-literal"}
-                    or (block_mode == "html-tag" and block_marker in {"script", "style", "textarea"})
-                ):
-                    mark(offset, line_end)
-                else:
-                    mark(offset, line_end)
-                if (
-                    (block_mode == "html-tag" and re.search(
-                        r"</(?:pre|script|style|textarea)[ \t]*>", body, flags=re.IGNORECASE
-                    ))
-                    or (block_mode in {"html-comment", "html-literal"} and block_marker in body)
-                ):
-                    block_mode = None
-                    block_marker = ""
-                paragraph_open = False
-            offset = line_end
-            continue
-
-        body_end = offset + len(body)
-        raw_content_start = offset
-        while raw_content_start < body_end and text[raw_content_start] == " ":
-            raw_content_start += 1
-        raw_indentation = raw_content_start - offset
-        line_list_indent = _commonmark_list_content_indent(body, list_content_indent)
-        container_indent = 0
-        if line_list_indent:
-            container_indent = line_list_indent
-        elif list_content_indent and raw_indentation >= list_content_indent:
-            container_indent = list_content_indent
-        content_start = offset + container_indent
-        while content_start < body_end and text[content_start] == " ":
-            content_start += 1
-        indentation = content_start - offset - container_indent
-        stripped = text[content_start:body_end] if indentation <= 3 else ""
-        opener = re.match(r"(`{3,}|~{3,})(.*)$", stripped) if stripped else None
-        if opener and (opener.group(1)[0] == "~" or "`" not in opener.group(2)):
-            mark(offset, line_end)
-            block_mode = "fence"
-            fence_character = opener.group(1)[0]
-            fence_length = len(opener.group(1))
-            fence_container_indent = container_indent
-            if container_indent == 0:
-                list_content_indent = 0
-                list_had_blank = False
-            elif line_list_indent:
-                list_content_indent = line_list_indent
-                list_had_blank = False
-            paragraph_open = False
-            offset = line_end
-            continue
-
-        raw_opening = re.match(
-            r"<(pre|script|style|textarea)(?:[ \t]|>|$)", stripped, flags=re.IGNORECASE
-        ) if stripped else None
-        block_tag = re.match(
-            r"</?([A-Za-z][A-Za-z0-9-]*)(?:[ \t]|/?>)", stripped
-        ) if stripped else None
-        complete_tag = re.fullmatch(COMPLETE_HTML_TAG_PATTERN, stripped) if stripped else None
-        html_started = False
-        if raw_opening:
-            tag = raw_opening.group(1).casefold()
-            if tag in {"script", "style", "textarea"}:
-                mark(offset, line_end)
-            else:
-                mark(offset, line_end)
-            if not re.search(
-                r"</(?:pre|script|style|textarea)[ \t]*>", stripped, flags=re.IGNORECASE
-            ):
-                block_mode, block_marker = "html-tag", tag
-            html_started = True
-        elif stripped.startswith("<!--"):
-            mark(offset, line_end)
-            if "-->" not in stripped:
-                block_mode, block_marker = "html-comment", "-->"
-            html_started = True
-        elif stripped.startswith("<?"):
-            mark(offset, line_end)
-            if "?>" not in stripped:
-                block_mode, block_marker = "html-literal", "?>"
-            html_started = True
-        elif stripped.startswith("<![CDATA["):
-            mark(offset, line_end)
-            if "]]>" not in stripped:
-                block_mode, block_marker = "html-literal", "]]>"
-            html_started = True
-        elif re.match(r"<![A-Z]", stripped):
-            mark(offset, line_end)
-            if ">" not in stripped:
-                block_mode, block_marker = "html-literal", ">"
-            html_started = True
-        elif block_tag and block_tag.group(1).casefold() in HTML_BLOCK_TAGS:
-            mark(offset, line_end)
-            block_mode = "html-blank"
-            html_started = True
-        elif complete_tag and not paragraph_open:
-            mark(offset, line_end)
-            block_mode = "html-blank"
-            html_started = True
-
-        if html_started:
-            if list_content_indent and raw_indentation < list_content_indent:
-                list_content_indent = 0
-                list_had_blank = False
-            paragraph_open = False
-        elif _commonmark_blank_line(body):
-            if list_content_indent:
-                list_had_blank = True
-            paragraph_open = False
-        else:
-            visible = body.lstrip(" ")
-            visible_indent = len(body) - len(visible)
-            atx_heading = visible_indent <= 3 and re.match(r"#{1,6}(?:[ \t]+|$)", visible)
-            thematic_break = visible_indent <= 3 and any(
-                re.fullmatch(pattern, visible)
-                for pattern in (
-                    r"(?:\*[ \t]*){3,}",
-                    r"(?:_[ \t]*){3,}",
-                    r"(?:-[ \t]*){3,}",
-                )
-            )
-            container_marker = visible_indent <= 3 and re.match(
-                r"(?:>[ \t]?|(?:[*+-]|[0-9]{1,9}[.)])[ \t]+)", visible
-            )
-            empty_container = visible_indent <= 3 and re.fullmatch(
-                r"(?:>[ \t]?|(?:[*+-]|[0-9]{1,9}[.)])[ \t]*)",
-                visible,
-            )
-            link_definition = visible_indent <= 3 and re.match(r"\[[^\]\n]+\]:", visible)
-            indented_code = (
-                not paragraph_open
-                and container_indent == 0
-                and (raw_indentation >= 4 or body.startswith("\t"))
-            )
-            # List/quote lines and setext-looking lines have container-sensitive
-            # lazy-continuation semantics. Keep paragraph state conservative so a
-            # type-7 tag cannot hide a later fence opener. Definite leaf blocks end
-            # the paragraph.
-            definition_leaf = bool(link_definition) and not paragraph_open
-            paragraph_open = (
-                bool(container_marker) and not bool(empty_container)
-            ) or not bool(
-                atx_heading
-                or thematic_break
-                or definition_leaf
-                or indented_code
-                or empty_container
-            )
-            if line_list_indent:
-                list_content_indent = line_list_indent
-                list_had_blank = False
-            elif list_content_indent and raw_indentation >= list_content_indent:
-                list_had_blank = False
-            elif list_content_indent and (
-                list_had_blank
-                or atx_heading
-                or thematic_break
-                or definition_leaf
-                or container_marker
-                or indented_code
-                or empty_container
-            ):
-                list_content_indent = 0
-                list_had_blank = False
-        offset = line_end
-
-    return markdown_mask
-
-
-def _skip_markdown_link_whitespace(
-    text: str,
-    start: int,
-    literal_mask: bytearray,
-) -> tuple[int, bool]:
-    cursor = start
-    line_endings = 0
-    while cursor < len(text) and text[cursor] in PORTABLE_MARKDOWN_WHITESPACE:
-        if literal_mask[cursor]:
-            return cursor, False
-        if text[cursor] == "\r":
-            line_endings += 1
-            cursor += 1
-            if cursor < len(text) and text[cursor] == "\n":
-                cursor += 1
-        elif text[cursor] == "\n":
-            line_endings += 1
-            cursor += 1
-        else:
-            cursor += 1
-        if line_endings > 1:
-            return cursor, False
-    return cursor, True
-
-
-def _is_canonical_image_position(text: str, start: int, end: int) -> bool:
-    line_start = text.rfind("\n", 0, start) + 1
-    line_end = text.find("\n", end)
-    if line_end < 0:
-        line_end = len(text)
-    if text[line_start:start] or text[end:line_end].strip(" \t\r"):
-        return False
-    if line_start:
-        previous_end = line_start - 1
-        previous_start = text.rfind("\n", 0, previous_end) + 1
-        if text[previous_start:previous_end].strip(" \t\r"):
-            return False
-    if line_end < len(text):
-        next_start = line_end + 1
-        next_end = text.find("\n", next_start)
-        if next_end < 0:
-            next_end = len(text)
-        if text[next_start:next_end].strip(" \t\r"):
-            return False
-    return True
-
-
-def _potential_markdown_image_starts(
-    text: str,
-    limit: int,
-) -> list[int]:
-    starts: list[int] = []
-    cursor = 0
-    while len(starts) < limit:
-        start = text.find("![", cursor)
-        if start < 0:
-            break
-        if not _markdown_character_is_escaped(text, start):
-            starts.append(start)
-        cursor = start + 2
-    return starts
-
-
-def _potential_raw_html_opening_tags(
-    text: str,
-    limit: int,
-) -> list[tuple[int, int]]:
-    tags: list[tuple[int, int]] = []
-    pattern = r"<[A-Za-z][A-Za-z0-9-]*(?=[\t\n\f\r />])"
-    for match in re.finditer(pattern, text, flags=re.IGNORECASE):
-        tags.append((match.start(), match.end()))
-        if len(tags) >= limit:
-            break
-    return tags
-
-
-def _first_type7_html_tag_marker(text: str) -> int | None:
-    """Return the first paragraph-sensitive type-7 tag marker, if any."""
-
-    pattern = r"<(/?)([A-Za-z][A-Za-z0-9-]*)(?=[\t\n\f\r />])"
-    raw_type1_open = False
-    for match in re.finditer(pattern, text):
-        closing, raw_name = match.groups()
-        name = raw_name.casefold()
-        if raw_type1_open:
-            if closing and name in HTML_RAW_UNTIL_CLOSE_TAGS:
-                raw_type1_open = False
-            continue
-        if name in HTML_BLOCK_TAGS:
-            continue
-        if not closing and name in HTML_RAW_UNTIL_CLOSE_TAGS:
-            raw_type1_open = True
-            continue
-        return match.start()
-    return None
-
-
-def _first_fence_like_run(text: str) -> int | None:
-    """Return the first raw fence run in the conservative image-credit subset."""
-
-    positions = [position for position in (text.find("```"), text.find("~~~")) if position >= 0]
-    return min(positions) if positions else None
-
-
-def _decode_commonmark_entities(value: str) -> str:
-    """Decode only semicolon-terminated references recognized by CommonMark."""
-
-    def replacement(match: re.Match[str]) -> str:
-        token = match.group(0)
-        if token[1] != "#":
-            return html.entities.html5.get(token[1:], token)
-        digits = token[2:-1]
-        base = 10
-        if digits[:1] in ("x", "X"):
-            digits = digits[1:]
-            base = 16
-        codepoint = int(digits, base)
-        if codepoint == 0 or 0xD800 <= codepoint <= 0xDFFF or codepoint > 0x10FFFF:
-            return "\uFFFD"
-        return chr(codepoint)
-
-    return COMMONMARK_ENTITY_PATTERN.sub(replacement, value)
-
-
-def _has_visible_alt_text(value: str) -> bool:
-    return any(unicodedata.category(character)[0] in "LNPS" for character in value)
-
-
 def _contains_unsafe_markdown_control(value: str) -> bool:
+    """Keep benchmark-owned terminal/control policy outside the shared parser."""
+
     return any(_is_unsafe_terminal_codepoint(ord(character)) for character in value)
 
 
 def markdown_images(text: str) -> list[tuple[str, str, bool]]:
-    literal_mask = _commonmark_image_block_mask(text)
-    potential_starts = _potential_markdown_image_starts(text, MAX_MARKDOWN_IMAGES + 1)
-    raw_html_tags = _potential_raw_html_opening_tags(text, MAX_MARKDOWN_IMAGES + 1)
-    first_type7_tag = _first_type7_html_tag_marker(text)
-    first_fence_run = _first_fence_like_run(text)
-    images: list[tuple[str, str, int, int, bool]] = []
-    length = len(text)
-    cursor = 0
-    while cursor < length - 1:
-        start = text.find("![", cursor)
-        if start < 0:
-            break
-        if literal_mask[start] or _markdown_character_is_escaped(text, start):
-            cursor = start + 2
-            continue
-        alt_start = start + 2
-        scan = alt_start
-        alt_end: int | None = None
-        simple_alt = True
-        while scan < length and scan - alt_start <= MAX_MARKDOWN_IMAGE_ALT_CHARS:
-            if literal_mask[scan]:
-                break
-            if text.startswith("![", scan):
-                start = scan
-                alt_start = scan + 2
-                scan = alt_start
-                simple_alt = True
-                continue
-            character = text[scan]
-            if character == "\\" and scan + 1 < length:
-                scan += 2
-                continue
-            if character == "[":
-                simple_alt = False
-            if character == "]":
-                if scan + 1 < length and text[scan + 1] == "(":
-                    alt_end = scan
-                else:
-                    cursor = scan + 1
-                break
-            scan += 1
-        if alt_end is None:
-            if scan >= length:
-                break
-            if cursor <= start:
-                cursor = max(scan + 1, start + 2)
-            continue
+    """Project shared scanner records onto the benchmark's stable tuple API."""
 
-        target_start = alt_end + 2
-        scan = target_start
-        target_end: int | None = None
-        image_end: int | None = None
-        while scan < length and scan - target_start <= MAX_MARKDOWN_IMAGE_TARGET_CHARS:
-            if literal_mask[scan]:
-                break
-            character = text[scan]
-            if character == ")":
-                if scan > target_start:
-                    target_end = scan
-                    image_end = scan + 1
-                break
-            if character in PORTABLE_MARKDOWN_WHITESPACE:
-                if scan == target_start:
-                    break
-                target_end = scan
-                title_cursor, portable_spacing = _skip_markdown_link_whitespace(text, scan, literal_mask)
-                if not portable_spacing:
-                    target_end = None
-                    scan = title_cursor
-                    break
-                if title_cursor < length and text[title_cursor] in ("'", '"'):
-                    quote_character = text[title_cursor]
-                    title_cursor += 1
-                    while (
-                        title_cursor < length
-                        and title_cursor - target_start <= MAX_MARKDOWN_IMAGE_TARGET_CHARS
-                    ):
-                        if literal_mask[title_cursor]:
-                            break
-                        if text[title_cursor] == "\\" and title_cursor + 1 < length:
-                            title_cursor += 2
-                            continue
-                        if text[title_cursor] == quote_character:
-                            title_cursor += 1
-                            title_cursor, portable_spacing = _skip_markdown_link_whitespace(
-                                text,
-                                title_cursor,
-                                literal_mask,
-                            )
-                            if not portable_spacing:
-                                break
-                            if title_cursor < length and text[title_cursor] == ")":
-                                image_end = title_cursor + 1
-                            break
-                        title_cursor += 1
-                scan = title_cursor
-                break
-            scan += 1
-        if target_end is not None and image_end is not None:
-            target = text[target_start:target_end]
-            decoded_target = _decode_commonmark_entities(target)
-            canonical = (
-                _is_canonical_image_position(text, start, image_end)
-                and (first_type7_tag is None or start < first_type7_tag)
-                and (first_fence_run is None or start < first_fence_run)
-                and simple_alt
-                and not _markdown_range_has_unescaped(text, alt_start, alt_end, "`")
-                and not any(character in text[alt_start:alt_end] for character in "<>")
-                and "\n" not in text[start:image_end]
-                and "\r" not in text[start:image_end]
-                and not any(character in target for character in "\\()<>")
-                and not any(character.isspace() for character in decoded_target)
-                and not any(character in decoded_target for character in "\\()<>")
-            )
-            decoded_alt = _decode_commonmark_entities(text[alt_start:alt_end]).strip()
-            images.append(
-                (
-                    decoded_alt,
-                    target,
-                    start,
-                    image_end,
-                    canonical,
-                )
-            )
-            if len(images) >= MAX_MARKDOWN_IMAGES + 1:
-                break
-            cursor = image_end
-        else:
-            cursor = max(scan + 1, target_start + 1)
-    represented_starts = {item[2] for item in images}
-    for start in potential_starts:
-        if start not in represented_starts:
-            images.append(("", "", start, min(start + 2, length), False))
-    for start, end in raw_html_tags:
-        if start not in represented_starts:
-            images.append(("", "", start, end, False))
-    images.sort(key=lambda item: item[2])
-    return [(alt, target, canonical) for alt, target, _, _, canonical in images[: MAX_MARKDOWN_IMAGES + 1]]
+    scanner = _load_markdown_image_scanner()
+    try:
+        records = scanner.scan_markdown_images(
+            text,
+            record_limit=MAX_MARKDOWN_IMAGES + 1,
+        )
+    except (TypeError, ValueError) as exc:
+        raise BenchmarkError(f"Cannot scan Markdown images: {exc}") from exc
+    return [(record.alt, record.target, record.canonical) for record in records]
 
 
 def _local_image_path(target: str, response_path: Path) -> Path | None:
     try:
-        normalized_target = _decode_commonmark_entities(target)
+        normalized_target = _load_markdown_image_scanner().decode_commonmark_entities(target)
         if (
             _contains_unsafe_markdown_control(target)
             or _contains_unsafe_markdown_control(normalized_target)
@@ -1207,7 +707,8 @@ def _check_one(
         candidates = scanned_images[:MAX_MARKDOWN_IMAGES]
         images = [(alt, target) for alt, target, canonical in candidates if canonical]
         nonempty_alt = bool(images) and all(
-            _has_visible_alt_text(alt) and not _contains_unsafe_markdown_control(alt)
+            _load_markdown_image_scanner().has_visible_alt_text(alt)
+            and not _contains_unsafe_markdown_control(alt)
             for alt, _ in images
         )
         resolved_images = [_local_image_path(target, response_path) for _, target in images]

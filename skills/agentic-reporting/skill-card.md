@@ -3,7 +3,7 @@
 ## Identity
 
 - Owner: `asimfish`
-- Version: `0.1.0`
+- Version: `0.2.0`
 - Status: released
 - License: MIT
 - Source: `skills/agentic-reporting/SKILL.md`
@@ -28,7 +28,7 @@ execution and reload it at the reporting boundary.
 ## Inputs and outputs
 
 - Inputs: a reporting objective or checkpoint, one primary mode, optional audience
-  and surface, and at most two display modules.
+  and surface, at most two display modules, and bounded literal must-show anchors.
 - Context output: a bounded Markdown bundle containing the universal contract, one
   mode, and selected modules.
 - Optional artifacts: checkpoint JSON, report-spec JSON, rendered Markdown, and
@@ -40,11 +40,11 @@ execution and reload it at the reporting boundary.
 | Capability | Required | Scope and control |
 |---|---:|---|
 | Read packaged files | Yes | Only this Skill's protocols, templates, and catalog |
-| Read user report/spec | When requested | Exact path supplied to `audit`, `validate-spec`, or `render` |
+| Read user report/spec/checkpoint | When requested | Exact path supplied to `audit`, `validate-spec`, `render`, `route`, or `bundle`; checkpoint symlink chains are rejected |
 | Write local file | Optional | Exact checkpoint, rendered report, or distribution path; existing files require explicit `--force` |
 | Execute local Python | Yes | Standard-library-only `reportctl.py`; no shell execution from report content |
 | Network access | No | The CLI never fetches links, images, papers, or dependencies |
-| Secrets or credentials | No | None requested, stored, or required |
+| Secrets or credentials | No | Credentials are never required; checkpoint fields are stored verbatim, so secrets and unnecessary private text must not be supplied |
 | External messages/state | No | No APIs, accounts, notifications, or remote mutations |
 
 ## Trust boundaries
@@ -55,7 +55,16 @@ Skill, or higher-priority policy. Structural audit does not validate truth,
 scientific significance, citation correctness, or accessibility in the rendered
 host. Manual verification remains mandatory.
 
-The write helpers reject direct symlink targets and broad distribution targets.
+A schema-v2 checkpoint checksum detects accidental route drift but does not
+authenticate the file. Checkpoint-backed audit derives the mode and verifies only
+normalized literal-anchor presence in blank-line-bounded, column-zero, plain
+top-level prose; it does not prove meaning, authorship, truth, audience/surface fit,
+or module use. V2 anchors use exact rendered plain text and reject Markdown
+delimiter forms. Keep the file in private scratch outside version control.
+Route/bundle output can replay its task, audience, or anchors; missing-anchor audit
+findings expose ordinals only.
+
+The write helpers reject symlink-chain targets and broad distribution targets.
 Installation is outside the Skill and is preview-first. It never replaces an
 existing Skill; existing instruction files are preserved by default, while the
 explicit `--append-adapter` path creates a backup before appending a marked block.

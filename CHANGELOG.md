@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 — 2026-08-24
+
+- Added schema-v2 full-intent checkpoints and a same-checkpoint final audit that
+  derives mode, rejects explicit conflicts, and gates bounded normalized literal
+  anchors without replaying missing values. Schema v1 remains route/bundle-only.
+- Replaced the audit and development benchmark's duplicated Markdown parsing with
+  one shared bounded scanner while preserving consumer-specific policy.
+- Documented the checkpoint fingerprint, literal-proxy, storage, output, and
+  independent bundle-budget boundaries in the Skill, adapters, security review,
+  architecture, benchmarks, and dedicated ADRs.
+- Bounded pre-conversion JSON numbers, checkpoint diagnostics, and pre-NFC prose
+  normalization to keep Python 3.9 behavior deterministic on adversarial inputs.
+
 ## 0.1.0 — 2026-08-24
 
 - Introduced the persistent micro-contract, routed Agent Skill, and structural audit.

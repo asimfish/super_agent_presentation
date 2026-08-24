@@ -14,11 +14,13 @@ long work sessions without keeping a large reporting manual in active context.
 - One lean Agent Skill routes a task to exactly one primary report mode and only the
   display modules it needs.
 - Modes cover concise answers, implementation handoffs, status updates,
-  investigations, experiments, decisions, academic synthesis, and reviews.
+  investigations, experiments, decisions, risks, incidents, postmortems, academic
+  synthesis, and reviews.
 - Dedicated modules govern figures/images, quantitative tables, conclusions,
   evidence, and academic-paper presentation.
 - A standard-library-only CLI can route, scaffold, checkpoint, bundle, and audit a
-  report; its behavior is tested.
+  report; a long-task final audit can derive mode and bounded literal anchors from
+  the same schema-v2 checkpoint, and its behavior is tested.
 - Activation evals include at least two positive and two adjacent negative cases.
 - Evaluation protocols for baseline comparison and long-context stress are
   recorded; checked-in forward runs are development-only and do not establish
@@ -33,13 +35,14 @@ long work sessions without keeping a large reporting manual in active context.
 |---|---|---|
 | M1 Research and architecture | Source notes, trade-off matrix, ADRs | Completed |
 | M2 Canonical framework | Skill, protocols, modules, adapters, CLI | Completed |
-| M3 Evaluation | Unit tests, declarative activation contract, route/fixture smoke, fresh-agent development record; comparative effectiveness remains unclaimed | Completed for v0.1 structural scope |
+| M3 Evaluation | Unit tests, declarative activation contract, route/fixture smoke, fresh-agent development record; comparative effectiveness remains unclaimed | Completed for v0.2 structural scope |
 | M4 Release | Validation, review, commit, public GitHub URL | Completed |
 
 ## Decisions
 
 - D1: Use a three-layer bookend architecture: tiny persistent contract, routed
-  on-demand skill context, deterministic final audit. See ADR-001.
+  on-demand skill context, and deterministic final audit against the same checkpoint
+  for long work. See ADR-001 and ADR-005.
 - D2: Use one primary report spine plus zero to two orthogonal display modules,
   rather than a universal report template. See ADR-002.
 - D3: Keep the canonical skill host-neutral; ship host-specific adapters as optional
@@ -53,6 +56,7 @@ long work sessions without keeping a large reporting manual in active context.
 |---|---|---|
 | A long always-on prompt consumes context | Slower, less focused task work | Keep persistent contract under a small fixed budget; defer detail |
 | A pure on-demand skill is not invoked | Inconsistent final reports | Repository/user rule requests activation at long-task start and the report boundary |
+| Saved reporting intent drifts or is omitted at finalization | Long-task handoff loses a known requirement | Fingerprint schema-v2 intent and audit normalized literal anchors against the same checkpoint; retain manual semantic checks |
 | One template is forced onto every task | Bloated or unnatural output | Route to one primary mode; allow concise mode and explicit user override |
 | Lint is mistaken for semantic verification | False confidence | Label audit as structural; require manual evidence and claim checks |
 | Arbitrary link is treated as enforceable | Silent non-compliance | Document link-only as best effort; recommend installation for persistent prompting |
@@ -60,6 +64,6 @@ long work sessions without keeping a large reporting manual in active context.
 
 ## Current frontier
 
-The public `v0.1.0` structural release is complete. A future preregistered, blind
+The public `v0.2.0` structural release is complete. A future preregistered, blind
 baseline-versus-framework study remains a separate evaluation frontier and is
 required before any general effectiveness claim.

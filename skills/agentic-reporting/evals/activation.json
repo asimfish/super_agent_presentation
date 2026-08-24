@@ -64,8 +64,8 @@
       "expected_route": {"mode": "implementation-handoff", "modules": ["evidence"]},
       "reason": "A likely long or multi-agent task needs a tiny reporting checkpoint before execution, without retaining the routed bundle.",
       "expected_behavior": [
-        "At task start, activate only long enough to save objective, audience, surface, mode, and must-show items.",
-        "Release the detailed bundle during task work and reload the checkpoint at the reporting boundary."
+        "At task start, activate only long enough to save objective, audience, surface, mode, modules, and must-show anchors.",
+        "Release the detailed bundle during task work, reload one bounded bundle at the reporting boundary, and audit the draft against the same checkpoint."
       ],
       "rubric_categories": ["discoverability", "correctness", "efficiency"],
       "tags": ["natural", "long-context", "task-start", "multi-agent"]

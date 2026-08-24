@@ -173,6 +173,816 @@ class ReportCtlTests(unittest.TestCase):
             self.assertEqual(rejected.returncode, 2)
             self.assertIn("fingerprint", rejected.stderr)
 
+    def test_checkpoint_v2_fingerprints_full_intent_and_v1_still_loads(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "checkpoint.json"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Summarize implementation and tests",
+                "--mode",
+                "implementation-handoff",
+                "--must-show",
+                "integration test failed",
+                "--output",
+                str(path),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            original = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(original["schema_version"], 2)
+            self.assertRegex(original["intent_sha256"], r"^[0-9a-f]{64}$")
+
+            tampered = copy.deepcopy(original)
+            tampered["must_show"] = ["claim this is complete"]
+            path.write_text(json.dumps(tampered), encoding="utf-8")
+            rejected = run_cli("route", "--checkpoint", str(path))
+            self.assertEqual(rejected.returncode, 2)
+            self.assertIn("intent fingerprint", rejected.stderr)
+
+            legacy = copy.deepcopy(original)
+            legacy["schema_version"] = 1
+            legacy.pop("intent_sha256")
+            legacy["must_show"] = [" "]
+            path.write_text(json.dumps(legacy), encoding="utf-8")
+            loaded = run_cli("route", "--checkpoint", str(path), "--json")
+            self.assertEqual(loaded.returncode, 0, loaded.stdout + loaded.stderr)
+            self.assertEqual(json.loads(loaded.stdout)["mode"], "implementation-handoff")
+            self.assertEqual(json.loads(loaded.stdout)["must_show"], [" "])
+
+    def test_checkpoint_drives_final_audit_and_exact_must_show_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--must-show",
+                "Verification evidence",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            report.write_text(
+                "Result: complete within the stated boundary.\n\n"
+                "Verification   evidence is recorded.\n",
+                encoding="utf-8",
+            )
+            accepted = run_cli(
+                "audit",
+                "--file",
+                str(report),
+                "--checkpoint",
+                str(checkpoint),
+                "--strict",
+                "--json",
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stdout + accepted.stderr)
+            accepted_payload = json.loads(accepted.stdout)
+            self.assertEqual(accepted_payload["mode"], "concise-answer")
+            self.assertEqual(accepted_payload["checkpoint"]["schema_version"], 2)
+            self.assertEqual(accepted_payload["checkpoint"]["must_show_checked"], 1)
+            self.assertEqual(accepted_payload["checkpoint"]["must_show_missing"], 0)
+
+            report.write_text("Result: complete within the stated boundary.\n", encoding="utf-8")
+            rejected = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint), "--json"
+            )
+            self.assertEqual(rejected.returncode, 1, rejected.stdout + rejected.stderr)
+            rejected_payload = json.loads(rejected.stdout)
+            self.assertEqual(rejected_payload["checkpoint"]["must_show_missing"], 1)
+            self.assertIn(
+                "missing-must-show",
+                {finding["code"] for finding in rejected_payload["findings"]},
+            )
+
+    def test_checkpoint_audit_rejects_mode_conflict_and_missing_route_source(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            report.write_text("Result: available.\n", encoding="utf-8")
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the result",
+                "--mode",
+                "concise-answer",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            conflict = run_cli(
+                "audit",
+                "--file",
+                str(report),
+                "--checkpoint",
+                str(checkpoint),
+                "--mode",
+                "status-update",
+            )
+            self.assertEqual(conflict.returncode, 2)
+            self.assertIn("conflicts with checkpoint mode", conflict.stderr)
+            missing = run_cli("audit", "--file", str(report))
+            self.assertEqual(missing.returncode, 2)
+            self.assertIn("Provide --mode or --checkpoint", missing.stderr)
+
+    def test_checkpoint_audit_has_a_lower_bounded_report_size(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "large-report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            report.write_text("A" * (1024 * 1024 + 1), encoding="utf-8")
+            result = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint)
+            )
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn("limit is 1048576 bytes", result.stderr)
+            self.assertNotIn("Traceback", result.stderr)
+
+    def test_checkpoint_rejects_conflicting_route_and_bundle_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            checkpoint = Path(temporary) / "checkpoint.json"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Summarize implementation and tests",
+                "--mode",
+                "implementation-handoff",
+                "--surface",
+                "chat",
+                "--audience",
+                "research team",
+                "--module",
+                "tables",
+                "--must-show",
+                "Verification evidence",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+
+            matching = run_cli(
+                "route",
+                "--checkpoint",
+                str(checkpoint),
+                "--task",
+                "Summarize implementation and tests",
+                "--mode",
+                "implementation-handoff",
+                "--surface",
+                "chat",
+                "--audience",
+                "research team",
+                "--module",
+                "tables",
+                "--must-show",
+                "Verification evidence",
+                "--json",
+            )
+            self.assertEqual(matching.returncode, 0, matching.stdout + matching.stderr)
+
+            conflicts = (
+                ("task", ("--task", "Summarize something else")),
+                ("mode", ("--mode", "status-update")),
+                ("surface", ("--surface", "markdown")),
+                ("audience", ("--audience", "executive team")),
+                ("modules", ("--module", "conclusions")),
+                ("must_show", ("--must-show", "Different evidence")),
+            )
+            for field, arguments in conflicts:
+                with self.subTest(field=field):
+                    result = run_cli(
+                        "bundle",
+                        "--checkpoint",
+                        str(checkpoint),
+                        *arguments,
+                    )
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn(f"Explicit {field} conflicts", result.stderr)
+
+    def test_legacy_checkpoint_routes_but_cannot_drive_final_audit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            payload = json.loads(checkpoint.read_text(encoding="utf-8"))
+            payload["schema_version"] = 1
+            payload.pop("intent_sha256")
+            checkpoint.write_text(json.dumps(payload), encoding="utf-8")
+            report.write_text("Outcome: complete within the stated boundary.\n", encoding="utf-8")
+
+            routed = run_cli("route", "--checkpoint", str(checkpoint), "--json")
+            self.assertEqual(routed.returncode, 0, routed.stdout + routed.stderr)
+            rejected = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint)
+            )
+            self.assertEqual(rejected.returncode, 2, rejected.stdout + rejected.stderr)
+            self.assertIn("requires schema_version 2", rejected.stderr)
+
+    def test_checkpoint_input_rejects_symlink_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            linked = root / "linked-checkpoint.json"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Summarize status",
+                "--mode",
+                "status-update",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            linked.symlink_to(checkpoint)
+            result = run_cli("route", "--checkpoint", str(linked))
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn("checkpoint input with symlink component", result.stderr)
+
+    def test_checkpoint_anchor_must_be_visible_main_prose(self) -> None:
+        hidden_anchor = "PRIVATE-ANCHOR-7GZ19"
+        hidden_forms = {
+            "fenced-code": f"```text\n{hidden_anchor}\n```",
+            "indented-code": f"    {hidden_anchor}",
+            "blockquote-indented-code": f">     {hidden_anchor}",
+            "list-indented-code": f"-     {hidden_anchor}",
+            "multiline-code-span": f"`log\n{hidden_anchor}\nlog`",
+            "nested-blockquote-tilde-fence": (
+                f"> > ~~~\n> > {hidden_anchor}\n> > ~~~"
+            ),
+            "blockquote-list-fence": (
+                f"> - item\n>     ~~~\n>   {hidden_anchor}\n>     ~~~"
+            ),
+            "blockquote-ordered-list-fence": (
+                f"> 1. item\n>      ~~~\n>    {hidden_anchor}\n>      ~~~"
+            ),
+            "blockquote-script-block": (
+                f"> <script>\n> {hidden_anchor}\n> </script>"
+            ),
+            "blockquote-list-script-block": (
+                f"> - item\n>     <script>\n>   {hidden_anchor}\n>     </script>"
+            ),
+            "blockquote-style-block": (
+                f"> <style>\n> {hidden_anchor}\n> </style>"
+            ),
+            "blockquote-hidden-div": (
+                f"> <div hidden>\n> {hidden_anchor}\n> </div>"
+            ),
+            "inline-script-block": (
+                f"prefix <script>\n\n{hidden_anchor}\n\n</script> suffix"
+            ),
+            "inline-style-block": (
+                f"prefix <style>\n\n{hidden_anchor}\n\n</style> suffix"
+            ),
+            "inline-template-block": (
+                f"prefix <template>\n\n{hidden_anchor}\n\n</template> suffix"
+            ),
+            "inline-hidden-div": (
+                f"prefix <div hidden>\n\n{hidden_anchor}\n\n</div> suffix"
+            ),
+            "html-comment": f"<!-- hidden\n{hidden_anchor}\n-->",
+            "link-destination": f"[details](https://example.test/{hidden_anchor})",
+            "multiline-link-destination": (
+                f"[details](\nhttps://example.test/{hidden_anchor})"
+            ),
+            "link-quoted-title-parenthesis": (
+                f"[visible](https://example.test \"hidden ) {hidden_anchor}\")"
+            ),
+            "link-angle-destination-parenthesis": (
+                f"[visible](<https://example.test/foo){hidden_anchor}>)"
+            ),
+            "multiline-link-title": (
+                f"[visible](https://example.test\n  \"hidden ) {hidden_anchor}\")"
+            ),
+            "inline-code": f"Evidence: `{hidden_anchor}`",
+            "image-alt": f"![{hidden_anchor}](missing.svg)",
+            "image-quoted-title-parenthesis": (
+                f"![alt](plot.svg \"hidden ) {hidden_anchor}\")"
+            ),
+            "multiline-image-destination": (
+                f"![alt](\nhttps://example.test/{hidden_anchor})"
+            ),
+            "reference-definition": f"[ref]: https://example.test/{hidden_anchor}",
+            "blockquote-reference-definition": (
+                f"> [ref]: https://example.test/{hidden_anchor}"
+            ),
+            "list-reference-definition": (
+                f"- [ref]: https://example.test/{hidden_anchor}"
+            ),
+            "escaped-label-reference-definition": (
+                f"[r\\]]: https://example.test/{hidden_anchor}"
+            ),
+            "multiline-label-reference-definition": (
+                f"[foo\nbar]: https://example.test/{hidden_anchor}"
+            ),
+            "blockquote-multiline-label-reference-definition": (
+                f"> [foo\n> bar]: https://example.test/{hidden_anchor}"
+            ),
+            "multiline-reference-definition": (
+                f"[ref]:\n  https://example.test/{hidden_anchor}"
+            ),
+            "raw-html": f"<span>{hidden_anchor}</span>",
+            "setext-h1-one-marker": f"{hidden_anchor}\n=",
+            "setext-h1-two-markers": f"{hidden_anchor}\n==",
+            "setext-h2-one-marker": f"{hidden_anchor}\n-",
+            "setext-h2-two-markers": f"{hidden_anchor}\n--",
+            "empty-bullet-before-prose": f"-\n{hidden_anchor}",
+            "empty-plus-before-prose": f"+\n{hidden_anchor}",
+            "empty-asterisk-before-prose": f"*\n{hidden_anchor}",
+            "empty-ordered-dot-before-prose": f"1.\n{hidden_anchor}",
+            "empty-ordered-paren-before-prose": f"1)\n{hidden_anchor}",
+            "asterisk-thematic-break": f"***\n{hidden_anchor}",
+            "underscore-thematic-break": f"___\n{hidden_anchor}",
+            "spaced-underscore-thematic-break": f"_ _ _\n{hidden_anchor}",
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--must-show",
+                hidden_anchor,
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            for name, hidden_form in hidden_forms.items():
+                with self.subTest(name=name):
+                    report.write_text(
+                        "Outcome: complete within the stated boundary.\n\n"
+                        f"{hidden_form}\n",
+                        encoding="utf-8",
+                    )
+                    result = run_cli(
+                        "audit",
+                        "--file",
+                        str(report),
+                        "--checkpoint",
+                        str(checkpoint),
+                        "--json",
+                    )
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    payload = json.loads(result.stdout)
+                    self.assertEqual(payload["checkpoint"]["must_show_missing"], 1)
+                    self.assertIn(
+                        "missing-must-show",
+                        {finding["code"] for finding in payload["findings"]},
+                    )
+                    missing_messages = [
+                        finding["message"] for finding in payload["findings"]
+                        if finding["code"] == "missing-must-show"
+                    ]
+                    self.assertTrue(missing_messages)
+                    self.assertNotIn(hidden_anchor, "\n".join(missing_messages))
+
+    def test_checkpoint_anchor_matching_normalizes_unicode_case_and_whitespace(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--must-show",
+                "CAFÉ RESULT",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            report.write_text(
+                "Outcome: complete within the stated boundary.\n\n"
+                "cafe\u0301   result is visible.\n",
+                encoding="utf-8",
+            )
+            result = run_cli(
+                "audit",
+                "--file",
+                str(report),
+                "--checkpoint",
+                str(checkpoint),
+                "--strict",
+                "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(json.loads(result.stdout)["checkpoint"]["must_show_missing"], 0)
+
+    def test_checkpoint_anchor_matching_uses_rendered_commonmark_entities(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--must-show",
+                "© result",
+                "--must-show",
+                "copy",
+                "--must-show",
+                "65",
+                "--must-show",
+                "x41",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            report.write_text(
+                "Outcome: &copy; result is visible. Decimal &#65; and hex &#x41;.\n",
+                encoding="utf-8",
+            )
+            result = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint), "--json"
+            )
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["checkpoint"]["must_show_checked"], 4)
+            self.assertEqual(payload["checkpoint"]["must_show_missing"], 3)
+            self.assertEqual(
+                [
+                    finding["message"] for finding in payload["findings"]
+                    if finding["code"] == "missing-must-show"
+                ],
+                [
+                    "Checkpoint must-show item #2 is not visible in main prose",
+                    "Checkpoint must-show item #3 is not visible in main prose",
+                    "Checkpoint must-show item #4 is not visible in main prose",
+                ],
+            )
+
+    def test_checkpoint_entity_matching_respects_backslash_escape_parity(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--must-show",
+                "©",
+                "--must-show",
+                "A",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+
+            for name, source in (
+                ("named", r"Result \&copy;"),
+                ("decimal", r"Result \&#65;"),
+                ("hex", r"Result \&#x41;"),
+            ):
+                with self.subTest(name=name):
+                    report.write_text(source + "\n", encoding="utf-8")
+                    result = run_cli(
+                        "audit", "--file", str(report), "--checkpoint", str(checkpoint), "--json"
+                    )
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    self.assertEqual(
+                        json.loads(result.stdout)["checkpoint"]["must_show_missing"],
+                        2,
+                    )
+
+            report.write_text(
+                r"Result \\&copy; plus \\&#65;." + "\n",
+                encoding="utf-8",
+            )
+            even = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint), "--json"
+            )
+            self.assertEqual(
+                json.loads(even.stdout)["checkpoint"]["must_show_missing"],
+                0,
+            )
+
+    def test_checkpoint_anchor_must_match_within_one_plain_prose_paragraph(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--must-show",
+                "Verification evidence",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+
+            report.write_text("Verification\n\nevidence is available.\n", encoding="utf-8")
+            split = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint), "--json"
+            )
+            self.assertEqual(split.returncode, 1, split.stdout + split.stderr)
+            self.assertEqual(json.loads(split.stdout)["checkpoint"]["must_show_missing"], 1)
+
+            report.write_text("Verification\nevidence is available.\n", encoding="utf-8")
+            wrapped = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint), "--json"
+            )
+            self.assertEqual(json.loads(wrapped.stdout)["checkpoint"]["must_show_missing"], 0)
+
+            report.write_text(
+                "[Details](https://example.test)\n\n"
+                "Verification evidence is visible in this conclusion.\n",
+                encoding="utf-8",
+            )
+            after_link = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint), "--json"
+            )
+            self.assertEqual(
+                json.loads(after_link.stdout)["checkpoint"]["must_show_missing"],
+                0,
+            )
+
+    def test_checkpoint_gate_rejects_controls_introduced_by_rendered_entities(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            anchor = "PRIVATE-ANCHOR-7GZ19"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--must-show",
+                anchor,
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            cases = {
+                "numeric-bidi": f"&#x202e;{anchor}&#x202c;",
+                "named-directional-marks": f"&rlm;{anchor}&lrm;",
+                "numeric-zero-width": f"&#x200b;{anchor}",
+                "raw-form-feed-separator-line": f"\f\n{anchor}",
+                "raw-record-separator-line": f"\x1e\n{anchor}",
+            }
+            for name, encoded in cases.items():
+                with self.subTest(name=name):
+                    report.write_text(
+                        "Outcome: complete within the stated boundary.\n\n"
+                        f"{encoded}\n",
+                        encoding="utf-8",
+                    )
+                    result = run_cli(
+                        "audit",
+                        "--file",
+                        str(report),
+                        "--checkpoint",
+                        str(checkpoint),
+                        "--strict",
+                        "--json",
+                    )
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    payload = json.loads(result.stdout)
+                    self.assertEqual(payload["checkpoint"]["must_show_missing"], 0)
+                    self.assertIn(
+                        "unsafe-visible-prose",
+                        {finding["code"] for finding in payload["findings"]},
+                    )
+
+    def test_checkpoint_reports_partial_missing_anchors_without_echoing_content(self) -> None:
+        hidden_anchor = "DO-NOT-ECHO-SECRET-993827"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            report = root / "report.md"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Give the verified outcome",
+                "--mode",
+                "concise-answer",
+                "--must-show",
+                "Visible conclusion",
+                "--must-show",
+                hidden_anchor,
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            report.write_text(
+                "Outcome: complete within the stated boundary.\n\n"
+                "Visible conclusion is supported.\n",
+                encoding="utf-8",
+            )
+            result = run_cli(
+                "audit", "--file", str(report), "--checkpoint", str(checkpoint), "--json"
+            )
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["checkpoint"]["must_show_checked"], 2)
+            self.assertEqual(payload["checkpoint"]["must_show_missing"], 1)
+            missing = [
+                finding for finding in payload["findings"]
+                if finding["code"] == "missing-must-show"
+            ]
+            self.assertEqual(len(missing), 1)
+            self.assertEqual(
+                missing[0]["message"],
+                "Checkpoint must-show item #2 is not visible in main prose",
+            )
+            self.assertNotIn(hidden_anchor, result.stdout)
+            self.assertNotIn(hidden_anchor, result.stderr)
+
+    def test_legacy_checkpoint_upgrade_enforces_v2_must_show_rules(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source.json"
+            valid_legacy = root / "valid-v1.json"
+            blank_legacy = root / "blank-v1.json"
+            upgraded = root / "upgraded.json"
+            rejected_output = root / "rejected.json"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Summarize implementation and tests",
+                "--mode",
+                "implementation-handoff",
+                "--must-show",
+                "Verification evidence",
+                "--output",
+                str(source),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            payload = json.loads(source.read_text(encoding="utf-8"))
+            payload["schema_version"] = 1
+            payload.pop("intent_sha256")
+            valid_legacy.write_text(json.dumps(payload), encoding="utf-8")
+
+            converted = run_cli(
+                "checkpoint",
+                "--checkpoint",
+                str(valid_legacy),
+                "--output",
+                str(upgraded),
+            )
+            self.assertEqual(converted.returncode, 0, converted.stdout + converted.stderr)
+            upgraded_payload = json.loads(upgraded.read_text(encoding="utf-8"))
+            self.assertEqual(upgraded_payload["schema_version"], 2)
+            self.assertRegex(upgraded_payload["intent_sha256"], r"^[0-9a-f]{64}$")
+            loaded = run_cli("route", "--checkpoint", str(upgraded), "--json")
+            self.assertEqual(loaded.returncode, 0, loaded.stdout + loaded.stderr)
+
+            payload["must_show"] = [" "]
+            blank_legacy.write_text(json.dumps(payload), encoding="utf-8")
+            rejected = run_cli(
+                "checkpoint",
+                "--checkpoint",
+                str(blank_legacy),
+                "--output",
+                str(rejected_output),
+            )
+            self.assertEqual(rejected.returncode, 2, rejected.stdout + rejected.stderr)
+            self.assertIn("must-show item #1 must be non-empty", rejected.stderr)
+            self.assertFalse(rejected_output.exists())
+
+    def test_v2_checkpoint_rejects_nonvisible_or_oversized_anchors_on_write_and_load(self) -> None:
+        invalid_anchors = {
+            "bidi-control": "result\u202e",
+            "zero-width": "result\u200b",
+            "combining-only": "\u0301",
+            "punctuation-only": "---",
+            "heading-marker-only": "#",
+            "emphasis-delimiters": "**PRIVATE-ANCHOR**",
+            "underscore-delimiters": "_PRIVATE-ANCHOR_",
+            "strikethrough-delimiters": "~~PRIVATE-ANCHOR~~",
+            "escape-delimiter": r"PRIVATE\-ANCHOR",
+            "per-item-limit": "A" * 121,
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            seed = root / "seed.json"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Summarize status",
+                "--mode",
+                "status-update",
+                "--must-show",
+                "Visible result",
+                "--output",
+                str(seed),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            original = json.loads(seed.read_text(encoding="utf-8"))
+
+            for name, anchor in invalid_anchors.items():
+                with self.subTest(kind="writer", name=name):
+                    output = root / f"writer-{name}.json"
+                    result = run_cli(
+                        "checkpoint",
+                        "--task",
+                        "Summarize status",
+                        "--mode",
+                        "status-update",
+                        "--must-show",
+                        anchor,
+                        "--output",
+                        str(output),
+                    )
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertFalse(output.exists())
+                with self.subTest(kind="loader", name=name):
+                    checkpoint = root / f"loader-{name}.json"
+                    payload = copy.deepcopy(original)
+                    payload["must_show"] = [anchor]
+                    checkpoint.write_text(json.dumps(payload), encoding="utf-8")
+                    result = run_cli("route", "--checkpoint", str(checkpoint))
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertNotIn("Traceback", result.stderr)
+
+            oversized_total = tuple("A" * 100 for _ in range(5))
+            output = root / "oversized-total.json"
+            arguments: list[str] = [
+                "checkpoint", "--task", "Summarize status", "--mode", "status-update"
+            ]
+            for anchor in oversized_total:
+                arguments.extend(("--must-show", anchor))
+            aggregate = run_cli(*arguments, "--output", str(output))
+            self.assertEqual(aggregate.returncode, 2, aggregate.stdout + aggregate.stderr)
+            self.assertIn("rendered aggregate limit", aggregate.stderr)
+            self.assertFalse(output.exists())
+
+            stable_intraword = root / "stable-intraword.json"
+            accepted = run_cli(
+                "checkpoint",
+                "--task",
+                "Summarize status",
+                "--mode",
+                "status-update",
+                "--must-show",
+                "success_rate and F1_score",
+                "--output",
+                str(stable_intraword),
+            )
+            self.assertEqual(accepted.returncode, 0, accepted.stdout + accepted.stderr)
+
+    def test_maximum_rendered_v2_anchor_budget_fits_default_academic_bundle_without_modules(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            checkpoint = Path(temporary) / "checkpoint.json"
+            anchors = ("A" * 59, "B" * 59, "C" * 59, "D" * 57)
+            arguments: list[str] = [
+                "checkpoint",
+                "--task",
+                "Synthesize the paper",
+                "--mode",
+                "academic-synthesis",
+                "--audience",
+                "R" * 500,
+            ]
+            for anchor in anchors:
+                arguments.extend(("--must-show", anchor))
+            created = run_cli(*arguments, "--output", str(checkpoint))
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            bundled = run_cli("bundle", "--checkpoint", str(checkpoint))
+            self.assertEqual(bundled.returncode, 0, bundled.stdout + bundled.stderr)
+            self.assertLessEqual(len(bundled.stdout), 16_000)
+
     def test_checkpoint_writer_rejects_unreadable_task_and_audience_values(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -180,6 +990,7 @@ class ReportCtlTests(unittest.TestCase):
                 ("blank-task", ("--task", " \t ")),
                 ("blank-audience", ("--task", "Summarize status", "--audience", "")),
                 ("long-audience", ("--task", "Summarize status", "--audience", "a" * 501)),
+                ("blank-must-show", ("--task", "Summarize status", "--must-show", " \t ")),
             )
             for name, arguments in cases:
                 with self.subTest(name=name):
@@ -214,6 +1025,64 @@ class ReportCtlTests(unittest.TestCase):
             self.assertEqual(result.returncode, 2)
             self.assertIn("root must be an object", result.stderr)
             self.assertNotIn("Traceback", result.stderr)
+
+    def test_checkpoint_unknown_fields_have_bounded_non_replaying_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            checkpoint = root / "checkpoint.json"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "Summarize status",
+                "--mode",
+                "status-update",
+                "--output",
+                str(checkpoint),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            payload = json.loads(checkpoint.read_text(encoding="utf-8"))
+            sentinel = "PRIVATE-SECRET-FIELD-SENTINEL"
+            payload[sentinel] = "value"
+            for index in range(20_000):
+                payload[f"private-field-{index}"] = index
+            checkpoint.write_text(json.dumps(payload), encoding="utf-8")
+
+            result = run_cli("route", "--checkpoint", str(checkpoint))
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn("20001 unknown field(s)", result.stderr)
+            self.assertNotIn(sentinel, result.stderr)
+            self.assertLess(len(result.stderr), 512)
+
+    def test_json_number_literals_are_bounded_before_conversion(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            checkpoint = Path(temporary) / "checkpoint.json"
+            cases = {
+                "integer": '{"schema_version":' + ("9" * 400_000) + "}",
+                "float": '{"schema_version":0.' + ("9" * 400_000) + "}",
+            }
+            for name, source in cases.items():
+                with self.subTest(name=name):
+                    checkpoint.write_text(source, encoding="utf-8")
+                    try:
+                        result = subprocess.run(
+                            [
+                                sys.executable,
+                                str(CLI),
+                                "route",
+                                "--checkpoint",
+                                str(checkpoint),
+                            ],
+                            cwd=ROOT,
+                            text=True,
+                            capture_output=True,
+                            check=False,
+                            timeout=5,
+                        )
+                    except subprocess.TimeoutExpired as exc:
+                        self.fail(f"{name} conversion exceeded the 5-second ceiling: {exc}")
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn("literal exceeds 128 characters", result.stderr)
+                    self.assertLess(len(result.stderr), 512)
 
     def test_checkpoint_rejects_malformed_routing_fields_without_traceback(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

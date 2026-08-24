@@ -4,7 +4,7 @@
 表格、论文、故障、决策和代码交付提供可复用的语义骨架，同时避免所有回答
 都被塞进同一个大模板；实际遵循程度仍取决于宿主和模型。
 
-当前版本是已发布的 `v0.1.0`。14 份正负 fixture、7 个场景路由和 5 个
+当前版本是已发布的 `v0.2.0`。14 份正负 fixture、7 个场景路由和 5 个
 post-activation 路由代理均达到声明预期；3 组 fresh-agent 开发测试保留了
 失败迭代与最终门禁。这些都不是真实宿主激活率或人类盲评，因此本仓库
 不宣称已经测得“提升了 Agent 输出质量”。
@@ -33,16 +33,20 @@ flowchart LR
     E --> F[到达汇报边界]
     F --> G[重载 checkpoint 或选择一个主协议]
     G --> H[零到两个展示模块]
-    H --> I[结构审计与事实核验]
+    H --> I[用同一 checkpoint 结构审计并核验事实]
     I --> J[最终汇报]
 ```
 
 - 常驻层只负责“何时调用”，不加载完整手册。
 - Skill 通过渐进式披露一次只取一个主协议和最多两个展示模块。
-- 长任务把少量汇报意图保存为 checkpoint，最终阶段从磁盘重新加载，
-  降低仅依赖早期对话记忆而遗忘的风险。
+- 长任务把少量汇报意图保存为 checkpoint，最终阶段从磁盘重新加载并以
+  同一 checkpoint 审计，降低仅依赖早期对话记忆而遗忘的风险。
 - 审计器检查可机械判断的结构错误；事实、科学结论和证据仍需人工或领域
   工具核验。
+
+这些 prompt 层只能降低遗忘风险。要机械阻断不合格交付，需由外部 wrapper 或 CI
+强制“创建 checkpoint 成功，且最终 `audit --checkpoint` 返回 0”；本仓库不宣称 prompt
+本身能做到强制。
 
 ## 部署与约束层级
 
@@ -51,7 +55,8 @@ flowchart LR
 | 只把仓库 URL 发给 Agent | 临时试用 | 尽力遵循；URL 不会自动安装或提升指令优先级 |
 | 显式调用 `$agentic-reporting` | 已安装 Skill 的单次任务 | 中等 |
 | 安装 Skill + 宿主微契约 | 日常跨任务使用 | 推荐；宿主会持续提醒最终化流程 |
-| 微契约 + Skill + JSON IR + validator/renderer | 批量、API、正式报告 | 结构约束最强，但仍不保证事实为真 |
+| 同一 checkpoint 审计 + 外部 wrapper/CI | 长任务、批量交付 | 可按退出码机械阻断；仍不验证事实 |
+| JSON IR + validator/renderer | API、持久化正式报告 | 提供更强结构约束；不代替证据核验 |
 
 ## 最快试用
 
@@ -101,17 +106,40 @@ python3 <skill-dir>/scripts/reportctl.py audit \
 ```
 
 预计为长任务时，应在开始阶段只保存一个小 checkpoint，任务期间释放详细
-bundle，交付前再加载：
+bundle，交付前再加载，并让最终审计使用同一文件：
 
 ```bash
 python3 <skill-dir>/scripts/reportctl.py checkpoint \
   --task "汇报实现结果、验证和剩余风险" \
   --mode implementation-handoff --surface chat \
-  --output .agent-report.json
+  --must-show "Verification evidence" \
+  --output <private-scratch>/agent-report.json
 
 python3 <skill-dir>/scripts/reportctl.py bundle \
-  --checkpoint .agent-report.json
+  --checkpoint <private-scratch>/agent-report.json
+python3 <skill-dir>/scripts/reportctl.py audit \
+  --file report.md --checkpoint <private-scratch>/agent-report.json --strict
 ```
+
+v2 的 `must-show` 只在空行分隔、column-zero 的纯顶层 Markdown 正文段落中
+计分；含 heading、quote、list、table、link/reference、image、code 或 raw HTML
+的段落不计分。为避免伪装解析跨段 DOM/CSS 状态，首个未屏蔽的 raw HTML tag
+之后停止所有锚点计分，而 raw HTML 本身也是结构审计错误。每个锚点必须各自
+在同一个安全段落内命中；段内软换行会折叠为空格，但不能跨空行拼接。报告代理会先按
+共享 scanner 支持的、以分号结尾的 CommonMark entity 子集解码一轮，但只解码
+`&` 前面不是奇数个反斜线的 entity；然后再做 NFC、大小写折叠和空白折叠。解码后出现 control
+或 Unicode 非显示字符会使门禁失败。v2 锚点必须是 exact rendered plain
+text，且不能使用 Markdown delimiter 形式。它不是语义或事实验证。建议把每个短锚点
+放入 raw HTML 之前的一条独立普通结论句；单项最多 120 字符，转义后连同分隔符的总预算最多
+240 字符。checkpoint 会原样保存任务、
+受众和锚点；应放在版本控制之外的私有临时目录，且注意 `route`/`bundle`
+可能把这些文本输出到日志。v1 文件仍可供 `route`/`bundle` 读取，但不能
+驱动最终审计。bundle 的 `--max-chars=16000` 是独立的上下文预算；某些合法
+的双模块组合需要调用者显式提高它。`audit --checkpoint` 的报告输入上限
+是 1 MiB；其中任一可计分普通正文段落最多 4096 字符，连续 Unicode mark
+最多 64 个，超限段落会产生错误且不会进入 NFC 或锚点匹配。仅用 `--mode`
+的旧路径仍为 4 MiB。所有受限 JSON 输入还会在数值转换前拒绝超过 128
+字符的 integer/float token。
 
 ## 覆盖的主场景
 
@@ -147,6 +175,9 @@ python3 skills/agentic-reporting/scripts/reportctl.py audit \
   --file report.md --mode implementation-handoff --strict
 ```
 
+若该正式报告来自长任务，则把最后一条命令的 `--mode` 换成启动时保存的
+`--checkpoint`，使 mode 和字面锚点进入同一最终门禁。
+
 JSON 是展示层的单一真源；原始日志、论文、测试或数据仍是事实真源。
 随附 JSON Schema 只用于可移植的结构与条件预检；正式渲染前必须以
 `validate-spec` 为准，因为 evidence ID 唯一性、跨记录引用和当前协议语义
@@ -163,6 +194,7 @@ skills/agentic-reporting/
   references/                  # 核心、主模式与展示模块
   assets/templates/            # Markdown 与 JSON 结构守卫
   scripts/reportctl.py         # route/bundle/checkpoint/audit/render
+  scripts/markdown_image_scanner.py # audit 与 benchmark 共用的有界扫描器
 dist/                          # 无 CLI 时的一文件路由包
 evals/                         # 激活与输出质量评测用例
 scripts/presentation_benchmark.py

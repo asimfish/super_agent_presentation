@@ -103,11 +103,13 @@ state-of-the-art superiority from a larger displayed number alone.
 
 ## Final boundary check
 
-Before handoff, manually confirm that the top line matches the actual terminal
-state, evidence supports each consequential claim, exceptions are visible, links
-resolve, and the report does not overstate what structural lint can prove. The
-audit can check form; it cannot verify scientific truth, citation correctness,
-causality, or visual appropriateness.
+For long work, final-audit its v2 checkpoint, not `--mode`. Put each rendered-text
+anchor in one blank-line-bounded, column-zero prose paragraph. Soft breaks join;
+blank lines and Markdown do not. Raw HTML errors and ends later credit. Entities
+decode unless `&` has odd backslash parity. Literal presence is not truth.
+
+Before handoff, manually verify current state, claims, evidence, exceptions, links,
+and format. The audit checks form, not truth, citations, causality, or visual fitness.
 
 
 ## Primary mode protocol

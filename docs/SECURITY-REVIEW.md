@@ -11,7 +11,8 @@
 - Dependencies: Python standard library, the local filesystem, GitHub Actions for CI,
   and the eventual Markdown renderer. The tools make no network request.
 - Required properties: never execute report content; fail closed on invalid schema,
-  unsafe URI schemes, symlinked write paths, implicit replacement, or unsupported
+  unsafe URI schemes, checkpoint input or output symlink chains, implicit
+  replacement, or unsupported
   installation scope; never replay terminal-control or directional-format characters
   from untrusted text; bound parser memory; preserve existing instructions; do not
   claim that structural checks prove truth or safety.
@@ -27,8 +28,9 @@
 
 | Source | Transformation | Sink / asset | Enforcement |
 |---|---|---|---|
-| Task text | route scoring, checkpoint serialization | checkpoint file | 20,000-character bound, fingerprint, explicit output, symlink-chain rejection, existing-file refusal |
-| Markdown report | UTF-8 parse and structural checks | audit result | 4 MiB and 100,000-line bounds, bounded single-pass image scan, portable title whitespace, control-bearing target rejection, 1,000-image and 500-finding fail-closed limits; terminal-safe human output; no evaluation, shell, HTML rendering, or network fetch |
+| Task/route text | route scoring, checkpoint serialization | checkpoint file and route/bundle stdout | 20,000-character task bound, schema-v2 full-intent checksum, bounded visible anchors, explicit output, symlink-chain rejection, existing-file refusal, terminal-safe output |
+| Checkpoint JSON | bounded parse, intent validation, mode derivation, literal-anchor selection | final audit result | 2 MiB UTF-8/regular-file bound, 128-character pre-conversion numeric-token bound, count-only unknown-field rejection, input symlink-chain rejection, v2 requirement, explicit-route conflict rejection, conservative plain-prose matching, ordinal-only missing-anchor diagnostics |
+| Markdown report | UTF-8 parse and structural checks | audit result | 1 MiB checkpoint-backed or 4 MiB mode-only bound plus 100,000-line bound; bounded single-pass image scan, portable title whitespace, control-bearing target rejection, 1,000-image and 500-finding fail-closed limits; terminal-safe human output; no evaluation, shell, HTML rendering, or network fetch |
 | JSON report spec | typed semantic validation and escaping | generated Markdown | 2 MiB, 100-level, and 100,000-value bounds; Unicode-scalar key/value validation; allowlisted status/kinds, evidence cross-references, printable HTTP(S)/local locator policy, Markdown/HTML and terminal-control escaping |
 | Distribution output path | fixed generated filenames | local route pack | broad-root and symlink rejection, full-set staging, backup rollback, manifest-bounded stale deletion, explicit `--force` |
 | Install target and host | static scope map and copied Skill | another project/user config | explicit target/scope, project `.git` check, active Codex override selection, unsupported scope denial, target/source/destination symlink rejection, preflight, digest-verified identical-Skill reuse only, best-effort rollback |
@@ -69,7 +71,8 @@
   memory and availability.
 - Fix: report, JSON, benchmark response, and existing-instruction inputs have explicit
   byte limits and UTF-8 failure handling.
-- Regression: the report audit rejects a file one byte above its 4 MiB limit.
+- Regression: mode-only audit rejects a report one byte above 4 MiB;
+  checkpoint-backed audit rejects one byte above its separate 1 MiB limit.
 
 ### SR-03 — Strict renderer accepted active-looking Markdown and URI schemes
 
@@ -88,13 +91,17 @@
   copied into an installation.
 - Fix: installer preflight rejects any source symlink before the first copy.
 
-### SR-05 — Checkpoint can retain sensitive task text
+### SR-05 — Checkpoint can retain or replay sensitive reporting text
 
 - Severity: contextual; mitigated and documented.
-- Source → sink: reporting objective → durable JSON → version control or backup.
-- Control: the Skill explicitly says the objective is stored verbatim, forbids
-  secrets/unnecessary private data, recommends keeping it outside version control,
-  and asks the agent to remove it when resume is no longer needed.
+- Source → sink: task/audience/must-show text → durable JSON and route/bundle stdout
+  → version control, backup, or command log.
+- Control: the Skill says these fields are stored verbatim, forbids secrets and
+  unnecessary private data, recommends a private scratch path outside version
+  control, and asks the agent to remove the file after handoff. Atomic creation uses
+  restrictive POSIX permissions, which do not protect a permissive parent, backup,
+  log, or later commit. Missing-anchor findings expose only ordinals and counts, not
+  the anchor or an offline-guessable digest.
 
 ### SR-07 — Untrusted controls could alter terminal presentation
 
@@ -114,9 +121,9 @@
 - Severity: medium for benchmark and audit integrity before remediation; fixed.
 - Source → sink: VT, FF, Unicode line separator, or paragraph separator in Markdown
   image syntax → permissive scanner boundary → false local-file/artifact success.
-- Fix: both forward scanners recognize only portable space, horizontal tab, CR, and
-  LF as title separators, retain other characters in the target, and reject raw or
-  decoded control/directional-format characters before path resolution. A `stat`
+- Fix: the shared forward scanner recognizes only portable space, horizontal tab,
+  CR, and LF as title separators, retains other characters in the target, and
+  rejects raw or decoded control/directional-format characters before path resolution. A `stat`
   probe also preserves symlink-loop classification across `pathlib` version changes.
 - Regression: delimiter and fragment variants for VT, FF, U+2028, and U+2029 fail in
   both the audit and benchmark on Python 3.9 and 3.14.
@@ -127,8 +134,8 @@
 - Source → sink: image-like text in code, comments, HTML blocks, indentation,
   lists, block quotes, nested labels, or renderer-dependent targets → permissive
   image-presence check → false presentation credit.
-- Fix: scanners preserve offsets while masking fenced code and CommonMark HTML
-  block types for required-image credit. Independent, blank-line-bounded,
+- Fix: the shared scanner preserves offsets while masking fenced code and CommonMark
+  HTML block types for required-image credit. Independent, blank-line-bounded,
   column-zero placement excludes inline code, comments, containers, and mixed prose.
   List-owned fences retain their continuation indentation; ambiguous dedented
   content remains masked until a matching closer or EOF instead of receiving image
@@ -147,9 +154,9 @@
   conservative false-negative boundary was checked against 100,000 fixed-seed
   CommonMark differential cases with zero false credits; it is not a proof of parser
   equivalence. URI autolinks are excluded from the tag marker.
-- Both scanners merge parsed and broad-gate candidates by source offset before the
-  1,000-candidate cap. This prevents a later parsed image from displacing earlier raw
-  markers in one implementation but not the other.
+- Both audit and benchmark consumers merge parsed and broad-gate candidates by
+  source offset before the 1,000-candidate cap. This prevents a later parsed image
+  from displacing earlier raw markers in one implementation but not the other.
 - Regression: canonical, reference-style, raw-HTML, container/lazy-continuation,
   and adversarial forms; HTML blank-line termination; type-1 opening versus
   type-6 closing-tag boundaries; non-CommonMark Unicode/control line separators;
@@ -161,7 +168,8 @@
   the documented CommonMark subset.
 - Source → sink: entity-encoded destination or alt text, directory, or arbitrary
   local file → source-level scanner → false image/accessibility credit.
-- Fix: both scanners decode exactly one CommonMark-valid entity-reference round:
+- Fix: the shared scanner decodes exactly one CommonMark-valid entity-reference
+  round:
   named HTML5 references must end in `;`, decimal references contain 1–7 digits,
   and hexadecimal references contain 1–6 digits. Decoded whitespace and delimiter
   escapes are noncanonical; strict rendering preserves literal ampersands across
@@ -190,6 +198,36 @@
   rendering fails without a traceback, and the portable schema rejects the covered
   string fields.
 
+### SR-12 — Checkpoint drift or literal-only placement could bypass final intent
+
+- Severity: medium for long-task reporting consistency before remediation; bounded
+  but not semantically eliminated.
+- Source → sink: edited checkpoint or anchor hidden in Markdown source literals →
+  derived final route/must-show result → misleadingly clean audit.
+- Fix: schema v2 fingerprints task, mode, surface, audience, modules, and anchors;
+  audit rejects v1, rejects a conflicting explicit mode, and checks short normalized
+  literal anchors only in blank-line-bounded, column-zero, plain top-level prose.
+  Headings, quotes, lists, tables, links/references, images, code, and raw HTML do not
+  receive credit; after the first unmasked raw HTML tag, later paragraphs receive no
+  credit because the proxy does not model cross-paragraph DOM/CSS state, and raw
+  HTML is a structural audit error. Each anchor matches within one safe paragraph;
+  soft line breaks collapse but blank-line boundaries do not. It decodes one round
+  of supported, semicolon-terminated CommonMark entities only at an `&` not escaped
+  by an odd-length backslash run. Decoded controls or Unicode non-rendering
+  characters are errors. V2 anchors reject Markdown delimiter forms and use exact
+  rendered plain text. Checkpoint-backed input is capped at 1 MiB; eligible
+  paragraphs above 4,096 characters or runs above 64 Unicode mark characters are
+  errors and are skipped before NFC and matching. Audit output does not contain raw
+  anchors or their checksums; unknown checkpoint keys are reported only as a count.
+- Boundary: the checksum is not authentication, and lexical presence does not prove
+  meaning, authorship, truth, audience/surface fit, or required module use. Those
+  remain manual checks.
+- Regression: field tampering and mode conflicts return status 2; a missing anchor
+  returns status 1; hidden-source forms do not satisfy it; diagnostics do not echo a
+  sensitive missing anchor. Adversarial combining runs, Tibetan decomposable marks,
+  400,000-digit JSON numbers, and 20,001 unknown keys reject within bounded time and
+  output.
+
 ## Supply-chain controls
 
 The runtime installs no Python dependency. CI installs the version-pinned
@@ -197,9 +235,10 @@ The runtime installs no Python dependency. CI installs the version-pinned
 tests cannot silently skip; it is not copied into the Skill. The portable schema is
 a structural and conditional preflight, while `validate-spec` remains authoritative
 for complete Unicode printability, identifier uniqueness, cross-record references,
-and catalog-derived semantics that JSON Schema cannot fully express. CI actions are pinned to exact Git commit
-identities rather than movable tags. The Skill has an independent provenance record
-and includes no copied third-party assets. These controls reduce ambiguity; they do
+and catalog-derived semantics that JSON Schema cannot fully express. CI actions are
+pinned to exact Git commit identities rather than movable tags. The Skill has an
+independent provenance record and includes no copied third-party assets. These
+controls reduce ambiguity; they do
 not prove publisher identity or runtime safety.
 
 ## Residual risk
@@ -217,5 +256,7 @@ not prove publisher identity or runtime safety.
   user. It does not broaden the target or bypass symlink checks.
 - Generated Markdown must still be rendered by a maintained, sanitizing consumer.
   The normal free-form report path is not transformed by the strict renderer.
+- Checkpoint matching is a conservative lexical proxy, not renderer equivalence or a
+  semantic assertion. A same-account writer can replace and re-fingerprint a file.
 - Clean tests and static inspection are not proof of security. The release gate must
   retain the documented trust assumptions and rerun source-to-sink regression tests.

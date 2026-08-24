@@ -36,7 +36,7 @@ flowchart LR
     E --> F[Reporting boundary]
     F --> G[Reload checkpoint or route\none primary mode]
     G --> H[Optional display modules\n0 to 2]
-    H --> I[Structural audit\nplus manual evidence check]
+    H --> I[Audit against same checkpoint\nplus manual evidence check]
     I --> J[Human-readable handoff]
 ```
 
@@ -49,7 +49,8 @@ An `AGENTS.md`, user rule, or equivalent host adapter says only:
 3. for likely long work, save a tiny checkpoint at the start without retaining the
    routed bundle;
 4. load one routed bundle rather than the entire library at the reporting boundary;
-5. run the report audit before a substantive final handoff.
+5. run the report audit against the same checkpoint, when one exists, before a
+   substantive final handoff.
 
 This layer is the persistent reminder mechanism, not an enforcement guarantee. It
 is deliberately too small to encode all reporting knowledge.
@@ -79,15 +80,43 @@ is bundled with the selected mode so the agent does not read the protocol catalo
 
 The audit checks objective features such as unresolved placeholders, required report
 blocks, inaccessible Markdown images, oversized tables, and missing experiment
-context. It does not claim to verify truth, citation correctness, or whether a chart
-is scientifically appropriate. Those remain explicit manual checks.
+context. For a schema-v2 checkpoint, it also derives the mode and requires every
+bounded `must_show` value to occur as a normalized literal substring in a
+blank-line-bounded, column-zero, plain top-level Markdown prose paragraph. Headings,
+quotes, lists, tables, links/references, images, code, and raw HTML make a paragraph
+ineligible. After the first unmasked raw HTML tag, no later paragraph receives
+credit; the proxy deliberately does not model cross-paragraph DOM or CSS state, and
+raw HTML is itself a structural audit error. Each anchor must match within one safe
+paragraph: soft line breaks collapse, but blank-line boundaries do not. The proxy
+first decodes one round of the shared scanner's supported, semicolon-terminated
+CommonMark entity subset only at an `&` not escaped by an odd-length backslash run;
+a decoded control or Unicode non-rendering character is an error. V2 anchors use
+exact rendered plain text and reject Markdown delimiter forms. A conflicting
+explicit mode is a configuration error. This makes the saved route part of the
+executable final gate, but it does not prove semantic coverage, authorship, truth,
+citation correctness, surface/audience fit, module use, or whether a chart is
+scientifically appropriate. Those remain explicit manual checks. See ADR-005.
+
+Before NFC, the proxy rejects and skips any eligible paragraph above 4,096
+characters or containing more than 64 consecutive Unicode mark characters. JSON
+integer and float tokens are independently capped at 128 characters before numeric
+conversion. These inner limits prevent the outer byte caps from hiding nonlinear
+normalization or parsing work.
 
 ## Bookend lifecycle
 
 For short tasks, route immediately before drafting the final answer. For long or
 multi-session work, route at the start and save a tiny manifest containing the mode,
-surface, audience, user request, and must-show evidence. Reload that manifest only at
-the finalization boundary. Task execution between the two bookends is unaffected.
+surface, audience, user request, modules, and must-show anchors. Reload that manifest
+only at the finalization boundary, retrieve one bundle, and audit the file-backed draft
+against the same manifest. Task execution between the two bookends is unaffected.
+
+Schema v2 fingerprints `task`, `mode`, `surface`, `audience`, `modules`, and
+`must_show` as one reporting intent. The unkeyed checksum detects accidental drift;
+it is not authentication because any writer can recompute it. Schema-v1 checkpoints
+remain route/bundle inputs for compatibility, but cannot drive a checkpoint-backed
+final audit. V2 anchors are intentionally small: each is at most 120 characters and
+their escaped receipt, including separators, is at most 240 characters.
 
 ## Interfaces
 
@@ -95,19 +124,40 @@ The stable command surface is:
 
 ```text
 reportctl.py list
-reportctl.py route --task TEXT [--mode MODE] [--surface SURFACE]
-reportctl.py bundle --task TEXT [--mode MODE] [--module NAME ...]
+reportctl.py route --task TEXT [route fields ...]
+reportctl.py route --checkpoint FILE [matching route assertions ...]
+reportctl.py bundle --task TEXT [route fields ...]
+reportctl.py bundle --checkpoint FILE [matching route assertions ...]
 reportctl.py scaffold --mode MODE
-reportctl.py checkpoint --task TEXT --output FILE [...]
+reportctl.py checkpoint --task TEXT --output FILE [route fields ...]
+reportctl.py checkpoint --checkpoint FILE --output FILE [matching route assertions ...]
 reportctl.py audit --file FILE --mode MODE [--json] [--strict]
+reportctl.py audit --file FILE --checkpoint FILE [--mode SAME_MODE] [--json] [--strict]
 reportctl.py validate-spec --file FILE
 reportctl.py render --file FILE [--output FILE]
+reportctl.py build-dist [--output DIR] [--force]
 ```
 
-All runtime commands use Python's standard library and accept explicit overrides.
-Machine output, including `list --json`, carries `schema_version`. Human output is
-bounded Markdown. Unknown values fail
-closed with actionable errors.
+All runtime commands use Python's standard library. Without a checkpoint, explicit
+route fields select values. With a checkpoint, concrete explicit task/mode/surface/
+audience/module/must-show fields are equality assertions: equal values are accepted,
+`--mode auto` makes no assertion, and a conflict fails with status 2 instead of
+silently changing the saved intent. Machine output, including `list --json`, carries
+`schema_version`. Human bundle output is bounded by the independent `--max-chars`
+budget. A valid checkpoint with two large modules can require the caller to raise
+that budget explicitly. Checkpoint-backed audit caps the report at 1 MiB for the
+additional prose proxy; mode-only audit retains its 4 MiB cap.
+
+The CLI exit contract is:
+
+| Status | Meaning |
+|---:|---|
+| 0 | Command succeeded; audit has no errors and, under `--strict`, no warnings |
+| 1 | Candidate content failed validation/audit, a must-show anchor is missing, or `--strict` promoted a warning |
+| 2 | Usage, path, schema, checkpoint-integrity, unsupported-v1-audit, or explicit-intent conflict |
+
+The legacy `audit --file FILE --mode MODE` path and its statuses remain available for
+short, non-checkpointed work.
 
 For durable, batch, or API-controlled reports, an optional structured report
 specification separates claims and evidence from rendering. The normal chat path
@@ -130,6 +180,18 @@ Every primary mode composes the same small reporting primitives:
 Modes decide which primitives are required and their order. Display modules decide
 how to render evidence; they never change the underlying claim.
 
+## Shared Markdown scanning boundary
+
+`reportctl` and the development benchmark consume one standard-library scanner,
+`skills/agentic-reporting/scripts/markdown_image_scanner.py`, through narrow adapter
+functions. The shared module owns bounded source-order image discovery, conservative
+CommonMark block masking, entity decoding, and visible-alt checks. Audit policy and
+benchmark case policy remain in their consumers. Loading is lazy so route,
+checkpoint, and bundle commands do not pay the scanner import cost.
+
+This removes security-sensitive parser drift without claiming full CommonMark
+rendering equivalence. See ADR-004.
+
 ## Portability boundary
 
 The canonical artifact is an Agent Skill. Adapters declare when specific hosts
@@ -144,5 +206,7 @@ enforcement requires a wrapper with an equivalent finalization gate.
 Task content, retrieved sources, and embedded report text are untrusted data. They
 cannot override the framework or higher-priority instructions. The CLI does not
 execute report content, fetch remote resources, or mutate another project by
-default. Installation is an explicit operation and must preserve existing host
-instructions.
+default. A checkpoint is also untrusted, potentially sensitive local data: reads are
+bounded and reject user-controlled symlink components, while writes are explicit and
+atomic. Its checksum is not a trust boundary. Installation is an explicit operation
+and must preserve existing host instructions.

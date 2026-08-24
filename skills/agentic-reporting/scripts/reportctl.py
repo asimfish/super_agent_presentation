@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 from bisect import bisect_right
 import hashlib
-import html
+import importlib.util
 import json
 import math
 import os
@@ -21,6 +21,7 @@ import tempfile
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
+from types import ModuleType
 from typing import Any, Iterable
 from urllib.parse import quote, unquote, urlsplit
 
@@ -61,21 +62,25 @@ CLAIM_EVIDENCE_REQUIRED_MODES = tuple(mode for mode in MODE_IDS if mode != "conc
 ACTION_REQUIRED_MODES = ("incident-update", "postmortem", "risk-report")
 MAX_JSON_BYTES = 2 * 1024 * 1024
 MAX_REPORT_BYTES = 4 * 1024 * 1024
+MAX_CHECKPOINT_REPORT_BYTES = 1 * 1024 * 1024
+MAX_CHECKPOINT_PROSE_PARAGRAPH_CHARS = 4_096
+MAX_NFC_MARK_RUN = 64
 MAX_TASK_CHARS = 20_000
+MAX_CHECKPOINT_MUST_SHOW_CHARS = 120
+MAX_CHECKPOINT_MUST_SHOW_TOTAL_CHARS = 240
+UNSTABLE_MUST_SHOW_MARKDOWN = frozenset("\\`*[]<>")
 MAX_JSON_DEPTH = 100
 MAX_JSON_NODES = 100_000
+MAX_JSON_NUMBER_CHARS = 128
 MAX_JSON_NUMBER_MAGNITUDE = 1.7976931348623157e308
-MAX_MARKDOWN_IMAGE_ALT_CHARS = 2_048
-MAX_MARKDOWN_IMAGE_TARGET_CHARS = 4_096
 MAX_AUDIT_IMAGES = 1_000
 MAX_AUDIT_FINDINGS = 500
 MAX_AUDIT_LINES = 100_000
+CHECKPOINT_INTENT_FIELDS = (
+    "task", "mode", "surface", "audience", "modules", "must_show",
+)
 DIST_MANIFEST_NAME = ".agentic-reporting-dist.json"
 RENDERABLE_IMAGE_SUFFIXES = frozenset({".avif", ".gif", ".jpeg", ".jpg", ".png", ".svg", ".webp"})
-COMMONMARK_ENTITY_PATTERN = re.compile(
-    r"&(?:#[Xx][0-9A-Fa-f]{1,6}|#[0-9]{1,7}|[A-Za-z][A-Za-z0-9]{1,31});"
-)
-
 STRICT_HTTP_HOST_PATTERN = (
     r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
     r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*"
@@ -123,6 +128,43 @@ class ReportCtlError(RuntimeError):
     """Actionable user-facing error."""
 
 
+_MARKDOWN_IMAGE_SCANNER: ModuleType | None = None
+
+
+def _load_markdown_image_scanner() -> ModuleType:
+    """Load the bundled scanner by fixed path without changing ``sys.path``."""
+
+    global _MARKDOWN_IMAGE_SCANNER
+    if _MARKDOWN_IMAGE_SCANNER is not None:
+        return _MARKDOWN_IMAGE_SCANNER
+    scanner_path = Path(__file__).resolve().with_name("markdown_image_scanner.py")
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "_agentic_reporting_markdown_image_scanner",
+            scanner_path,
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError("no module loader is available")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        for name in (
+            "commonmark_image_block_mask",
+            "decode_commonmark_entities",
+            "has_visible_alt_text",
+            "markdown_character_is_escaped",
+            "portable_markdown_line_ranges",
+            "scan_markdown_images",
+        ):
+            if not callable(getattr(module, name, None)):
+                raise ImportError(f"scanner export is missing: {name}")
+    except Exception as exc:
+        raise ReportCtlError(
+            f"Cannot load bundled Markdown image scanner {scanner_path}: {exc}"
+        ) from exc
+    _MARKDOWN_IMAGE_SCANNER = module
+    return module
+
+
 TERMINAL_FORMAT_CONTROLS = frozenset(
     {
         0x061C,  # Arabic letter mark
@@ -133,30 +175,6 @@ TERMINAL_FORMAT_CONTROLS = frozenset(
         0x2028,  # line separator
         0x2029,  # paragraph separator
     }
-)
-PORTABLE_MARKDOWN_WHITESPACE = frozenset(" \t\r\n")
-HTML_BLOCK_TAGS = frozenset(
-    {
-        "address", "article", "aside", "base", "basefont", "blockquote", "body",
-        "caption", "center", "col", "colgroup", "dd", "details", "dialog", "dir",
-        "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form",
-        "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head",
-        "header", "hr", "html", "iframe", "legend", "li", "link", "main", "menu",
-        "menuitem", "nav", "noframes", "ol", "optgroup", "option", "p", "param",
-        "search", "section", "summary", "table", "tbody", "td", "tfoot", "th",
-        "thead", "title", "tr", "track", "ul",
-    }
-)
-HTML_RAW_UNTIL_CLOSE_TAGS = frozenset({"pre", "script", "style", "textarea"})
-COMPLETE_HTML_TAG_PATTERN = (
-    r"(?:"
-    r"</[A-Za-z][A-Za-z0-9-]*[ \t]*>"
-    r"|"
-    r"<[A-Za-z][A-Za-z0-9-]*"
-    r"(?:[ \t]+[A-Za-z_:][A-Za-z0-9_.:-]*"
-    r"(?:[ \t]*=[ \t]*(?:[^ \t\"'=<>`]+|'[^']*'|\"[^\"]*\"))?"
-    r")*[ \t]*/?>"
-    r")[ \t]*"
 )
 
 
@@ -331,10 +349,26 @@ def _load_json(path: Path) -> Any:
     def reject_nonstandard_constant(value: str) -> None:
         raise ValueError(f"non-standard numeric constant {value}")
 
+    def parse_bounded_int(value: str) -> int:
+        if len(value) > MAX_JSON_NUMBER_CHARS:
+            raise ValueError(
+                f"integer literal exceeds {MAX_JSON_NUMBER_CHARS} characters"
+            )
+        return int(value)
+
+    def parse_bounded_float(value: str) -> float:
+        if len(value) > MAX_JSON_NUMBER_CHARS:
+            raise ValueError(
+                f"floating-point literal exceeds {MAX_JSON_NUMBER_CHARS} characters"
+            )
+        return float(value)
+
     try:
         data = json.loads(
             _read_text_bounded(path, MAX_JSON_BYTES, "JSON file"),
             parse_constant=reject_nonstandard_constant,
+            parse_float=parse_bounded_float,
+            parse_int=parse_bounded_int,
         )
     except (json.JSONDecodeError, RecursionError, ValueError) as exc:
         raise ReportCtlError(f"Invalid JSON in {path}: {exc}") from exc
@@ -512,27 +546,125 @@ def _validated_audience(value: Any) -> str:
     return value
 
 
+def _task_sha256(task: str) -> str:
+    """Preserve the v1 digest for normal UTF-8 while handling invalid scalars safely."""
+
+    return hashlib.sha256(task.encode("utf-8", errors="surrogatepass")).hexdigest()
+
+
+def _checkpoint_intent_sha256(data: dict[str, Any]) -> str:
+    """Fingerprint the complete reporting intent; this detects drift, not forgery."""
+
+    intent = {field: data[field] for field in CHECKPOINT_INTENT_FIELDS}
+    canonical = json.dumps(
+        intent,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("ascii")).hexdigest()
+
+
+def _has_unstable_must_show_markdown(value: str) -> bool:
+    """Reject anchor source forms whose Markdown rendering can drop delimiters."""
+
+    if any(character in UNSTABLE_MUST_SHOW_MARKDOWN for character in value):
+        return True
+    if "~~" in value:
+        return True
+    return any(
+        character == "_"
+        and (
+            index == 0
+            or index + 1 == len(value)
+            or not value[index - 1].isalnum()
+            or not value[index + 1].isalnum()
+        )
+        for index, character in enumerate(value)
+    )
+
+
+def _validate_checkpoint_must_show(value: Any, version: int) -> list[str]:
+    """Validate a checkpoint's bounded anchors without echoing their content."""
+
+    if not isinstance(value, list) or len(value) > 20:
+        raise ReportCtlError("Checkpoint must_show must contain at most 20 strings")
+    legacy = version == 1
+    per_item_limit = 2_000 if legacy else MAX_CHECKPOINT_MUST_SHOW_CHARS
+    rendered_total = 0
+    for index, item in enumerate(value, start=1):
+        if not isinstance(item, str) or len(item) > per_item_limit:
+            raise ReportCtlError(
+                f"Checkpoint must-show item #{index} must be a string of at most {per_item_limit} characters"
+            )
+        if legacy:
+            continue
+        normalized = unicodedata.normalize("NFC", item)
+        if not normalized.strip():
+            raise ReportCtlError(f"Checkpoint must-show item #{index} must be non-empty")
+        if _has_unstable_must_show_markdown(normalized):
+            raise ReportCtlError(
+                f"Checkpoint must-show item #{index} contains Markdown delimiter syntax; "
+                "use the exact rendered plain text instead"
+            )
+        has_visible_character = False
+        for character in normalized:
+            if character in " \t\r\n":
+                continue
+            category = unicodedata.category(character)
+            if _is_unsafe_control(ord(character)) or category.startswith("C"):
+                raise ReportCtlError(
+                    f"Checkpoint must-show item #{index} contains a control or non-rendering character"
+                )
+            if category[0] in "LNS":
+                has_visible_character = True
+        if not has_visible_character:
+            raise ReportCtlError(
+                f"Checkpoint must-show item #{index} has no stable visible character"
+            )
+        rendered_total += len(_escape_inline(item))
+    if not legacy:
+        rendered_total += max(0, len(value) - 1) * len("; ")
+    if not legacy and rendered_total > MAX_CHECKPOINT_MUST_SHOW_TOTAL_CHARS:
+        raise ReportCtlError(
+            "Checkpoint must_show exceeds the v2 rendered aggregate limit of "
+            f"{MAX_CHECKPOINT_MUST_SHOW_TOTAL_CHARS} characters"
+        )
+    return value
+
+
 def _load_checkpoint(path: Path) -> dict[str, Any]:
-    data = _load_json(path)
+    try:
+        original = path.expanduser()
+    except (OSError, RuntimeError) as exc:
+        raise ReportCtlError(f"Cannot expand checkpoint input path {path}: {exc}") from exc
+    candidate = original if original.is_absolute() else Path.cwd() / original
+    resolved = _resolve_checked_path(candidate, "checkpoint input")
+    data = _load_json(resolved)
     if not isinstance(data, dict):
         raise ReportCtlError(f"Checkpoint root must be an object: {path}")
-    required = {
+    base_required = {
         "schema_version", "kind", "created_at", "task", "task_sha256", "mode",
         "surface", "audience", "modules", "must_show",
     }
+    missing_base = sorted(base_required - set(data))
+    if missing_base:
+        raise ReportCtlError(f"Checkpoint is missing required fields: {', '.join(missing_base)}")
+    version = data.get("schema_version")
+    if (
+        not isinstance(version, int)
+        or isinstance(version, bool)
+        or version not in (1, 2)
+        or data.get("kind") != "agentic-report-checkpoint"
+    ):
+        raise ReportCtlError(f"Not an agentic reporting checkpoint: {path}")
+    required = base_required | ({"intent_sha256"} if version == 2 else set())
     missing = sorted(required - set(data))
     unknown = sorted(set(data) - required)
     if missing:
         raise ReportCtlError(f"Checkpoint is missing required fields: {', '.join(missing)}")
     if unknown:
-        raise ReportCtlError(f"Checkpoint has unknown fields: {', '.join(unknown)}")
-    if (
-        not isinstance(data.get("schema_version"), int)
-        or isinstance(data.get("schema_version"), bool)
-        or data.get("schema_version") != 1
-        or data.get("kind") != "agentic-report-checkpoint"
-    ):
-        raise ReportCtlError(f"Not an agentic reporting checkpoint: {path}")
+        raise ReportCtlError(f"Checkpoint has {len(unknown)} unknown field(s)")
     if not isinstance(data.get("created_at"), str) or not data["created_at"].strip():
         raise ReportCtlError("Checkpoint created_at must be a non-empty string")
     task = _validated_task_text(data.get("task"))
@@ -549,45 +681,77 @@ def _load_checkpoint(path: Path) -> dict[str, Any]:
         or any(not isinstance(item, str) or item not in MODULE_IDS for item in modules)
     ):
         raise ReportCtlError("Checkpoint modules must contain at most two unique known module IDs")
-    must_show = data.get("must_show")
-    if (
-        not isinstance(must_show, list)
-        or len(must_show) > 20
-        or any(not isinstance(item, str) or len(item) > 2000 for item in must_show)
-    ):
-        raise ReportCtlError("Checkpoint must_show must contain at most 20 strings of at most 2000 characters")
+    must_show = _validate_checkpoint_must_show(data.get("must_show"), version)
     if not isinstance(data.get("task_sha256"), str):
         raise ReportCtlError("Checkpoint task_sha256 must be a string")
-    expected = hashlib.sha256(task.encode("utf-8")).hexdigest()
+    expected = _task_sha256(task)
     if data.get("task_sha256") != expected:
         raise ReportCtlError("Checkpoint task fingerprint does not match its content")
+    if version == 2:
+        if not isinstance(data.get("intent_sha256"), str):
+            raise ReportCtlError("Checkpoint intent_sha256 must be a string")
+        if data["intent_sha256"] != _checkpoint_intent_sha256(data):
+            raise ReportCtlError("Checkpoint intent fingerprint does not match its routing content")
     return data
 
 
 def resolve_plan(args: argparse.Namespace, catalog: dict[str, Any]) -> dict[str, Any]:
     checkpoint = _load_checkpoint(Path(args.checkpoint)) if getattr(args, "checkpoint", None) else None
+    if checkpoint is not None:
+        overrides = {
+            "task": getattr(args, "task", None),
+            "surface": getattr(args, "surface", None),
+            "audience": getattr(args, "audience", None),
+            "modules": getattr(args, "module", None),
+            "must_show": getattr(args, "must_show", None),
+        }
+        requested_mode_override = getattr(args, "mode", None)
+        if requested_mode_override not in (None, "auto"):
+            overrides["mode"] = requested_mode_override
+        for field, supplied in overrides.items():
+            if supplied is not None and supplied != checkpoint[field]:
+                raise ReportCtlError(
+                    f"Explicit {field} conflicts with checkpoint {field}; update or recreate the checkpoint"
+                )
     task = checkpoint["task"] if checkpoint else getattr(args, "task", None)
     if task is None:
         raise ReportCtlError("Provide --task or --checkpoint")
     task = _validated_task_text(task)
 
-    requested_mode = checkpoint.get("mode") if checkpoint else getattr(args, "mode", "auto")
+    requested_mode = checkpoint.get("mode") if checkpoint else (getattr(args, "mode", None) or "auto")
     inferred_mode, scores = infer_mode(task, catalog)
     mode = inferred_mode if requested_mode in (None, "auto") else requested_mode
     if mode not in catalog["modes"]:
         raise ReportCtlError(f"Unknown mode: {mode}")
 
-    surface = checkpoint.get("surface", "chat") if checkpoint else getattr(args, "surface", "chat")
+    surface = checkpoint.get("surface", "chat") if checkpoint else (getattr(args, "surface", None) or "chat")
     if surface not in SURFACES:
         raise ReportCtlError(f"Unknown surface: {surface}")
+    supplied_audience = getattr(args, "audience", None)
     audience = _validated_audience(
-        checkpoint.get("audience", "user") if checkpoint else getattr(args, "audience", "user")
+        checkpoint.get("audience", "user")
+        if checkpoint
+        else ("user" if supplied_audience is None else supplied_audience)
     )
     explicit_modules = checkpoint.get("modules") if checkpoint else getattr(args, "module", None)
     modules = select_modules(task, mode, explicit_modules, catalog)
-    must_show = checkpoint.get("must_show", []) if checkpoint else getattr(args, "must_show", [])
-    if not isinstance(must_show, list) or len(must_show) > 20 or any(not isinstance(item, str) or len(item) > 2000 for item in must_show):
-        raise ReportCtlError("must_show must contain at most 20 strings of at most 2000 characters each")
+    must_show = checkpoint.get("must_show", []) if checkpoint else (getattr(args, "must_show", None) or [])
+    allow_legacy_blank_must_show = bool(
+        checkpoint is not None and checkpoint.get("schema_version") == 1
+    )
+    if (
+        not isinstance(must_show, list)
+        or len(must_show) > 20
+        or any(
+            not isinstance(item, str)
+            or len(item) > 2000
+            or (not allow_legacy_blank_must_show and not item.strip())
+            for item in must_show
+        )
+    ):
+        raise ReportCtlError(
+            "must_show must contain at most 20 non-empty strings of at most 2000 characters each"
+        )
 
     return {
         "schema_version": 1,
@@ -732,18 +896,20 @@ def _safe_write(path: Path, text: str, force: bool = False) -> None:
 def command_checkpoint(args: argparse.Namespace) -> int:
     catalog = load_catalog()
     plan = resolve_plan(args, catalog)
+    _validate_checkpoint_must_show(plan["must_show"], 2)
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "kind": "agentic-report-checkpoint",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "task": plan["task"],
-        "task_sha256": hashlib.sha256(plan["task"].encode("utf-8")).hexdigest(),
+        "task_sha256": _task_sha256(plan["task"]),
         "mode": plan["mode"],
         "surface": plan["surface"],
         "audience": plan["audience"],
         "modules": plan["modules"],
         "must_show": plan["must_show"],
     }
+    payload["intent_sha256"] = _checkpoint_intent_sha256(payload)
     output = Path(args.output)
     _safe_write(output, _safe_json_dumps(payload) + "\n", args.force)
     _safe_print(f"Saved reporting checkpoint: {output}")
@@ -822,577 +988,18 @@ def _split_table_row(row: str) -> list[str]:
     return cells
 
 
-def _markdown_character_is_escaped(text: str, index: int) -> bool:
-    backslashes = 0
-    cursor = index - 1
-    while cursor >= 0 and text[cursor] == "\\":
-        backslashes += 1
-        cursor -= 1
-    return backslashes % 2 == 1
-
-
-def _markdown_range_has_unescaped(
-    text: str,
-    start: int,
-    end: int,
-    characters: str,
-) -> bool:
-    cursor = start
-    while cursor < end:
-        if text[cursor] == "\\" and cursor + 1 < end:
-            cursor += 2
-            continue
-        if text[cursor] in characters:
-            return True
-        cursor += 1
-    return False
-
-
-def _portable_markdown_line_ranges(text: str) -> Iterable[tuple[int, int]]:
-    """Yield LF, CRLF, or CR lines without treating other controls as breaks."""
-
-    start = 0
-    for ending in re.finditer(r"\r\n|[\r\n]", text):
-        yield start, ending.end()
-        start = ending.end()
-    if start < len(text):
-        yield start, len(text)
-
-
-def _commonmark_blank_line(body: str) -> bool:
-    return re.fullmatch(r"[ \t]*", body) is not None
-
-
-def _commonmark_list_content_indent(body: str, active_indent: int = 0) -> int:
-    """Return the raw-space continuation indent for a CommonMark list marker.
-
-    The block mask only needs the container's ownership boundary, not a full
-    inline parse.  Tabs are intentionally left to the conservative fallback;
-    the deterministic renderer never emits tab-indented containers.
-    """
-
-    marker = re.match(r"^( *)([*+-]|[0-9]{1,9}[.)])(?:( +)(.*)|$)", body)
-    if marker is None:
-        return 0
-    leading = len(marker.group(1))
-    if leading > 3 and not (
-        active_indent and leading >= active_indent and leading - active_indent <= 3
-    ):
-        return 0
-    padding = len(marker.group(3) or "")
-    # CommonMark uses one column when more than four spaces follow a marker;
-    # a marker-only item also owns one continuation column.
-    continuation_padding = padding if 1 <= padding <= 4 else 1
-    return leading + len(marker.group(2)) + continuation_padding
-
-
-
-
-def _commonmark_image_block_mask(text: str) -> bytearray:
-    """Mask fenced-code and CommonMark HTML blocks for canonical image credit."""
-
-    markdown_mask = bytearray(len(text))
-
-    def mark(start: int, end: int) -> None:
-        if end > start:
-            markdown_mask[start:end] = b"\x01" * (end - start)
-
-    block_mode: str | None = None
-    block_marker = ""
-    fence_character = ""
-    fence_length = 0
-    fence_container_indent = 0
-    paragraph_open = False
-    list_content_indent = 0
-    list_had_blank = False
-    for offset, line_end in _portable_markdown_line_ranges(text):
-        line = text[offset:line_end]
-        body = line.rstrip("\r\n")
-        if block_mode == "fence":
-            mark(offset, line_end)
-            container_body = body[fence_container_indent:]
-            stripped = container_body.lstrip(" ")
-            indentation = len(container_body) - len(stripped)
-            closer = re.fullmatch(
-                re.escape(fence_character) + "{" + str(fence_length) + r",}[ \t]*",
-                stripped,
-            )
-            if indentation <= 3 and closer:
-                block_mode = None
-                fence_character = ""
-                fence_length = 0
-                fence_container_indent = 0
-            paragraph_open = False
-            offset = line_end
-            continue
-
-        if block_mode is not None:
-            if block_mode == "html-blank" and _commonmark_blank_line(body):
-                block_mode = None
-                block_marker = ""
-                paragraph_open = False
-            else:
-                if (
-                    block_mode in {"html-comment", "html-literal"}
-                    or (block_mode == "html-tag" and block_marker in {"script", "style", "textarea"})
-                ):
-                    mark(offset, line_end)
-                else:
-                    mark(offset, line_end)
-                if (
-                    (block_mode == "html-tag" and re.search(
-                        r"</(?:pre|script|style|textarea)[ \t]*>", body, flags=re.IGNORECASE
-                    ))
-                    or (block_mode in {"html-comment", "html-literal"} and block_marker in body)
-                ):
-                    block_mode = None
-                    block_marker = ""
-                paragraph_open = False
-            offset = line_end
-            continue
-
-        body_end = offset + len(body)
-        raw_content_start = offset
-        while raw_content_start < body_end and text[raw_content_start] == " ":
-            raw_content_start += 1
-        raw_indentation = raw_content_start - offset
-        line_list_indent = _commonmark_list_content_indent(body, list_content_indent)
-        container_indent = 0
-        if line_list_indent:
-            container_indent = line_list_indent
-        elif list_content_indent and raw_indentation >= list_content_indent:
-            container_indent = list_content_indent
-        content_start = offset + container_indent
-        while content_start < body_end and text[content_start] == " ":
-            content_start += 1
-        indentation = content_start - offset - container_indent
-        stripped = text[content_start:body_end] if indentation <= 3 else ""
-        opener = re.match(r"(`{3,}|~{3,})(.*)$", stripped) if stripped else None
-        if opener and (opener.group(1)[0] == "~" or "`" not in opener.group(2)):
-            mark(offset, line_end)
-            block_mode = "fence"
-            fence_character = opener.group(1)[0]
-            fence_length = len(opener.group(1))
-            fence_container_indent = container_indent
-            if container_indent == 0:
-                list_content_indent = 0
-                list_had_blank = False
-            elif line_list_indent:
-                list_content_indent = line_list_indent
-                list_had_blank = False
-            paragraph_open = False
-            offset = line_end
-            continue
-
-        raw_opening = re.match(
-            r"<(pre|script|style|textarea)(?:[ \t]|>|$)", stripped, flags=re.IGNORECASE
-        ) if stripped else None
-        block_tag = re.match(
-            r"</?([A-Za-z][A-Za-z0-9-]*)(?:[ \t]|/?>)", stripped
-        ) if stripped else None
-        complete_tag = re.fullmatch(COMPLETE_HTML_TAG_PATTERN, stripped) if stripped else None
-        html_started = False
-        if raw_opening:
-            tag = raw_opening.group(1).casefold()
-            if tag in {"script", "style", "textarea"}:
-                mark(offset, line_end)
-            else:
-                mark(offset, line_end)
-            if not re.search(
-                r"</(?:pre|script|style|textarea)[ \t]*>", stripped, flags=re.IGNORECASE
-            ):
-                block_mode, block_marker = "html-tag", tag
-            html_started = True
-        elif stripped.startswith("<!--"):
-            mark(offset, line_end)
-            if "-->" not in stripped:
-                block_mode, block_marker = "html-comment", "-->"
-            html_started = True
-        elif stripped.startswith("<?"):
-            mark(offset, line_end)
-            if "?>" not in stripped:
-                block_mode, block_marker = "html-literal", "?>"
-            html_started = True
-        elif stripped.startswith("<![CDATA["):
-            mark(offset, line_end)
-            if "]]>" not in stripped:
-                block_mode, block_marker = "html-literal", "]]>"
-            html_started = True
-        elif re.match(r"<![A-Z]", stripped):
-            mark(offset, line_end)
-            if ">" not in stripped:
-                block_mode, block_marker = "html-literal", ">"
-            html_started = True
-        elif block_tag and block_tag.group(1).casefold() in HTML_BLOCK_TAGS:
-            mark(offset, line_end)
-            block_mode = "html-blank"
-            html_started = True
-        elif complete_tag and not paragraph_open:
-            mark(offset, line_end)
-            block_mode = "html-blank"
-            html_started = True
-
-        if html_started:
-            if list_content_indent and raw_indentation < list_content_indent:
-                list_content_indent = 0
-                list_had_blank = False
-            paragraph_open = False
-        elif _commonmark_blank_line(body):
-            if list_content_indent:
-                list_had_blank = True
-            paragraph_open = False
-        else:
-            visible = body.lstrip(" ")
-            visible_indent = len(body) - len(visible)
-            atx_heading = visible_indent <= 3 and re.match(r"#{1,6}(?:[ \t]+|$)", visible)
-            thematic_break = visible_indent <= 3 and any(
-                re.fullmatch(pattern, visible)
-                for pattern in (
-                    r"(?:\*[ \t]*){3,}",
-                    r"(?:_[ \t]*){3,}",
-                    r"(?:-[ \t]*){3,}",
-                )
-            )
-            container_marker = visible_indent <= 3 and re.match(
-                r"(?:>[ \t]?|(?:[*+-]|[0-9]{1,9}[.)])[ \t]+)", visible
-            )
-            empty_container = visible_indent <= 3 and re.fullmatch(
-                r"(?:>[ \t]?|(?:[*+-]|[0-9]{1,9}[.)])[ \t]*)",
-                visible,
-            )
-            link_definition = visible_indent <= 3 and re.match(r"\[[^\]\n]+\]:", visible)
-            indented_code = (
-                not paragraph_open
-                and container_indent == 0
-                and (raw_indentation >= 4 or body.startswith("\t"))
-            )
-            # List/quote lines and setext-looking lines have container-sensitive
-            # lazy-continuation semantics. Keep paragraph state conservative so a
-            # type-7 tag cannot hide a later fence opener. Definite leaf blocks end
-            # the paragraph.
-            definition_leaf = bool(link_definition) and not paragraph_open
-            paragraph_open = (
-                bool(container_marker) and not bool(empty_container)
-            ) or not bool(
-                atx_heading
-                or thematic_break
-                or definition_leaf
-                or indented_code
-                or empty_container
-            )
-            if line_list_indent:
-                list_content_indent = line_list_indent
-                list_had_blank = False
-            elif list_content_indent and raw_indentation >= list_content_indent:
-                list_had_blank = False
-            elif list_content_indent and (
-                list_had_blank
-                or atx_heading
-                or thematic_break
-                or definition_leaf
-                or container_marker
-                or indented_code
-                or empty_container
-            ):
-                list_content_indent = 0
-                list_had_blank = False
-        offset = line_end
-
-    return markdown_mask
-
-
-def _skip_markdown_link_whitespace(
-    text: str,
-    start: int,
-    literal_mask: bytearray,
-) -> tuple[int, bool]:
-    """Skip portable link whitespace without crossing a blank line."""
-
-    cursor = start
-    line_endings = 0
-    while cursor < len(text) and text[cursor] in PORTABLE_MARKDOWN_WHITESPACE:
-        if literal_mask[cursor]:
-            return cursor, False
-        if text[cursor] == "\r":
-            line_endings += 1
-            cursor += 1
-            if cursor < len(text) and text[cursor] == "\n":
-                cursor += 1
-        elif text[cursor] == "\n":
-            line_endings += 1
-            cursor += 1
-        else:
-            cursor += 1
-        if line_endings > 1:
-            return cursor, False
-    return cursor, True
-
-
-def _is_canonical_image_position(text: str, start: int, end: int) -> bool:
-    line_start = text.rfind("\n", 0, start) + 1
-    line_end = text.find("\n", end)
-    if line_end < 0:
-        line_end = len(text)
-    if text[line_start:start] or text[end:line_end].strip(" \t\r"):
-        return False
-
-    if line_start:
-        previous_end = line_start - 1
-        previous_start = text.rfind("\n", 0, previous_end) + 1
-        if text[previous_start:previous_end].strip(" \t\r"):
-            return False
-
-    if line_end < len(text):
-        next_start = line_end + 1
-        next_end = text.find("\n", next_start)
-        if next_end < 0:
-            next_end = len(text)
-        if text[next_start:next_end].strip(" \t\r"):
-            return False
-    return True
-
-
-def _potential_markdown_image_starts(
-    text: str,
-    limit: int,
-) -> list[int]:
-    starts: list[int] = []
-    cursor = 0
-    while len(starts) < limit:
-        start = text.find("![", cursor)
-        if start < 0:
-            break
-        if not _markdown_character_is_escaped(text, start):
-            starts.append(start)
-        cursor = start + 2
-    return starts
-
-
-def _potential_raw_html_opening_tags(
-    text: str,
-    limit: int,
-) -> list[tuple[int, int]]:
-    tags: list[tuple[int, int]] = []
-    pattern = r"<[A-Za-z][A-Za-z0-9-]*(?=[\t\n\f\r />])"
-    for match in re.finditer(pattern, text, flags=re.IGNORECASE):
-        tags.append((match.start(), match.end()))
-        if len(tags) >= limit:
-            break
-    return tags
-
-
-def _first_type7_html_tag_marker(text: str) -> int | None:
-    """Return the first paragraph-sensitive type-7 tag marker, if any."""
-
-    pattern = r"<(/?)([A-Za-z][A-Za-z0-9-]*)(?=[\t\n\f\r />])"
-    raw_type1_open = False
-    for match in re.finditer(pattern, text):
-        closing, raw_name = match.groups()
-        name = raw_name.casefold()
-        if raw_type1_open:
-            if closing and name in HTML_RAW_UNTIL_CLOSE_TAGS:
-                raw_type1_open = False
-            continue
-        if name in HTML_BLOCK_TAGS:
-            continue
-        if not closing and name in HTML_RAW_UNTIL_CLOSE_TAGS:
-            raw_type1_open = True
-            continue
-        return match.start()
-    return None
-
-
-def _first_fence_like_run(text: str) -> int | None:
-    """Return the first raw fence run in the conservative image-credit subset."""
-
-    positions = [position for position in (text.find("```"), text.find("~~~")) if position >= 0]
-    return min(positions) if positions else None
-
-
-def _decode_commonmark_entities(value: str) -> str:
-    """Decode only semicolon-terminated references recognized by CommonMark."""
-
-    def replacement(match: re.Match[str]) -> str:
-        token = match.group(0)
-        if token[1] != "#":
-            return html.entities.html5.get(token[1:], token)
-        digits = token[2:-1]
-        base = 10
-        if digits[:1] in ("x", "X"):
-            digits = digits[1:]
-            base = 16
-        codepoint = int(digits, base)
-        if codepoint == 0 or 0xD800 <= codepoint <= 0xDFFF or codepoint > 0x10FFFF:
-            return "\uFFFD"
-        return chr(codepoint)
-
-    return COMMONMARK_ENTITY_PATTERN.sub(replacement, value)
-
-
-def _has_visible_alt_text(value: str) -> bool:
-    return any(unicodedata.category(character)[0] in "LNPS" for character in value)
-
-
 def _scan_markdown_images(
     text: str,
     max_images: int = MAX_AUDIT_IMAGES + 1,
 ) -> list[tuple[str, str, int, int, bool]]:
-    """Scan potential inline images and classify the canonical audit subset.
+    """Project the shared scanner records onto reportctl's stable tuple API."""
 
-    The bounded state machine avoids regex backtracking on malformed runs of `![`.
-    It supports escaped alt characters and an optional quoted Markdown title. A
-    canonical image is an independent, single-line, column-zero paragraph with
-    simple alt text and a target that does not depend on renderer-specific escapes.
-    Required credit also stops after raw triple-backtick/triple-tilde syntax or a
-    paragraph-sensitive type-7 HTML tag marker; this deliberately conservative
-    subset avoids claiming full CommonMark parser equivalence.
-    Every remaining unescaped Markdown marker and raw HTML opening tag is retained
-    as a noncanonical candidate for fail-closed audit and forbidden-image checks.
-    Rejecting all raw HTML closes CSS and custom-element visual sinks without
-    pretending to implement an HTML/CSS renderer.
-    """
-
-    literal_mask = _commonmark_image_block_mask(text)
-    potential_starts = _potential_markdown_image_starts(text, max_images)
-    raw_html_tags = _potential_raw_html_opening_tags(text, max_images)
-    first_type7_tag = _first_type7_html_tag_marker(text)
-    first_fence_run = _first_fence_like_run(text)
-    images: list[tuple[str, str, int, int, bool]] = []
-    length = len(text)
-    cursor = 0
-    while cursor < length - 1:
-        start = text.find("![", cursor)
-        if start < 0:
-            break
-        if literal_mask[start] or _markdown_character_is_escaped(text, start):
-            cursor = start + 2
-            continue
-
-        alt_start = start + 2
-        scan = alt_start
-        alt_end: int | None = None
-        simple_alt = True
-        while scan < length and scan - alt_start <= MAX_MARKDOWN_IMAGE_ALT_CHARS:
-            if literal_mask[scan]:
-                break
-            if text.startswith("![", scan):
-                # A newer candidate supersedes an unclosed one without rescanning.
-                start = scan
-                alt_start = scan + 2
-                scan = alt_start
-                simple_alt = True
-                continue
-            character = text[scan]
-            if character == "\\" and scan + 1 < length:
-                scan += 2
-                continue
-            if character == "[":
-                simple_alt = False
-            if character == "]":
-                if scan + 1 < length and text[scan + 1] == "(":
-                    alt_end = scan
-                else:
-                    cursor = scan + 1
-                break
-            scan += 1
-        if alt_end is None:
-            if scan >= length:
-                break
-            if cursor <= start:
-                cursor = max(scan + 1, start + 2)
-            continue
-
-        target_start = alt_end + 2
-        scan = target_start
-        target_end: int | None = None
-        image_end: int | None = None
-        while scan < length and scan - target_start <= MAX_MARKDOWN_IMAGE_TARGET_CHARS:
-            if literal_mask[scan]:
-                break
-            character = text[scan]
-            if character == ")":
-                if scan > target_start:
-                    target_end = scan
-                    image_end = scan + 1
-                break
-            if character in PORTABLE_MARKDOWN_WHITESPACE:
-                if scan == target_start:
-                    break
-                target_end = scan
-                title_cursor, portable_spacing = _skip_markdown_link_whitespace(text, scan, literal_mask)
-                if not portable_spacing:
-                    target_end = None
-                    scan = title_cursor
-                    break
-                if title_cursor < length and text[title_cursor] in ("'", '"'):
-                    quote_character = text[title_cursor]
-                    title_cursor += 1
-                    while (
-                        title_cursor < length
-                        and title_cursor - target_start <= MAX_MARKDOWN_IMAGE_TARGET_CHARS
-                    ):
-                        if literal_mask[title_cursor]:
-                            break
-                        if text[title_cursor] == "\\" and title_cursor + 1 < length:
-                            title_cursor += 2
-                            continue
-                        if text[title_cursor] == quote_character:
-                            title_cursor += 1
-                            title_cursor, portable_spacing = _skip_markdown_link_whitespace(
-                                text,
-                                title_cursor,
-                                literal_mask,
-                            )
-                            if not portable_spacing:
-                                break
-                            if title_cursor < length and text[title_cursor] == ")":
-                                image_end = title_cursor + 1
-                            break
-                        title_cursor += 1
-                scan = title_cursor
-                break
-            scan += 1
-
-        if target_end is not None and image_end is not None:
-            target = text[target_start:target_end]
-            decoded_target = _decode_commonmark_entities(target)
-            canonical = (
-                _is_canonical_image_position(text, start, image_end)
-                and (first_type7_tag is None or start < first_type7_tag)
-                and (first_fence_run is None or start < first_fence_run)
-                and simple_alt
-                and not _markdown_range_has_unescaped(text, alt_start, alt_end, "`")
-                and not any(character in text[alt_start:alt_end] for character in "<>")
-                and "\n" not in text[start:image_end]
-                and "\r" not in text[start:image_end]
-                and not any(character in target for character in "\\()<>")
-                and not any(character.isspace() for character in decoded_target)
-                and not any(character in decoded_target for character in "\\()<>")
-            )
-            decoded_alt = _decode_commonmark_entities(text[alt_start:alt_end]).strip()
-            images.append(
-                (
-                    decoded_alt,
-                    target,
-                    start,
-                    image_end,
-                    canonical,
-                )
-            )
-            if len(images) >= max_images:
-                break
-            cursor = image_end
-        else:
-            cursor = max(scan + 1, target_start + 1)
-    represented_starts = {item[2] for item in images}
-    for start in potential_starts:
-        if start not in represented_starts:
-            images.append(("", "", start, min(start + 2, length), False))
-    for start, end in raw_html_tags:
-        if start not in represented_starts:
-            images.append(("", "", start, end, False))
-    images.sort(key=lambda item: item[2])
-    return images[:max_images]
+    scanner = _load_markdown_image_scanner()
+    try:
+        records = scanner.scan_markdown_images(text, record_limit=max_images)
+    except (TypeError, ValueError) as exc:
+        raise ReportCtlError(f"Cannot scan Markdown images: {exc}") from exc
+    return [tuple(record) for record in records]
 
 
 class _AuditFindingLimit(RuntimeError):
@@ -1473,6 +1080,7 @@ def _audit_markdown_impl(
     if len(text) < 1200 and heading_total > 5:
         findings.append(_finding("over-sectioned", "warning", "Short report has more than five headings"))
 
+    scanner = _load_markdown_image_scanner()
     scanned_images = _scan_markdown_images(text)
     if len(scanned_images) > MAX_AUDIT_IMAGES:
         findings.append(
@@ -1504,7 +1112,7 @@ def _audit_markdown_impl(
                     line,
                 )
             )
-        elif not _has_visible_alt_text(alt):
+        elif not scanner.has_visible_alt_text(alt):
             findings.append(
                 _finding(
                     "missing-image-alt",
@@ -1513,7 +1121,7 @@ def _audit_markdown_impl(
                     line,
                 )
             )
-        normalized_target = _decode_commonmark_entities(target)
+        normalized_target = scanner.decode_commonmark_entities(target)
         if (
             _contains_unsafe_control(target)
             or _contains_unsafe_control(normalized_target)
@@ -1644,22 +1252,272 @@ def audit_markdown(text: str, report_path: Path, mode: str, catalog: dict[str, A
         ]
 
 
+def _visible_narrative_paragraphs(text: str) -> list[str]:
+    """Return blank-line-bounded, column-zero plain Markdown prose paragraphs.
+
+    The gate intentionally excludes every paragraph with block, code, HTML, image,
+    link/reference, table, list, quote, or heading syntax. It is a stable lexical
+    subset, not an attempt to reproduce a particular Markdown/HTML renderer.
+    """
+
+    scanner = _load_markdown_image_scanner()
+    mask = scanner.commonmark_image_block_mask(text)
+
+    def mark(start: int, end: int) -> None:
+        if end > start:
+            mask[start:end] = b"\x01" * (end - start)
+
+    # CommonMark code spans may cross line endings. Match equal-length unescaped
+    # delimiter runs in one pass, avoiding adversarial repeated rescans. A stale
+    # opener masked by an enclosing span is discarded conservatively.
+    pending_backticks: dict[int, int] = {}
+    cursor = 0
+    while cursor < len(text):
+        opening = text.find("`", cursor)
+        if opening < 0:
+            break
+        if mask[opening] or scanner.markdown_character_is_escaped(text, opening):
+            cursor = opening + 1
+            continue
+        opening_end = opening + 1
+        while opening_end < len(text) and text[opening_end] == "`":
+            opening_end += 1
+        width = opening_end - opening
+        previous = pending_backticks.pop(width, None)
+        if previous is not None and not mask[previous]:
+            mark(previous, opening_end)
+        else:
+            pending_backticks[width] = opening
+        cursor = opening_end
+
+    cursor = 0
+    while True:
+        start = text.find("<!--", cursor)
+        if start < 0:
+            break
+        if mask[start]:
+            cursor = start + 4
+            continue
+        closing = text.find("-->", start + 4)
+        end = len(text) if closing < 0 else closing + 3
+        mark(start, end)
+        cursor = end
+
+    # Raw HTML is already a structural audit error. Once an unmasked opening or
+    # closing tag appears, exclude the remaining source from must-show credit too;
+    # this avoids partial DOM/CSS visibility claims (script/style/template/hidden
+    # containers) without implementing an HTML renderer.
+    raw_tag_pattern = re.compile(
+        r"</?[A-Za-z][A-Za-z0-9-]*(?=[\t\n\f\r />])",
+        flags=re.IGNORECASE,
+    )
+    raw_cursor = 0
+    while True:
+        raw_tag = raw_tag_pattern.search(text, raw_cursor)
+        if raw_tag is None:
+            break
+        if mask[raw_tag.start()] or scanner.markdown_character_is_escaped(
+            text,
+            raw_tag.start(),
+        ):
+            raw_cursor = raw_tag.end()
+            continue
+        mark(raw_tag.start(), len(text))
+        break
+
+    # Credit only blank-line-bounded, column-zero plain prose paragraphs. This
+    # deliberately excludes headings, quotes, lists, tables, links/references,
+    # images, code, and raw HTML. Agents can satisfy a checkpoint reliably by
+    # placing each short anchor in an ordinary top-level conclusion sentence.
+    safe_paragraphs: list[str] = []
+    paragraph: list[tuple[str, str, int, int]] = []
+
+    def flush_paragraph() -> None:
+        if not paragraph:
+            return
+        safe = True
+        visible_lines: list[str] = []
+        for raw_line, visible_line, start, end in paragraph:
+            if raw_line[:1] in (" ", "\t"):
+                safe = False
+                break
+            if any(mask[position] and not text[position].isspace() for position in range(start, end)):
+                safe = False
+                break
+            if re.match(
+                r"(?:"
+                r"#{1,6}(?:[ \t]|$)"
+                r"|>"
+                r"|(?:[*+-]|[0-9]{1,9}[.)])(?:[ \t]+|$)"
+                r"|[|]"
+                r"|(?:=+|-+)[ \t]*$"
+                r"|(?:\*[ \t]*){3,}$"
+                r"|(?:_[ \t]*){3,}$"
+                r")",
+                raw_line,
+            ):
+                safe = False
+                break
+            if any(token in raw_line for token in ("`", "<", "![", "](", "[", "|")):
+                safe = False
+                break
+            visible_lines.append(visible_line)
+        if safe:
+            safe_paragraphs.append("\n".join(visible_lines))
+        paragraph.clear()
+
+    for offset, line_end in scanner.portable_markdown_line_ranges(text):
+        body_end = line_end
+        while body_end > offset and text[body_end - 1] in "\r\n":
+            body_end -= 1
+        raw_line = text[offset:body_end]
+        visible_line = "".join(
+            " " if mask[position] else text[position]
+            for position in range(offset, body_end)
+        )
+        if not raw_line.strip(" \t"):
+            flush_paragraph()
+        else:
+            paragraph.append((raw_line, visible_line, offset, body_end))
+    flush_paragraph()
+    return safe_paragraphs
+
+
+def _checkpoint_must_show_findings(
+    text: str,
+    must_show: list[str],
+) -> list[dict[str, Any]]:
+    scanner = _load_markdown_image_scanner()
+    decoded_paragraphs = [
+        scanner.decode_commonmark_entities(paragraph)
+        for paragraph in _visible_narrative_paragraphs(text)
+    ]
+    findings: list[dict[str, Any]] = []
+    if any(
+        character not in " \t\r\n"
+        and (
+            _is_unsafe_control(ord(character))
+            or unicodedata.category(character).startswith("C")
+        )
+        for paragraph in decoded_paragraphs
+        for character in paragraph
+    ):
+        findings.append(
+            _finding(
+                "unsafe-visible-prose",
+                "error",
+                "Checkpoint prose proxy contains a control or non-rendering character",
+            )
+        )
+    normalizable_paragraphs: list[str] = []
+    oversized_paragraph = False
+    excessive_combining = False
+    for paragraph in decoded_paragraphs:
+        if len(paragraph) > MAX_CHECKPOINT_PROSE_PARAGRAPH_CHARS:
+            oversized_paragraph = True
+            continue
+        mark_run = 0
+        paragraph_is_bounded = True
+        for character in paragraph:
+            if unicodedata.category(character).startswith("M"):
+                mark_run += 1
+                if mark_run > MAX_NFC_MARK_RUN:
+                    paragraph_is_bounded = False
+                    excessive_combining = True
+                    break
+            else:
+                mark_run = 0
+        if paragraph_is_bounded:
+            normalizable_paragraphs.append(paragraph)
+    if oversized_paragraph:
+        findings.append(
+            _finding(
+                "checkpoint-prose-paragraph-limit",
+                "error",
+                "Checkpoint prose proxy contains a paragraph above the normalization limit",
+            )
+        )
+    if excessive_combining:
+        findings.append(
+            _finding(
+                "excessive-combining-sequence",
+                "error",
+                "Checkpoint prose proxy contains an excessive canonical-combining sequence",
+            )
+        )
+    normalized_paragraphs = [
+        " ".join(unicodedata.normalize("NFC", paragraph).split()).casefold()
+        for paragraph in normalizable_paragraphs
+    ]
+    for index, item in enumerate(must_show, start=1):
+        normalized_item = " ".join(unicodedata.normalize("NFC", item).split()).casefold()
+        if not any(normalized_item in paragraph for paragraph in normalized_paragraphs):
+            findings.append(
+                _finding(
+                    "missing-must-show",
+                    "error",
+                    f"Checkpoint must-show item #{index} is not visible in main prose",
+                )
+            )
+    return findings
+
+
+def _merge_bounded_audit_findings(
+    findings: list[dict[str, Any]],
+    extra: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not extra or any(item.get("code") == "audit-finding-limit" for item in findings):
+        return findings
+    if len(findings) + len(extra) <= MAX_AUDIT_FINDINGS:
+        return findings + extra
+    return (findings + extra)[:MAX_AUDIT_FINDINGS] + [
+        _finding(
+            "audit-finding-limit",
+            "error",
+            f"Audit stopped after {MAX_AUDIT_FINDINGS} findings; remaining content was not fully audited",
+        )
+    ]
+
+
 def command_audit(args: argparse.Namespace) -> int:
     catalog = load_catalog()
-    if args.mode not in catalog["modes"]:
-        raise ReportCtlError(f"Unknown mode: {args.mode}")
+    checkpoint_path = Path(args.checkpoint) if args.checkpoint else None
+    checkpoint = _load_checkpoint(checkpoint_path) if checkpoint_path else None
+    if checkpoint is not None and checkpoint["schema_version"] != 2:
+        raise ReportCtlError(
+            "Checkpoint-driven audit requires schema_version 2; recreate the checkpoint to fingerprint the full reporting intent"
+        )
+    if args.mode is None and checkpoint is None:
+        raise ReportCtlError("Provide --mode or --checkpoint")
+    if checkpoint is not None and args.mode is not None and args.mode != checkpoint["mode"]:
+        raise ReportCtlError(
+            f"Audit mode {args.mode} conflicts with checkpoint mode {checkpoint['mode']}"
+        )
+    mode = checkpoint["mode"] if checkpoint is not None else args.mode
+    if mode not in catalog["modes"]:
+        raise ReportCtlError(f"Unknown mode: {mode}")
     path = Path(args.file)
     try:
-        text = _read_text_bounded(path, MAX_REPORT_BYTES, "Report file")
+        report_limit = (
+            MAX_CHECKPOINT_REPORT_BYTES if checkpoint is not None else MAX_REPORT_BYTES
+        )
+        text = _read_text_bounded(path, report_limit, "Report file")
     except ReportCtlError:
         raise
-    findings = audit_markdown(text, path.resolve(), args.mode, catalog)
+    findings = audit_markdown(text, path.resolve(), mode, catalog)
+    checkpoint_findings: list[dict[str, Any]] = []
+    if checkpoint is not None:
+        checkpoint_findings = _checkpoint_must_show_findings(text, checkpoint["must_show"])
+        findings = _merge_bounded_audit_findings(findings, checkpoint_findings)
+    missing_must_show = sum(
+        item.get("code") == "missing-must-show" for item in checkpoint_findings
+    )
     errors = sum(item["severity"] == "error" for item in findings)
     warnings = sum(item["severity"] == "warning" for item in findings)
     payload = {
         "schema_version": 1,
         "file": str(path),
-        "mode": args.mode,
+        "mode": mode,
         "errors": errors,
         "warnings": warnings,
         "manual_checks_required": [
@@ -1672,12 +1530,25 @@ def command_audit(args: argparse.Namespace) -> int:
         ],
         "findings": findings,
     }
+    if checkpoint is not None:
+        payload["checkpoint"] = {
+            "file": str(checkpoint_path),
+            "schema_version": checkpoint["schema_version"],
+            "must_show_checked": len(checkpoint["must_show"]),
+            "must_show_missing": missing_must_show,
+        }
     if args.json:
         print(_safe_json_dumps(payload))
     else:
         for item in findings:
             location = f":{item['line']}" if "line" in item else ""
             _safe_print(f"{item['severity'].upper():7} {item['code']}{location} — {item['message']}")
+        if checkpoint is not None:
+            _safe_print(
+                "Checkpoint: "
+                f"{len(checkpoint['must_show'])} must-show item(s) checked, "
+                f"{missing_must_show} missing."
+            )
         _safe_print(f"Audit: {errors} error(s), {warnings} warning(s). Structural checks only; manual verification remains required.")
     return 1 if errors or (args.strict and warnings) else 0
 
@@ -2512,11 +2383,11 @@ def command_build_dist(args: argparse.Namespace) -> int:
 def add_route_arguments(parser: argparse.ArgumentParser, include_output: bool = False) -> None:
     parser.add_argument("--task", help="The reporting objective or user request")
     parser.add_argument("--checkpoint", help="Resume a saved reporting checkpoint")
-    parser.add_argument("--mode", choices=("auto",) + MODE_IDS, default="auto")
-    parser.add_argument("--surface", choices=SURFACES, default="chat")
-    parser.add_argument("--audience", default="user")
+    parser.add_argument("--mode", choices=("auto",) + MODE_IDS)
+    parser.add_argument("--surface", choices=SURFACES)
+    parser.add_argument("--audience")
     parser.add_argument("--module", action="append", choices=MODULE_IDS, help="Display module; repeat at most twice")
-    parser.add_argument("--must-show", action="append", default=[], help="Evidence or conclusion that must remain visible")
+    parser.add_argument("--must-show", action="append", help="Exact visible text anchor; repeat at most 20 times")
     if include_output:
         parser.add_argument("--output", required=True)
         parser.add_argument("--force", action="store_true")
@@ -2550,7 +2421,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     audit_parser = subparsers.add_parser("audit", help="Run limited structural checks on Markdown")
     audit_parser.add_argument("--file", required=True)
-    audit_parser.add_argument("--mode", choices=MODE_IDS, required=True)
+    audit_parser.add_argument("--mode", choices=MODE_IDS)
+    audit_parser.add_argument(
+        "--checkpoint",
+        help="Derive the mode and exact must-show anchors from a saved checkpoint",
+    )
     audit_parser.add_argument("--json", action="store_true")
     audit_parser.add_argument("--strict", action="store_true", help="Treat warnings as a failing exit status")
     audit_parser.set_defaults(handler=command_audit)

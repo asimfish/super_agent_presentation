@@ -21,11 +21,12 @@ files under dist/modules/. Do not also load the full Skill or every route. If th
 local CLI is available, one reportctl.py bundle may replace the dist path; never use
 both paths for the same handoff. Near the start of a likely long task, activate only
 long enough to preserve a tiny host-supported checkpoint containing the reporting
-objective, mode, audience, surface, and must-show evidence; do not retain the routed
-bundle. Reload the checkpoint after compaction, resume, or a multi-agent handoff.
-Before a substantive final response, run the structural audit if the repository and
-a file-backed draft are accessible, then manually check facts, claims, numbers,
-links, and uncertainty. If any resource or audit is unavailable, say so and use a
+objective, mode, audience, surface, modules, and must-show anchors; do not retain the
+routed bundle. Reload the checkpoint after compaction, resume, or a multi-agent handoff.
+Before a substantive final response, run the structural audit against that same
+checkpoint when the local CLI, checkpoint, and a file-backed draft are accessible,
+then manually check facts, claims, numbers, links, and uncertainty. If any resource
+or audit is unavailable, say so and use a
 concise outcome/evidence/boundary/action handoff.
 ```
 

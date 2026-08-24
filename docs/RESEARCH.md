@@ -91,11 +91,12 @@ they are not vendor guarantees:
    use and prevents implementation, experiment, academic, and review templates from
    being merged into one report.
 4. **Externalize only a tiny checkpoint during long work.** Save the reporting
-   objective, audience, surface, mode, and must-show evidence. Do not keep the full
-   report bundle or duplicate the task log.
+   objective, audience, surface, mode, modules, and short must-show anchors. Do not
+   keep the full report bundle, duplicate the task log, or store secrets.
 5. **Reload at lifecycle boundaries.** After compaction, resume, or a multi-agent
    handoff, use the checkpoint to retrieve a fresh bundle instead of trusting the
-   model to remember an earlier template.
+   model to remember an earlier template; at finalization, audit the draft against
+   that same checkpoint.
 6. **Let subagents return facts; let the root agent render.** Centralizing the final
    presentation avoids incompatible subagent formats while preserving their raw
    evidence and uncertainty.
@@ -108,6 +109,10 @@ they are not vendor guarantees:
    detect placeholders, missing blocks, malformed tables, or inaccessible local
    images. It cannot prove citations, scientific claims, metric comparability, or
    the appropriateness of an interpretation.
+9. **Use a lexical checkpoint gate, not a semantic claim.** A schema-v2 checksum can
+   detect accidental route drift, and normalized literal anchors can catch bounded
+   omissions. Neither authenticates the file nor proves meaning, authorship, truth,
+   audience fit, or module appropriateness.
 
 ## Recommended deployment
 

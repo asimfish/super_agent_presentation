@@ -34,7 +34,8 @@ or universal headings. Explicit user formatting remains authoritative.
   conditions, and three seeds.
 - A future `long-soak` run should probe the same final handoff near 10%, 50%, and
   85% context occupancy, plus a compaction/resume boundary, without repeating the
-  reporting rules.
+  reporting rules. It should record creation, reload, and final audit against the
+  same checkpoint rather than accepting an agent's self-report that these occurred.
 - Only a preregistered full run across held-out cases and multiple model revisions
   should support a public effectiveness claim.
 
@@ -183,4 +184,13 @@ explicit JSON-format override, prompt injection embedded in logs, a late failure
 after earlier success, rollback without root-cause resolution, unnecessary and
 misleading charts, inaccessible color-only graphics, zero/missing/N/A confusion,
 incomparable protocols, absent uncertainty, conflicting facts, secrets in logs,
-partial multi-task success, unsupported SOTA language, and stale file links.
+partial multi-task success, unsupported SOTA language, stale file links, a
+checkpoint/explicit-mode conflict, a tampered full-intent fingerprint, must-show text
+that appears only in headings/quotes/lists/tables/links/references/images/code/raw
+HTML, entity source text that differs from its rendered character, decoded controls
+or non-rendering characters, odd/even backslash entity escapes, an anchor split
+across blank-line paragraphs versus a soft line break, rejected anchor delimiter
+forms, an anchor after an unmasked raw HTML tag, a checkpoint-backed report above 1
+MiB, and audit output that must not echo a missing sensitive anchor. These are
+structural and security regressions, not evidence that real-agent reporting
+improves.

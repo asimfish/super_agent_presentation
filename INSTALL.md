@@ -237,9 +237,29 @@ the implementation, create the tiny reporting checkpoint and then stop.
 ```
 
 Use the host trace, when available, to verify actual Skill/tool invocation rather
-than accepting a claim that it happened. Inspect that the checkpoint contains only
-the reporting objective, mode, audience, surface, and must-show items; then remove
-the disposable checkpoint.
+than accepting a claim that it happened. Keep this disposable checkpoint in a
+private scratch directory outside the test repository. Inspect that it is schema v2
+and contains the expected objective, concrete mode, audience, surface, modules,
+short must-show anchors, timestamp, kind, and self-consistency checksums—without
+secrets or a copied task log.
+
+Resume the same host task and request the final handoff as a file-backed Markdown
+draft. Verify in the trace that the host reloads one bundle and runs:
+
+```bash
+python3 <installed-skill>/scripts/reportctl.py audit \
+  --file <draft.md> --checkpoint <the-same-checkpoint> --strict
+```
+
+Confirm that a missing anchor returns status 1, a conflicting explicit mode returns
+status 2, and the diagnostic does not replay the missing anchor. Then remove the
+disposable checkpoint. For a positive check, place the anchor in a standalone,
+column-zero ordinary conclusion sentence before raw HTML and separated by blank
+lines; headings, quotes, lists, tables, links/references, images, code, and raw HTML
+do not receive must-show credit. Use exact rendered plain text without Markdown
+delimiter forms. A created checkpoint normally has restrictive POSIX file
+permissions, but that does not make a permissive parent directory, terminal log,
+backup, or version-controlled path private.
 
 Run the repository's automated checks from the checkout as an additional release
 check; they do not prove that every model or host will comply:

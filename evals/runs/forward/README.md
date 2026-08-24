@@ -18,6 +18,11 @@ tests, not a human, cross-model, or public blind benchmark.
 The final adversarial assessment is `judge-3.json`. It explicitly identifies itself
 as a same-model, non-human, non-blind development review.
 
+The retained engineering checkpoint is a frozen schema-v1 development artifact from
+that run. Current `route`/`bundle` commands can still read it, but it predates and
+does not demonstrate the schema-v2 same-checkpoint final audit. The historical JSON
+is intentionally not rewritten.
+
 ## What failed before the final candidates
 
 The failed iterations are intentionally retained:

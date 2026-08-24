@@ -83,6 +83,41 @@ class PresentationBenchmarkTests(unittest.TestCase):
                 errors = list(Draft202012Validator(schema).iter_errors(data))
                 self.assertEqual(errors, [], [error.message for error in errors])
 
+    def test_benchmark_json_number_literals_are_bounded_before_conversion(self) -> None:
+        probe = """
+import pathlib
+import runpy
+import sys
+
+namespace = runpy.run_path(sys.argv[1], run_name="benchmark_json_number_probe")
+try:
+    namespace["_read_json"](pathlib.Path(sys.argv[2]))
+except Exception as exc:
+    print(type(exc).__name__ + ": " + str(exc))
+    raise SystemExit(0)
+raise SystemExit(1)
+"""
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "oversized-number.json"
+            source.write_text(
+                '{"schema_version":' + ("9" * 400_000) + "}",
+                encoding="utf-8",
+            )
+            try:
+                result = subprocess.run(
+                    [sys.executable, "-c", probe, str(SCRIPT), str(source)],
+                    cwd=ROOT,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                    timeout=5,
+                )
+            except subprocess.TimeoutExpired as exc:
+                self.fail(f"benchmark integer conversion exceeded the 5-second ceiling: {exc}")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("integer literal exceeds 128 characters", result.stdout)
+            self.assertLess(len(result.stdout), 512)
+
     def test_runtime_and_draft_schemas_reject_same_shape_mutations(self) -> None:
         activation = json.loads(ACTIVATION.read_text(encoding="utf-8"))
         activation_schema = json.loads(
