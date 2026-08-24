@@ -2,9 +2,10 @@
 
 ## Supported scope
 
-The framework is local reporting infrastructure. `reportctl.py` uses only Python's
-standard library, performs no network requests, does not execute report content,
-and does not require credentials. Its audit is structural and must not be treated as
+The framework is local reporting infrastructure. `reportctl.py`,
+`presentation_benchmark.py`, and the deterministic study commands use only Python's
+standard library, perform no network requests, do not execute report content, and
+do not require credentials. Their audit is structural and must not be treated as
 a security scanner or factual verifier. Human CLI output visibly escapes terminal
 controls and directional-format characters; generated Markdown applies the same
 defense, while JSON uses valid escapes that preserve parsed values.
@@ -18,6 +19,62 @@ caller explicitly requests a backed-up append. A pending adapter retry may reuse
 installed Skill only after a bounded, file-digest manifest matches the current
 source. Known adapter errors are preflighted; unexpected write failures receive a
 best-effort rollback.
+
+`presentation_study.py host-plan` only freezes a typed receipt. The sole model-call
+boundary is `host-run --execute`: it launches the exact preregistered external
+executable with a fixed argument vector and `shell=False`. That host may inherit the
+current account's authentication, use the network, incur model charges, and create
+provider-side state. Executable SHA-256 and local workspace receipts do not pin the
+provider model or credential boundary. The adapter enforces a timeout and bounded
+local response/transcript/stderr capture; it does not currently enforce a Codex
+provider output-token or monetary cap.
+The frozen host plan includes the complete argv, transcript format, and adapter
+source SHA-256. `host-run` rejects any rebuild drift before execution, and record
+validation checks the completed receipt against those frozen identities.
+
+Only `host-run` can create the controller-owned binding from a frozen host plan and
+completed execution receipt to the full stored record. Ordinary `import-output`
+records are manual evidence and cannot claim `host_adapter` telemetry or an
+adapter-enforced token cap. All imports also receive a record lock over the stored
+record, response, transcript, and optional host binding, so later mutation fails
+validation. This closes accidental/self-reported evidence paths;
+unkeyed receipts still do not defend against a dishonest same-account operator.
+Caller records and controller-stored records have distinct schemas, so a caller
+cannot inject `machine_evaluation` and a stored record cannot masquerade as raw
+input. Bounded enum/type validation rejects malformed or unhashable JSON values as
+controlled errors rather than tracebacks.
+
+Codex transcript parsing treats only successful exact command events as
+observations. Echoed command text, failed executions, compound shell syntax, wrong
+Skill paths, help/version or unknown-option forms, and mismatched checkpoint paths
+do not count. Even a matched command
+does not prove which persisted bytes were audited; current Codex runs therefore set
+`checkpoint_receipt_verified: false`. Public compaction evidence requires a future
+controller-side artifact receipt in addition to transcript observations.
+
+## Private study boundary
+
+A study output root must not already exist, must remain outside every Git worktree,
+and is created owner-only (`0700` on POSIX). Plans, held-out cases, prompts,
+responses, generated artifacts, JSONL transcripts, host plans, assignment keys,
+rating forms, and deblinding material are private evidence. Do not commit them,
+include their absolute paths in release artifacts, or pass secrets through study
+metadata. A reviewed aggregate pilot summary may be published only after removing
+raw content and local identifiers.
+
+Blind keys, rating locks, and controller records use owner-only files and bounded,
+atomic writes. The rating lock binds the assignment key and the entire blind packet,
+so aggregation rejects post-freeze edits to prompts, responses, artifacts, or the
+manifest. Artifact paths reject absolute paths, traversal, escaping symlinks,
+unsupported media types, nonregular targets, digest drift, and per-file/aggregate
+size excess. Study JSON additionally rejects excessive nesting, value counts, and
+numeric-token lengths, while the generation matrix and serialized manifest are
+bounded before initialization can succeed. These controls reduce accidental disclosure and tampering; unkeyed
+SHA-256 receipts do not authenticate the operator, and a malicious same-account
+process remains outside the filesystem-race boundary. For public effectiveness
+claims, a same-account baseline workspace is insufficient: use a recorded external
+sandbox, one controller-locked workspace per generation unit, a receipt that covers
+the fresh per-unit starting state, and an audited shared global-instruction policy.
 
 ## Untrusted input
 

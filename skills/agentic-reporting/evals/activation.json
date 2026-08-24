@@ -47,7 +47,7 @@
       "category": "natural_positive",
       "prompt": "Analyze these five-seed benchmark results and present the table, conclusion, uncertainty, and limitations.",
       "expected_activation": true,
-      "expected_route": {"mode": "experiment-report", "modules": ["tables", "conclusions"]},
+      "expected_route": {"mode": "experiment-report", "modules": ["tables"]},
       "reason": "A multi-run experiment analysis needs a reproducible report protocol and bounded displays.",
       "expected_behavior": [
         "Select experiment-report without requiring explicit invocation.",

@@ -11,6 +11,7 @@ import argparse
 import importlib.util
 import json
 import re
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -233,9 +234,47 @@ def _require_identifier(value: Any, label: str) -> str:
     return identifier
 
 
-def load_benchmark() -> dict[str, Any]:
-    data = _read_json(CASES_PATH)
-    validate_benchmark(data)
+def _resolve_artifact_root(artifact_root: Path) -> Path:
+    try:
+        resolved_root = Path(artifact_root).expanduser().resolve(strict=True)
+        if not resolved_root.is_dir():
+            raise BenchmarkError(f"artifact root must be a directory: {artifact_root}")
+    except BenchmarkError:
+        raise
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise BenchmarkError(f"cannot resolve artifact root {artifact_root}: {exc}") from exc
+    return resolved_root
+
+
+def _resolve_declared_artifact(
+    artifact_root: Path,
+    artifact: str,
+    *,
+    label: str,
+) -> Path:
+    artifact_path = Path(artifact)
+    if artifact_path.is_absolute() or ".." in artifact_path.parts:
+        raise BenchmarkError(f"{label} must be a safe artifact-root-relative path: {artifact}")
+    try:
+        resolved_artifact = (artifact_root / artifact_path).resolve(strict=True)
+        resolved_artifact.relative_to(artifact_root)
+        mode = resolved_artifact.stat().st_mode
+    except ValueError as exc:
+        raise BenchmarkError(f"{label} escapes the artifact root: {artifact}") from exc
+    except (OSError, RuntimeError) as exc:
+        raise BenchmarkError(f"{label} cannot be resolved within the artifact root: {artifact}") from exc
+    if not stat.S_ISREG(mode):
+        raise BenchmarkError(f"{label} must resolve to a regular file: {artifact}")
+    return resolved_artifact
+
+
+def load_benchmark(
+    path: Path = CASES_PATH,
+    *,
+    artifact_root: Path = REPO_ROOT,
+) -> dict[str, Any]:
+    data = _read_json(Path(path))
+    validate_benchmark(data, artifact_root=artifact_root)
     return data
 
 
@@ -350,7 +389,11 @@ def validate_activation(data: dict[str, Any]) -> None:
         raise BenchmarkError(f"activation contract is missing rubric coverage: {', '.join(missing_rubrics)}")
 
 
-def validate_benchmark(data: dict[str, Any]) -> None:
+def validate_benchmark(
+    data: dict[str, Any],
+    *,
+    artifact_root: Path = REPO_ROOT,
+) -> None:
     _require_object_shape(
         data,
         "presentation root",
@@ -366,6 +409,7 @@ def validate_benchmark(data: dict[str, Any]) -> None:
     cases = data.get("cases")
     if not isinstance(cases, list) or len(cases) < 7:
         raise BenchmarkError("presentation benchmark must contain at least seven cases")
+    resolved_artifact_root = _resolve_artifact_root(artifact_root)
 
     ids: set[str] = set()
     scenarios: set[str] = set()
@@ -392,12 +436,11 @@ def validate_benchmark(data: dict[str, Any]) -> None:
         _require_string(case.get("evidence_boundary"), f"case {case_id} evidence_boundary")
         _require_string_list(case.get("artifacts"), f"case {case_id} artifacts")
         for artifact in case["artifacts"]:
-            artifact_path = Path(artifact)
-            if artifact_path.is_absolute() or ".." in artifact_path.parts:
-                raise BenchmarkError(f"case {case_id} artifact must be a safe repository-relative path: {artifact}")
-            resolved_artifact = (REPO_ROOT / artifact_path).resolve()
-            if REPO_ROOT not in resolved_artifact.parents or not resolved_artifact.is_file():
-                raise BenchmarkError(f"case {case_id} artifact does not resolve to a repository file: {artifact}")
+            _resolve_declared_artifact(
+                resolved_artifact_root,
+                artifact,
+                label=f"case {case_id} artifact",
+            )
         _require_string(case.get("report_profile"), f"case {case_id} report_profile")
         expected_route = case.get("expected_route")
         if not isinstance(expected_route, dict) or set(expected_route) != {"mode", "modules"}:
@@ -675,6 +718,7 @@ def _check_one(
     check: dict[str, Any],
     text: str,
     response_path: Path,
+    artifact_root: Path,
 ) -> tuple[bool, str]:
     check_type = check["type"]
     if check_type == "required_regex":
@@ -720,7 +764,14 @@ def _check_one(
                 and path.suffix.casefold() in RENDERABLE_IMAGE_SUFFIXES
                 for path in resolved_images
             )
-        allowed_artifacts = {(REPO_ROOT / artifact).resolve() for artifact in case.get("artifacts", [])}
+        allowed_artifacts = {
+            _resolve_declared_artifact(
+                artifact_root,
+                artifact,
+                label=f"case {case['id']} artifact",
+            )
+            for artifact in case.get("artifacts", [])
+        }
         artifact_match = bool(images) and bool(allowed_artifacts) and any(
             path in allowed_artifacts for path in resolved_images if path is not None
         )
@@ -759,7 +810,13 @@ def _check_one(
     return passed, observed
 
 
-def evaluate_response(case: dict[str, Any], response_path: Path) -> dict[str, Any]:
+def evaluate_response(
+    case: dict[str, Any],
+    response_path: Path,
+    *,
+    artifact_root: Path = REPO_ROOT,
+) -> dict[str, Any]:
+    resolved_artifact_root = _resolve_artifact_root(artifact_root)
     try:
         size = response_path.stat().st_size
         if not response_path.is_file():
@@ -782,7 +839,13 @@ def evaluate_response(case: dict[str, Any], response_path: Path) -> dict[str, An
         raise BenchmarkError(f"cannot read response file {response_path}: {exc}") from exc
     results = []
     for check in case["machine_checks"]:
-        passed, observed = _check_one(case, check, text, response_path)
+        passed, observed = _check_one(
+            case,
+            check,
+            text,
+            response_path,
+            resolved_artifact_root,
+        )
         results.append(
             {
                 "id": check["id"],

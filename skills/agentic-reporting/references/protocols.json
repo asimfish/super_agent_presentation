@@ -134,9 +134,11 @@
         "评估结果",
         "统计分析"
       ],
-      "default_modules": [
-        "tables",
+      "embedded_modules": [
         "conclusions"
+      ],
+      "default_modules": [
+        "tables"
       ],
       "required_semantics": [
         "question",

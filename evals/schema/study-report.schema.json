@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/asimfish/super_agent_presentation/evals/schema/study-report.schema.json",
+  "title": "Aggregated blind study report and claim gate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "study_id", "study_kind", "claim_boundary", "input_receipts",
+    "generation", "ratings", "critical_error_count", "metrics", "gates", "claim",
+    "limitations"
+  ],
+  "properties": {
+    "$schema": {"type": "string", "minLength": 1},
+    "schema_version": {"const": "1.0"},
+    "study_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,79}$"},
+    "study_kind": {"enum": ["pilot", "controlled", "public"]},
+    "claim_boundary": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "input_receipts": {"$ref": "#/$defs/inputReceipts"},
+    "generation": {"$ref": "#/$defs/generation"},
+    "ratings": {"$ref": "#/$defs/ratings"},
+    "critical_error_count": {"type": "integer", "minimum": 0},
+    "metrics": {"$ref": "#/$defs/metrics"},
+    "gates": {
+      "type": "object", "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z0-9_]+$"},
+      "additionalProperties": {"oneOf": [{"type": "boolean"}, {"type": "null"}]}
+    },
+    "claim": {"$ref": "#/$defs/claim"},
+    "limitations": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "string", "minLength": 1, "maxLength": 2000}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"study_kind": {"const": "pilot"}}, "required": ["study_kind"]},
+      "then": {
+        "properties": {
+          "claim": {
+            "properties": {
+              "status": {"const": "insufficient_evidence"},
+              "effectiveness_claim_eligible": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableNumber": {"oneOf": [{"type": "number"}, {"type": "null"}]},
+    "nullableRate": {
+      "oneOf": [{"type": "number", "minimum": 0, "maximum": 1}, {"type": "null"}]
+    },
+    "inputReceipts": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "plan_sha256", "cases_sha256", "input_artifacts_sha256",
+        "assignment_key_sha256", "ratings_lock_sha256"
+      ],
+      "properties": {
+        "plan_sha256": {"$ref": "#/$defs/sha256"},
+        "cases_sha256": {"$ref": "#/$defs/sha256"},
+        "input_artifacts_sha256": {"$ref": "#/$defs/sha256"},
+        "assignment_key_sha256": {"$ref": "#/$defs/sha256"},
+        "ratings_lock_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "generation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record_count", "pair_count"],
+      "properties": {
+        "record_count": {"type": "integer", "minimum": 0},
+        "pair_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "ratings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rater_count", "qualified_independent_count"],
+      "properties": {
+        "rater_count": {"type": "integer", "minimum": 0},
+        "qualified_independent_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "dimensionMap": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "task_fidelity", "information_architecture", "readability_and_scannability",
+        "completeness_and_actionability", "evidence_calibration",
+        "visual_display_fitness", "concision_and_proportionality"
+      ],
+      "properties": {
+        "task_fidelity": {"$ref": "#/$defs/nullableNumber"},
+        "information_architecture": {"$ref": "#/$defs/nullableNumber"},
+        "readability_and_scannability": {"$ref": "#/$defs/nullableNumber"},
+        "completeness_and_actionability": {"$ref": "#/$defs/nullableNumber"},
+        "evidence_calibration": {"$ref": "#/$defs/nullableNumber"},
+        "visual_display_fitness": {"$ref": "#/$defs/nullableNumber"},
+        "concision_and_proportionality": {"$ref": "#/$defs/nullableNumber"}
+      }
+    },
+    "humanDimensionMeans": {
+      "type": "object", "additionalProperties": false,
+      "required": ["baseline", "framework"],
+      "properties": {
+        "baseline": {"$ref": "#/$defs/dimensionMap"},
+        "framework": {"$ref": "#/$defs/dimensionMap"}
+      }
+    },
+    "ci95": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "prefixItems": [
+        {"$ref": "#/$defs/nullableNumber"}, {"$ref": "#/$defs/nullableNumber"}
+      ],
+      "items": false
+    },
+    "primaryComposite": {
+      "type": "object", "additionalProperties": false,
+      "required": ["difference", "ci95", "case_count", "resamples"],
+      "properties": {
+        "difference": {"$ref": "#/$defs/nullableNumber"},
+        "ci95": {"$ref": "#/$defs/ci95"},
+        "case_count": {"type": "integer", "minimum": 0},
+        "resamples": {
+          "oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}]
+        }
+      }
+    },
+    "taskDifference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["difference", "ci95"],
+      "properties": {
+        "difference": {"$ref": "#/$defs/nullableNumber"},
+        "ci95": {"$ref": "#/$defs/ci95"}
+      }
+    },
+    "preference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["framework", "baseline", "tie", "win_rate", "loss_rate"],
+      "properties": {
+        "framework": {"type": "integer", "minimum": 0},
+        "baseline": {"type": "integer", "minimum": 0},
+        "tie": {"type": "integer", "minimum": 0},
+        "win_rate": {"$ref": "#/$defs/nullableRate"},
+        "loss_rate": {"$ref": "#/$defs/nullableRate"}
+      }
+    },
+    "visualSelection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tp", "fp", "fn", "tn", "precision", "recall"],
+      "properties": {
+        "tp": {"type": "integer", "minimum": 0},
+        "fp": {"type": "integer", "minimum": 0},
+        "fn": {"type": "integer", "minimum": 0},
+        "tn": {"type": "integer", "minimum": 0},
+        "precision": {"$ref": "#/$defs/nullableRate"},
+        "recall": {"$ref": "#/$defs/nullableRate"}
+      }
+    },
+    "pairNumbers": {
+      "type": "object", "additionalProperties": false,
+      "required": ["median", "p90"],
+      "properties": {
+        "median": {"$ref": "#/$defs/nullableNumber"},
+        "p90": {"$ref": "#/$defs/nullableNumber"}
+      }
+    },
+    "longSoak": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fresh_pass_rate", "soak85_pass_rate", "gap"],
+      "properties": {
+        "fresh_pass_rate": {"$ref": "#/$defs/nullableRate"},
+        "soak85_pass_rate": {"$ref": "#/$defs/nullableRate"},
+        "gap": {"$ref": "#/$defs/nullableNumber"}
+      }
+    },
+    "metrics": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "human_dimension_means", "primary_composite", "task_fidelity_difference",
+        "preference", "machine_invariant_pass_rate", "mandatory_display_checks",
+        "semantic_slot_adherence", "semantic_slot_density_per_1000_output_tokens",
+        "visual_selection", "token_overhead", "agreement_within_one", "long_soak"
+      ],
+      "properties": {
+        "human_dimension_means": {"$ref": "#/$defs/humanDimensionMeans"},
+        "primary_composite": {"$ref": "#/$defs/primaryComposite"},
+        "task_fidelity_difference": {"$ref": "#/$defs/taskDifference"},
+        "preference": {"$ref": "#/$defs/preference"},
+        "machine_invariant_pass_rate": {"$ref": "#/$defs/nullableRate"},
+        "mandatory_display_checks": {"$ref": "#/$defs/checkCoverage"},
+        "semantic_slot_adherence": {"$ref": "#/$defs/nullableRate"},
+        "semantic_slot_density_per_1000_output_tokens": {
+          "$ref": "#/$defs/semanticDensity"
+        },
+        "visual_selection": {"$ref": "#/$defs/visualSelection"},
+        "token_overhead": {"$ref": "#/$defs/pairNumbers"},
+        "agreement_within_one": {"$ref": "#/$defs/nullableRate"},
+        "long_soak": {"$ref": "#/$defs/longSoak"}
+      }
+    },
+    "checkCoverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["passed", "total", "pass_rate"],
+      "properties": {
+        "passed": {"type": "integer", "minimum": 0},
+        "total": {"type": "integer", "minimum": 0},
+        "pass_rate": {"$ref": "#/$defs/nullableRate"}
+      }
+    },
+    "semanticDensity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["baseline", "framework", "difference"],
+      "properties": {
+        "baseline": {"$ref": "#/$defs/nullableNumber"},
+        "framework": {"$ref": "#/$defs/nullableNumber"},
+        "difference": {"$ref": "#/$defs/nullableNumber"}
+      }
+    },
+    "claim": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "status", "effectiveness_claim_eligible", "missing_prerequisites", "failed_gates"
+      ],
+      "properties": {
+        "status": {"enum": ["pass", "fail", "insufficient_evidence"]},
+        "effectiveness_claim_eligible": {"type": "boolean"},
+        "missing_prerequisites": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "failed_gates": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9_]+$"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"enum": ["fail", "insufficient_evidence"]}}, "required": ["status"]},
+          "then": {"properties": {"effectiveness_claim_eligible": {"const": false}}}
+        },
+        {
+          "if": {"properties": {"effectiveness_claim_eligible": {"const": true}}, "required": ["effectiveness_claim_eligible"]},
+          "then": {"properties": {"status": {"const": "pass"}}}
+        }
+      ]
+    }
+  }
+}

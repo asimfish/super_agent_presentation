@@ -89,10 +89,10 @@ class ReportCtlTests(unittest.TestCase):
         cases = {
             "Give a concise answer. Do not use a table or image.": ("concise-answer", []),
             "请简短回答，不要使用表格或图片。": ("concise-answer", []),
-            "请给出实验汇报，但不要表格和图片。": ("experiment-report", ["conclusions"]),
+            "请给出实验汇报，但不要表格和图片。": ("experiment-report", []),
             "不要使用图表，只给文字结论。": ("concise-answer", ["conclusions"]),
             "请审查这份实验报告，不要表格。": ("review-report", ["evidence"]),
-            "Give an experiment report and avoid tables.": ("experiment-report", ["conclusions"]),
+            "Give an experiment report and avoid tables.": ("experiment-report", []),
         }
         for task, (mode, modules) in cases.items():
             with self.subTest(task=task):
@@ -149,6 +149,46 @@ class ReportCtlTests(unittest.TestCase):
         self.assertIn("Primary mode: `experiment-report`", result.stdout)
         self.assertIn("Display module: tables", result.stdout)
         self.assertNotIn("Display module: visuals", result.stdout)
+
+    def test_experiment_conclusion_is_embedded_and_not_auto_loaded(self) -> None:
+        routed = run_cli(
+            "route",
+            "--task",
+            "Analyze the five-seed experiment table and give a calibrated conclusion.",
+            "--json",
+        )
+        self.assertEqual(routed.returncode, 0, routed.stderr)
+        payload = json.loads(routed.stdout)
+        self.assertEqual(payload["mode"], "experiment-report")
+        self.assertEqual(payload["modules"], ["tables"])
+
+        explicit = run_cli(
+            "route",
+            "--task",
+            "Analyze the experiment and make a separate deployment recommendation.",
+            "--mode",
+            "experiment-report",
+            "--module",
+            "conclusions",
+            "--json",
+        )
+        self.assertEqual(explicit.returncode, 0, explicit.stderr)
+        self.assertEqual(json.loads(explicit.stdout)["modules"], ["conclusions"])
+
+    def test_default_experiment_bundle_stays_under_twelve_thousand_characters(self) -> None:
+        result = run_cli(
+            "bundle",
+            "--task",
+            "Analyze the five-seed benchmark table and give a calibrated conclusion.",
+            "--mode",
+            "experiment-report",
+            "--max-chars",
+            "12000",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertLessEqual(len(result.stdout), 12000)
+        self.assertIn("Display module: tables", result.stdout)
+        self.assertNotIn("Display module: conclusions", result.stdout)
 
     def test_checkpoint_round_trip_and_tamper_detection(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

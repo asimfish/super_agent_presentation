@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/asimfish/super_agent_presentation/evals/schema/study-plan.schema.json",
+  "title": "Agentic reporting study plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "study_id", "study_kind", "claim_boundary", "benchmark",
+    "framework", "execution", "models", "conditions", "seeds", "contexts",
+    "generation", "rating", "analysis"
+  ],
+  "properties": {
+    "$schema": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "schema_version": {"const": "1.0"},
+    "study_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,79}$"},
+    "study_kind": {"enum": ["pilot", "controlled", "public"]},
+    "claim_boundary": {
+      "type": "string", "minLength": 1, "maxLength": 2000, "pattern": "\\S"
+    },
+    "benchmark": {"$ref": "#/$defs/benchmark"},
+    "framework": {"$ref": "#/$defs/framework"},
+    "execution": {"$ref": "#/$defs/execution"},
+    "models": {
+      "type": "array", "minItems": 1, "maxItems": 20,
+      "items": {"$ref": "#/$defs/model"}
+    },
+    "conditions": {"const": ["baseline", "framework"]},
+    "seeds": {
+      "type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true,
+      "items": {"type": "integer", "minimum": 0, "maximum": 2147483647}
+    },
+    "contexts": {
+      "type": "array", "minItems": 1, "maxItems": 20,
+      "items": {"$ref": "#/$defs/context"}
+    },
+    "generation": {"$ref": "#/$defs/generation"},
+    "rating": {"$ref": "#/$defs/rating"},
+    "analysis": {"$ref": "#/$defs/analysis"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"study_kind": {"const": "pilot"}}, "required": ["study_kind"]},
+      "then": {
+        "properties": {
+          "benchmark": {"properties": {"heldout": {"const": false}}}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+    "dimension": {
+      "enum": [
+        "task_fidelity", "information_architecture", "readability_and_scannability",
+        "completeness_and_actionability", "evidence_calibration",
+        "visual_display_fitness", "concision_and_proportionality"
+      ]
+    },
+    "benchmark": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "benchmark_id", "cases_sha256", "case_ids", "heldout", "preregistration_receipt"
+      ],
+      "properties": {
+        "benchmark_id": {"type": "string", "minLength": 1},
+        "cases_sha256": {"$ref": "#/$defs/sha256"},
+        "case_ids": {
+          "type": "array", "minItems": 1, "maxItems": 500, "uniqueItems": true,
+          "items": {
+            "type": "string", "maxLength": 80,
+            "pattern": "^[a-z0-9][a-z0-9-]{0,79}$"
+          }
+        },
+        "heldout": {"type": "boolean"},
+        "preregistration_receipt": {
+          "oneOf": [
+            {"type": "string", "minLength": 1, "maxLength": 500, "pattern": "\\S"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "framework": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "commit_sha", "skill_manifest_sha256", "adapter_sha256"],
+      "properties": {
+        "repository": {
+          "type": "string", "minLength": 1, "maxLength": 500, "pattern": "\\S"
+        },
+        "commit_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "skill_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "adapter_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "baseline_isolation", "isolation_receipt", "global_instruction_policy",
+        "replicate_semantics"
+      ],
+      "properties": {
+        "baseline_isolation": {"enum": ["same-account-workspace", "external-sandbox"]},
+        "isolation_receipt": {
+          "oneOf": [
+            {"type": "string", "minLength": 1, "maxLength": 1000, "pattern": "\\S"},
+            {"type": "null"}
+          ]
+        },
+        "global_instruction_policy": {"enum": ["unverified", "shared-and-audited"]},
+        "replicate_semantics": {"enum": ["independent-repeat", "provider-seed"]}
+      }
+    },
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "id", "host", "host_version", "model", "revision", "revision_receipt",
+        "executable_sha256"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$"},
+        "host": {"enum": ["manual", "codex", "claude", "copilot", "gemini"]},
+        "host_version": {
+          "type": "string", "minLength": 1, "maxLength": 200, "pattern": "\\S"
+        },
+        "model": {
+          "type": "string", "minLength": 1, "maxLength": 200, "pattern": "\\S"
+        },
+        "revision": {
+          "type": "string", "minLength": 1, "maxLength": 200, "pattern": "\\S"
+        },
+        "revision_receipt": {
+          "oneOf": [
+            {"type": "string", "minLength": 1, "maxLength": 1000, "pattern": "\\S"},
+            {"type": "null"}
+          ]
+        },
+        "executable_sha256": {"$ref": "#/$defs/nullableSha256"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"host": {"const": "manual"}}, "required": ["host"]},
+          "then": {"properties": {"executable_sha256": {"type": "null"}}},
+          "else": {"properties": {"executable_sha256": {"$ref": "#/$defs/sha256"}}}
+        }
+      ]
+    },
+    "context": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "target_occupancy_percent", "compaction_required"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,79}$"},
+        "target_occupancy_percent": {"type": "number", "minimum": 0, "maximum": 100},
+        "compaction_required": {"type": "boolean"}
+      }
+    },
+    "generation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_output_tokens", "timeout_seconds", "locale", "renderer"],
+      "properties": {
+        "max_output_tokens": {"type": "integer", "minimum": 1, "maximum": 32768},
+        "timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 86400},
+        "locale": {
+          "type": "string", "minLength": 1, "maxLength": 100, "pattern": "\\S"
+        },
+        "renderer": {
+          "type": "string", "minLength": 1, "maxLength": 200, "pattern": "\\S"
+        }
+      }
+    },
+    "rating": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required_raters"],
+      "properties": {
+        "required_raters": {"type": "integer", "minimum": 2, "maximum": 20}
+      }
+    },
+    "thresholds": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "machine_pass_rate_min", "human_dimension_min", "priority_dimension_min",
+        "primary_gain_min", "primary_ci_lower_min", "task_fidelity_margin",
+        "win_rate_min", "loss_rate_max", "semantic_slot_rate_min",
+        "semantic_density_difference_min",
+        "visual_precision_min", "visual_recall_min", "token_overhead_median_max",
+        "token_overhead_p90_max", "long_soak_pass_rate_min",
+        "long_soak_fresh_gap_max", "agreement_within_one_min"
+      ],
+      "properties": {
+        "machine_pass_rate_min": {"const": 0.98},
+        "human_dimension_min": {"const": 4.0},
+        "priority_dimension_min": {"const": 4.2},
+        "primary_gain_min": {"const": 0.3},
+        "primary_ci_lower_min": {"const": 0.0},
+        "task_fidelity_margin": {"const": 0.2},
+        "win_rate_min": {"const": 0.65},
+        "loss_rate_max": {"const": 0.15},
+        "semantic_slot_rate_min": {"const": 0.95},
+        "semantic_density_difference_min": {"const": 0.0},
+        "visual_precision_min": {"const": 0.9},
+        "visual_recall_min": {"const": 0.9},
+        "token_overhead_median_max": {"const": 0.15},
+        "token_overhead_p90_max": {"const": 0.3},
+        "long_soak_pass_rate_min": {"const": 0.9},
+        "long_soak_fresh_gap_max": {"const": 0.05},
+        "agreement_within_one_min": {"const": 0.85}
+      }
+    },
+    "analysis": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "bootstrap_seed", "bootstrap_resamples", "primary_context_ids",
+        "primary_dimensions", "thresholds"
+      ],
+      "properties": {
+        "bootstrap_seed": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+        "bootstrap_resamples": {"type": "integer", "minimum": 10000, "maximum": 1000000},
+        "primary_context_ids": {
+          "type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,79}$"}
+        },
+        "primary_dimensions": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"$ref": "#/$defs/dimension"}
+        },
+        "thresholds": {"$ref": "#/$defs/thresholds"}
+      }
+    }
+  }
+}

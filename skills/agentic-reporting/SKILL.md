@@ -24,7 +24,10 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
 3. Complete and verify the actual task. Keep task execution independent of report
    styling.
 4. Immediately before a substantive update or final answer, retrieve one bounded
-   bundle. Add at most two display modules and only when the content needs them:
+   bundle. Prefer one display module; add a second only for a distinct need that the
+   primary mode and first module do not already cover. Never load a module merely
+   because the requested output names a semantic that the selected mode already
+   specifies:
 
    Resolve `<skill-dir>` to the directory containing this `SKILL.md`; do not
    assume the caller's working directory is the skill directory.
@@ -76,6 +79,10 @@ the user's main decision or question and embed secondary facts inside it.
 Figures, tables, conclusions, evidence detail, and academic display are orthogonal
 modules, not reasons to merge multiple modes. A visual must make a relationship or
 artifact materially easier to understand; decoration is not a valid reason.
+`experiment-report` already contains result interpretation, uncertainty boundaries,
+and a calibrated conclusion. Do not add `conclusions` to that mode merely because
+the request asks for a conclusion; add it explicitly only when a separate decision
+or recommendation policy is genuinely needed.
 
 ## Long-context persistence
 

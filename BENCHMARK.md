@@ -2,18 +2,20 @@
 
 ## Status and claim boundary
 
-This repository ships an executable, standard-library-only evaluation harness. The
-checked-in smoke fixtures test the harness and the declared reporting invariants;
-they do **not** show that the framework improves a real agent. An effectiveness
-claim requires a completed, pinned, blind baseline-versus-framework generation run,
-independent ratings, and the resulting machine report.
+This repository ships a deterministic fixture harness plus a standard-library-only
+private study controller. The checked-in smoke fixtures test the evaluator and the
+declared reporting invariants; they do **not** show that the framework improves a
+real agent. A one-pair real-host pilot validates an execution and activation path
+only. An effectiveness claim requires a completed, externally isolated, pinned,
+blind baseline-versus-framework study, independent frozen ratings, complete host
+telemetry, and a passing machine claim report.
 
 ## Questions under evaluation
 
 The benchmark keeps three questions separate:
 
 1. Does a framework report meet an absolute reporting-quality bar?
-2. With model, task, tools, decoding, and output budget held fixed, does the
+2. With model, task, tools, decoding, and an actually enforceable output budget held fixed, does the
    framework improve the report over a no-framework baseline?
 3. Does reporting guidance preserve task correctness and remain proportionate in
    token cost, visual use, and ceremony after long work sessions?
@@ -30,12 +32,19 @@ or universal headings. Explicit user formatting remains authoritative.
   contract with eight cases. CI validates four boundary categories and five
   governance rubrics, then checks only the five positive cases' internal routes
   after activation. It does not observe whether a real host invokes the Skill.
-- A future `core` run should use at least four held-out cases per scenario, both
-  conditions, and three seeds.
-- A future `long-soak` run should probe the same final handoff near 10%, 50%, and
-  85% context occupancy, plus a compaction/resume boundary, without repeating the
-  reporting rules. It should record creation, reload, and final audit against the
-  same checkpoint rather than accepting an agent's self-report that these occurred.
+- `presentation_study.py` now implements the `core` mechanics: immutable inputs,
+  generation ingest, typed host receipts, blinding, rating freeze, paired case
+  bootstrap, and claim gates. No complete core study has been run. A full run still
+  needs at least four private held-out cases per scenario, both conditions, and
+  three independent repeats.
+- The controller accepts the planned `long-soak` contexts near 10%, 50%, and 85%
+  occupancy plus a compaction/resume boundary, and records checkpoint telemetry.
+  That matrix has not been executed; self-reported occupancy or checkpoint use is
+  insufficient.
+- `evals/runs/pilot/codex-20260824/` is a one-case, one-model-alias, one-repeat real
+  Codex pilot. It observed one treatment Skill read and none in baseline, but has no
+  blind ratings, private holdout, external baseline isolation, fixed provider
+  revision, audited global-instruction policy, or enforced output-token cap.
 - Only a preregistered full run across held-out cases and multiple model revisions
   should support a public effectiveness claim.
 
@@ -64,15 +73,62 @@ The smoke JSON deliberately reports `host_activation_observed: false` and
 `activation_effectiveness_claim: false`. The locally checked route proxy must not be
 renamed activation accuracy, precision, recall, or pass rate.
 
+The private study lifecycle is separate from smoke:
+
+```bash
+python3 scripts/presentation_study.py init \
+  --plan <private-dir>/plan.json \
+  --cases-file <private-dir>/heldout-cases.json \
+  --artifact-root <private-dir>/case-assets \
+  --output <private-dir>/run
+python3 scripts/presentation_study.py import-output \
+  --run-dir <private-dir>/run --record <record.json> --response <response.md>
+python3 scripts/presentation_study.py validate --run-dir <private-dir>/run
+python3 scripts/presentation_study.py blind --run-dir <private-dir>/run
+python3 scripts/presentation_study.py rating-template \
+  --run-dir <private-dir>/run --rater-id <rater-id> --output <private-rating.json>
+python3 scripts/presentation_study.py freeze-ratings \
+  --run-dir <private-dir>/run --rating <completed-private-rating.json>
+python3 scripts/presentation_study.py aggregate --run-dir <private-dir>/run --json
+```
+
+For a supported real host, `host-plan` freezes a typed receipt without execution.
+`host-run` launches the exact reviewed executable only when `--execute` is present;
+without it the command fails closed. The adapter uses a fixed argument vector and
+`shell=False`, then parses bounded JSONL telemetry. The plan locks the complete argv,
+transcript format, and host-adapter source SHA-256; execution rebuilds and compares
+all three exactly, and the completed receipt is checked against the frozen plan.
+It may inherit host credentials,
+use the network, incur cost, and alter provider-side state. It enforces a timeout and
+local transcript/stderr/response byte caps, but Codex currently does not expose the
+plan's `max_output_tokens` as an adapter-enforced provider cap. The receipt records
+that limitation instead of claiming equal budgets. Transcript telemetry credits
+only successful, exactly tokenized Skill/reportctl command executions; echoed text,
+failed commands, shell operators, help/version or unknown-option forms, and
+mismatched checkpoint paths receive no credit.
+Those observations still do not bind persisted checkpoint bytes to the audited
+report. The current Codex adapter therefore records
+`checkpoint_receipt_verified: false`, which makes it ineligible for a public claim
+in compaction-required strata until a controller-side receipt is implemented.
+
+`pilot-summary` is available only for `study_kind=pilot` and always emits
+`status: insufficient_evidence` with `effectiveness_claim_eligible: false`.
+
 ## Baseline-versus-framework protocol
 
 1. Freeze the case set and gates before generation.
-2. Pin model revision, client, system prompts and their SHA-256 hashes, framework
-   commit, tools, decoding controls, output budget, locale, rendering CSS, seed
-   policy, and artifact checksums.
-3. Run the baseline in an isolated directory that cannot read this framework or the
-   hidden evaluator. Run the treatment from the pinned distribution, not from a
-   maintainer checkout containing hidden cases.
+2. Pin a verifiable model revision, client executable and SHA-256, system/global
+   instructions and their receipts, framework commit, installed Skill/adapter
+   manifests, tools, decoding controls, enforceable output budget, locale,
+   renderer, repeat semantics, and artifact checksums. A caller-supplied revision
+   label is not proof that a provider model is immutable.
+3. Run each generation unit in its own controller-recorded workspace. Run the
+   baseline in an externally isolated sandbox that cannot read this
+   framework or the hidden evaluator, and retain its isolation receipt. A separate
+   same-account workspace is useful for a pilot but is not sufficient for a public
+   claim. The external receipt must cover the fresh per-unit starting state, not
+   merely repeat the plan's `independent-repeat` label. Run treatment from the
+   pinned distribution, not a maintainer checkout.
 4. Give both conditions the exact prompt emitted by this harness. Preserve tool
    availability and task assets.
 5. Save raw Markdown, generated artifacts, the full transcript, token counts,
@@ -80,12 +136,46 @@ renamed activation accuracy, precision, recall, or pass rate.
 6. Randomize pair order and A/B assignment. Keep the key private with owner-only
    permissions, and reject symbolic-link key targets.
 7. Render both reports with the same renderer. Raters score each side separately
-   before recording a preference. They must not see condition names, machine checks,
-   framework terminology, or the assignment key.
+   before recording a preference. The controller omits condition labels, machine
+   checks, and the assignment key. It copies response content verbatim, so style or
+   explicit self-identification may reveal treatment; measure and disclose that
+   residual blinding limitation rather than claiming perfect masking.
 8. Use at least two independent qualified raters; three are preferred for release
    evidence. Freeze ratings before deblinding.
 9. Aggregate repeated seeds at the case level, then use a paired case bootstrap.
    Do not treat seeds from one prompt as independent cases.
+
+## Claim eligibility before metric gates
+
+The controller returns `insufficient_evidence` before considering a favorable score
+unless the frozen design includes all of the following:
+
+- a private held-out case file distinct from the public development suite and an
+  external preregistration receipt;
+- all seven public scenario families with at least four cases each;
+- both required and forbidden visual-oracle coverage, plus at least one required
+  local-image check and declared table-count checks;
+- at least three declared independent repeats backed by distinct controller-locked
+  workspaces and an external per-unit isolation receipt, multiple verifiable model revisions, and
+  fresh/50%/85% context conditions including required compaction coverage;
+- an `external-sandbox` baseline-isolation receipt and
+  `shared-and-audited` global-instruction policy;
+- complete generation pairs, host telemetry, framework activation evidence,
+  controller-bound executable-host records, unpolluted baseline receipts, revision
+  receipts, enforced output-token caps,
+  observed context strata, complete compaction observations, successful strict
+  final-audit telemetry for every framework response, and successful
+  framework checkpoint create/reload/audit telemetry plus a controller-verified
+  checkpoint receipt in compaction-required strata;
+- at least two qualified independent raters with valid owner-only frozen batches.
+
+Passing these prerequisites does not itself establish effectiveness; every
+provisional metric gate below must also pass. Unkeyed SHA-256 receipts detect drift,
+not a dishonest operator or compromised environment.
+
+The release controller accepts at most 1,500 generation records and also rejects a
+serialized expected-record manifest above 2 MiB. This accommodates the minimum
+1,008-record public design while failing closed on accidental Cartesian explosions.
 
 An optional `prompt-only` ablation may distinguish the effect of a short style prompt
 from the persistent micro-contract, routed protocol, and final audit. It is not a
@@ -140,8 +230,8 @@ Those properties require source verification and human review.
 These thresholds must be frozen before inspecting a real run:
 
 - zero critical errors;
-- at least 98% declared machine-invariant pass rate and 100% resolvable local
-  resources/tables;
+- at least 98% declared machine-invariant pass rate and 100% pass rate for every
+  required local-image and declared table-count check;
 - framework task fidelity non-inferior to baseline by a 0.20 margin on a 5-point
   scale;
 - all human dimensions at least 4.0, with readability, completeness, and evidence
@@ -152,9 +242,11 @@ These thresholds must be frozen before inspecting a real run:
 - semantic-slot adherence at least 95%;
 - required/forbidden visual-selection precision and recall at least 90%;
 - median output-token overhead at most 15%, p90 at most 30%, and no reduction in
-  useful facts or semantic slots per 1,000 output tokens;
-- contract pass rate at 85% context occupancy at least 90%, no more than five
-  percentage points below the fresh-session rate; and
+  human-rated required semantic slots per 1,000 output tokens relative to baseline;
+- strict final-audit pass rate at 85% context occupancy at least 90%, no more than
+  five percentage points below the fresh-session rate. Fresh short tasks may use
+  mode-only audit; compaction strata additionally require the checkpoint contract;
+  and
 - at least 85% of paired rater scores within one point. Low agreement blocks an
   effectiveness claim even when mean scores look favorable.
 

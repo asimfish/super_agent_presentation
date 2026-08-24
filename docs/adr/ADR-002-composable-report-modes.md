@@ -12,9 +12,11 @@ not report types.
 
 ## Decision
 
-Select exactly one primary report mode. Add at most two display modules only when
-they materially improve comprehension. Explicit user formatting wins. Default to
-the shortest mode that preserves evidence and decision usefulness.
+Select exactly one primary report mode. Prefer one display module and add a second
+only for a distinct need that the mode and first module do not already cover. A mode
+may declare a generic module capability as embedded so automatic routing does not
+retrieve duplicate instructions. Explicit user formatting wins. Default to the
+shortest mode that preserves evidence and decision usefulness.
 
 ## Consequences
 

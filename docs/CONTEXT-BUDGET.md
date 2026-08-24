@@ -1,7 +1,7 @@
 # Context budget measurement
 
 - Measured: 2026-08-24
-- Revision: release tag `v0.2.0`
+- Revision: release tag `v0.3.0`
 - Method: Python `len(text)` and `len(text.split())` over the exact files and output
   of `reportctl bundle --task "Context-budget measurement." --mode <mode>
   --max-chars 16000`. These are tokenizer-independent measurements, not model token
@@ -48,7 +48,7 @@ PY
 | Root `AGENTS.md` micro-contract | 1,057 | 149 | Host instruction discovery |
 | Generic AGENTS adapter body | 944 | 127 | Every applicable host request after installation |
 | Skill activation description | 599 | 77 | Skill discovery metadata |
-| Full `SKILL.md` | 9,187 | 1,252 | Only after Skill activation |
+| Full `SKILL.md` | 9,936 | 1,360 | Only after Skill activation |
 
 The persistent contract remains under the project's 150-word budget. The detailed
 Skill is deferred; likely long work activates it briefly near the start to save a
@@ -62,17 +62,17 @@ mode, and that mode's default zero-to-two modules.
 
 | Mode | Default modules | Characters | Word-like units |
 |---|---|---:|---:|
-| `concise-answer` | — | 7,334 | 1,095 |
-| `status-update` | — | 7,750 | 1,131 |
-| `decision-brief` | conclusions | 11,107 | 1,567 |
-| `incident-update` | evidence | 10,833 | 1,569 |
-| `investigation-report` | evidence | 11,005 | 1,607 |
-| `implementation-handoff` | evidence | 11,039 | 1,613 |
-| `postmortem` | evidence | 11,216 | 1,614 |
-| `review-report` | evidence | 11,396 | 1,655 |
-| `risk-report` | tables, conclusions | 14,192 | 2,055 |
-| `experiment-report` | tables, conclusions | 14,866 | 2,129 |
-| `academic-synthesis` | evidence, academic-display | 15,278 | 2,200 |
+| `concise-answer` | — | 7,090 | 1,059 |
+| `status-update` | — | 7,506 | 1,095 |
+| `decision-brief` | conclusions | 11,249 | 1,584 |
+| `incident-update` | evidence | 10,589 | 1,533 |
+| `investigation-report` | evidence | 10,761 | 1,571 |
+| `implementation-handoff` | evidence | 10,795 | 1,577 |
+| `postmortem` | evidence | 10,972 | 1,578 |
+| `review-report` | evidence | 11,152 | 1,619 |
+| `risk-report` | tables, conclusions | 14,334 | 2,072 |
+| `experiment-report` | tables | 11,597 | 1,685 |
+| `academic-synthesis` | evidence, academic-display | 15,034 | 2,164 |
 
 All measured task-based default bundles remain below the CLI's 16,000-character
 guard. That guard is an independent caller-selected retrieval budget, not a promise
@@ -81,6 +81,11 @@ that every valid checkpoint and two-module combination fits: callers must raise
 not need to read `protocols.json`, every mode, every module, every template, or the
 full distribution. The strict JSON schema is loaded only for a strict report-spec
 task.
+
+The experiment mode's default fell from the v0.2 two-module route to 11,597
+characters because the mode already includes conclusion calibration; automatically
+loading the generic conclusion module duplicated that policy. Explicit composition
+remains available when a distinct decision or recommendation protocol is required.
 
 ## Interpretation boundary
 

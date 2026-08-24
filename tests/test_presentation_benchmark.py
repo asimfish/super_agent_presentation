@@ -13,6 +13,8 @@ from jsonschema import Draft202012Validator
 
 from scripts.presentation_benchmark import (
     BenchmarkError,
+    evaluate_response,
+    load_benchmark,
     markdown_images,
     validate_activation,
     validate_benchmark,
@@ -82,6 +84,97 @@ class PresentationBenchmarkTests(unittest.TestCase):
                 Draft202012Validator.check_schema(schema)
                 errors = list(Draft202012Validator(schema).iter_errors(data))
                 self.assertEqual(errors, [], [error.message for error in errors])
+
+    def test_external_benchmark_artifact_root_validates_loads_and_evaluates(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            artifact = root / "plot.svg"
+            artifact.write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+                encoding="utf-8",
+            )
+            data = json.loads(CASES.read_text(encoding="utf-8"))
+            case = next(item for item in data["cases"] if item["id"] == "image-anomaly-boundary")
+            case["artifacts"] = ["plot.svg"]
+            external_cases = root / "presentation-cases.json"
+            external_cases.write_text(json.dumps(data), encoding="utf-8")
+
+            validate_benchmark(data, artifact_root=root)
+            loaded = load_benchmark(external_cases, artifact_root=root)
+            self.assertEqual(loaded, data)
+
+            response = root / "response.md"
+            good = (FIXTURES / "good" / "image-anomaly-boundary.md").read_text(encoding="utf-8")
+            response.write_text(
+                good.replace("../../assets/return-curve.svg", "plot.svg"),
+                encoding="utf-8",
+            )
+            report = evaluate_response(case, response, artifact_root=root)
+            image_check = next(check for check in report["checks"] if check["id"] == "show-image")
+            self.assertTrue(report["passed"])
+            self.assertTrue(image_check["passed"])
+            self.assertIn("supplied_artifact_match=True", image_check["observed"])
+
+    def test_external_artifact_root_rejects_unsafe_or_nonregular_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            root = base / "artifacts"
+            root.mkdir()
+            outside = base / "outside.svg"
+            outside.write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+                encoding="utf-8",
+            )
+            (root / "directory.svg").mkdir()
+            (root / "escape.svg").symlink_to(outside)
+
+            for name, artifact in (
+                ("absolute", str(outside)),
+                ("parent-traversal", "../outside.svg"),
+                ("symlink-escape", "escape.svg"),
+                ("nonregular", "directory.svg"),
+            ):
+                with self.subTest(name=name):
+                    data = json.loads(CASES.read_text(encoding="utf-8"))
+                    case = next(
+                        item for item in data["cases"]
+                        if item["id"] == "image-anomaly-boundary"
+                    )
+                    case["artifacts"] = [artifact]
+                    with self.assertRaises(BenchmarkError):
+                        validate_benchmark(data, artifact_root=root)
+
+    def test_evaluate_response_rechecks_artifact_containment_after_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            root = base / "artifacts"
+            root.mkdir()
+            artifact = root / "plot.svg"
+            artifact.write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+                encoding="utf-8",
+            )
+            data = json.loads(CASES.read_text(encoding="utf-8"))
+            case = next(item for item in data["cases"] if item["id"] == "image-anomaly-boundary")
+            case["artifacts"] = ["plot.svg"]
+            validate_benchmark(data, artifact_root=root)
+
+            response = root / "response.md"
+            good = (FIXTURES / "good" / "image-anomaly-boundary.md").read_text(encoding="utf-8")
+            response.write_text(
+                good.replace("../../assets/return-curve.svg", "plot.svg"),
+                encoding="utf-8",
+            )
+            outside = base / "outside.svg"
+            outside.write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+                encoding="utf-8",
+            )
+            artifact.unlink()
+            artifact.symlink_to(outside)
+
+            with self.assertRaisesRegex(BenchmarkError, "escapes the artifact root"):
+                evaluate_response(case, response, artifact_root=root)
 
     def test_benchmark_json_number_literals_are_bounded_before_conversion(self) -> None:
         probe = """

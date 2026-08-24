@@ -6,6 +6,12 @@ Load this module when the report must interpret evidence, make a recommendation,
 state a scientific, technical, operational, or business conclusion. A conclusion is
 an evidence boundary, not a more emphatic summary.
 
+Do not load it when the selected primary mode already provides the needed conclusion
+protocol. In particular, `experiment-report` already covers verified results,
+interpretation, uncertainty, scope, null findings, trade-offs, and the next
+experiment. Compose this module with that mode only for a distinct decision or
+recommendation policy that the experiment protocol does not cover.
+
 ## Conclusion chain
 
 Use this order, visibly or implicitly:

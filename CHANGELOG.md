@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.3.0 — 2026-08-24
+
+- Added a standard-library-only, preregistered study controller with immutable plan,
+  case, prompt, artifact, generation, blind-assignment, rating-lock, and aggregate
+  receipts plus versioned JSON Schemas.
+- Added a typed, side-effect-free Codex argv/JSONL adapter, inert `host-plan`, and an
+  explicit `host-run --execute` boundary with executable/workspace/framework
+  digests, frozen complete argv/transcript format/adapter-source identity,
+  plan-to-run exact comparison, `shell=False`, timeouts, bounded captures, and honest unsupported-control
+  receipts. Controller-owned bindings prevent manual imports from impersonating
+  adapter telemetry or an enforced provider cap; per-record locks detect later
+  changes to records, responses, transcripts, or host bindings.
+- Added portable generated-image ingest with traversal, symlink, type, size, and
+  digest enforcement through validation and blinding.
+- Added randomized A/B packets, owner-only assignment keys and rating templates,
+  independent rating freeze bound to the full blind packet, case-level paired
+  bootstrap, design prerequisites, and claim gates. Pilot summaries are
+  schema-locked to `insufficient_evidence`.
+- Bounded study JSON nesting, numeric tokens, and Cartesian products; aligned the
+  runtime with the versioned schema/threshold profile; and made revision receipts,
+  provider-enforced output caps, complete compaction/context observations, and the
+  framework checkpoint lifecycle in compaction-required strata explicit claim
+  prerequisites without forcing checkpoints onto short tasks.
+- Separated the common strict final-audit observation from checkpoint-backed audit
+  telemetry, so fresh short-task and 85%-occupancy rates use a comparable contract
+  while checkpoint lifecycle gates remain scoped to compaction strata.
+- Split caller generation input from controller-enriched stored records with two
+  self-contained schemas; added shared boundary probes and controlled failures for
+  unhashable JSON values instead of accepting traceback paths.
+- Hardened Codex telemetry to credit only successful exact command events and kept
+  an allowlisted argument grammar (rejecting help/unknown-option lookalikes), while
+  keeping checkpoint artifact receipts explicitly unverified. Public profiles now require
+  one controller-locked workspace per generation unit plus an external per-unit
+  fresh-isolation receipt.
+- Made visual gates fail closed on empty denominators, required both required and
+  forbidden oracle coverage, added a 100% required-image/table-check gate, and
+  preregistered semantic-slot density per 1,000 output tokens against baseline.
+- Ran and published a redacted one-case, one-model, one-repeat Codex integration
+  pilot. It observed treatment Skill activation but has no effectiveness standing;
+  raw prompts, responses, transcripts, host receipts, and ratings remain private.
+- Removed the redundant automatic `conclusions` module from `experiment-report`.
+  The mode already carries calibrated conclusion rules, and a regression now keeps
+  the default experiment bundle below 12,000 characters while preserving explicit
+  composition for distinct decision needs.
+- Documented real-host credential/network/cost boundaries, same-account baseline
+  contamination, unpinned provider revisions, unenforced output-token caps, and the
+  external isolation required for a public claim.
+
 ## 0.2.0 — 2026-08-24
 
 - Added schema-v2 full-intent checkpoints and a same-checkpoint final audit that

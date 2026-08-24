@@ -395,6 +395,18 @@ def load_catalog() -> dict[str, Any]:
             "protocol catalog is incomplete: "
             f"missing modes={missing_modes}, missing modules={missing_modules}"
         )
+    for mode_id, record in modes.items():
+        for field in ("default_modules", "embedded_modules"):
+            values = record.get(field, [])
+            if (
+                not isinstance(values, list)
+                or len(values) != len(set(item for item in values if isinstance(item, str)))
+                or any(not isinstance(item, str) or item not in MODULE_IDS for item in values)
+            ):
+                raise ReportCtlError(
+                    f"protocol mode {mode_id!r} has invalid {field}; "
+                    "expected unique known module IDs"
+                )
     return catalog
 
 
@@ -513,10 +525,11 @@ def select_modules(
                     for term in terms
                 ):
                     suppressed.add(module_id)
+        embedded = set(catalog["modes"][mode].get("embedded_modules", []))
         scored = [
             (module_id, _signal_score(task, record.get("signals", [])))
             for module_id, record in catalog["modules"].items()
-            if module_id not in suppressed
+            if module_id not in suppressed and module_id not in embedded
         ]
         selected = [item for item, score in sorted(scored, key=lambda row: -row[1]) if score > 0]
         selected.extend(
@@ -2280,7 +2293,7 @@ def command_build_dist(args: argparse.Namespace) -> int:
     index_lines = [
         "# Agent reporting index",
         "",
-        "Choose exactly one primary route. Read no other route. Add at most two display modules only when the content requires them. Explicit user format wins.",
+        "Choose exactly one primary route. Read no other route. Prefer one display module; add a second only for a distinct need the route does not already cover. Explicit user format wins.",
         "",
         "## Primary routes",
         "",

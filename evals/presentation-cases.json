@@ -154,8 +154,8 @@
       ],
       "evidence_boundary": "Describe observed means and the accuracy/latency trade-off. Do not claim statistical significance, causality, or a universal winner.",
       "artifacts": [],
-      "report_profile": "experiment-report+tables+conclusions",
-      "expected_route": {"mode": "experiment-report", "modules": ["tables", "conclusions"]},
+      "report_profile": "experiment-report+tables",
+      "expected_route": {"mode": "experiment-report", "modules": ["tables"]},
       "required_semantic_slots": ["protocol", "quantitative_display", "verified_result", "uncertainty_boundary", "tradeoff_conclusion"],
       "visual_oracle": {
         "necessity": "required",
@@ -219,8 +219,8 @@
       ],
       "evidence_boundary": "Preserve protocol grouping and units. Do not combine the groups into an overall leaderboard or treat missing values as zero.",
       "artifacts": [],
-      "report_profile": "experiment-report+tables+conclusions",
-      "expected_route": {"mode": "experiment-report", "modules": ["tables", "conclusions"]},
+      "report_profile": "experiment-report+tables",
+      "expected_route": {"mode": "experiment-report", "modules": ["tables"]},
       "required_semantic_slots": ["protocol_separation", "tables", "missing_value_semantics", "comparison_boundary"],
       "visual_oracle": {
         "necessity": "required",

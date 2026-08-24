@@ -1,0 +1,83 @@
+{
+  "$schema": "../schema/study-plan.schema.json",
+  "schema_version": "1.0",
+  "study_id": "public-benchmark-pilot-v1",
+  "study_kind": "pilot",
+  "claim_boundary": "This one-case public development pilot validates the study pipeline only and cannot support an effectiveness claim.",
+  "benchmark": {
+    "benchmark_id": "agentic-reporting-presentation-v1",
+    "cases_sha256": "aeb411bf221f5e6615b8744f770925b4c4e45aa32f8ca488fd60fe595adc4a89",
+    "case_ids": ["experiment-null-result"],
+    "heldout": false,
+    "preregistration_receipt": null
+  },
+  "framework": {
+    "repository": "https://github.com/asimfish/super_agent_presentation",
+    "commit_sha": "0000000000000000000000000000000000000000",
+    "skill_manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "adapter_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "execution": {
+    "baseline_isolation": "same-account-workspace",
+    "isolation_receipt": null,
+    "global_instruction_policy": "unverified",
+    "replicate_semantics": "independent-repeat"
+  },
+  "models": [
+    {
+      "id": "manual-model",
+      "host": "manual",
+      "host_version": "manual",
+      "model": "manual-model",
+      "revision": "manual-pilot-v1",
+      "revision_receipt": null,
+      "executable_sha256": null
+    }
+  ],
+  "conditions": ["baseline", "framework"],
+  "seeds": [7],
+  "contexts": [
+    {
+      "id": "fresh",
+      "target_occupancy_percent": 10,
+      "compaction_required": false
+    }
+  ],
+  "generation": {
+    "max_output_tokens": 1200,
+    "timeout_seconds": 300,
+    "locale": "en-US",
+    "renderer": "CommonMark"
+  },
+  "rating": {"required_raters": 2},
+  "analysis": {
+    "bootstrap_seed": 1729,
+    "bootstrap_resamples": 10000,
+    "primary_context_ids": ["fresh"],
+    "primary_dimensions": [
+      "information_architecture",
+      "readability_and_scannability",
+      "completeness_and_actionability",
+      "evidence_calibration"
+    ],
+    "thresholds": {
+      "machine_pass_rate_min": 0.98,
+      "human_dimension_min": 4.0,
+      "priority_dimension_min": 4.2,
+      "primary_gain_min": 0.3,
+      "primary_ci_lower_min": 0.0,
+      "task_fidelity_margin": 0.2,
+      "win_rate_min": 0.65,
+      "loss_rate_max": 0.15,
+      "semantic_slot_rate_min": 0.95,
+      "semantic_density_difference_min": 0.0,
+      "visual_precision_min": 0.9,
+      "visual_recall_min": 0.9,
+      "token_overhead_median_max": 0.15,
+      "token_overhead_p90_max": 0.3,
+      "long_soak_pass_rate_min": 0.9,
+      "long_soak_fresh_gap_max": 0.05,
+      "agreement_within_one_min": 0.85
+    }
+  }
+}

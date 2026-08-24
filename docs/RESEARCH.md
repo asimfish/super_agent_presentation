@@ -22,6 +22,23 @@ that prompt instructions guarantee compliance.
 | Cursor | Project Rules support Always Apply, intelligent, path-specific, and manual activation. Cursor also recognizes root and nested `AGENTS.md`. | Always Apply rules consume recurring context. User Rules affect Agent Chat, not all features such as Tab or Inline Edit. | [Cursor Rules](https://cursor.com/docs/rules) |
 | GitHub Copilot | Repository-wide custom instructions use `.github/copilot-instructions.md`; path instructions and some agent instruction files are also supported. | GitHub says instructions accompany every chat request, support varies by Copilot surface, and nondeterministic responses may not follow them identically each time. | [response customization](https://docs.github.com/en/copilot/concepts/prompting/response-customization), [support matrix](https://docs.github.com/en/copilot/reference/custom-instructions-support) |
 
+### Non-interactive host execution
+
+OpenAI documents `codex exec` as the non-interactive automation entry point. JSONL
+events can be streamed with `--json`; callers can request ephemeral sessions and
+select a sandbox mode. These interfaces make a typed local adapter possible, but
+they do not make a model call side-effect-free or pin provider behavior. A host may
+still use authentication, network services, and billable inference. The project
+therefore separates inert `host-plan` receipts from literal
+`host-run --execute` authorization and records unsupported controls instead of
+inferring them. [OpenAI Codex non-interactive mode](https://developers.openai.com/codex/non-interactive-mode)
+
+Codex discovers global and project `AGENTS.md` guidance before work, so a separate
+workspace without this repository is not automatically a clean baseline if the same
+account has global instructions. This is why the public-study gate requires an
+external isolation receipt and an audited shared global-instruction policy, not
+merely two directories. [OpenAI Docs: AGENTS.md](https://learn.chatgpt.com/codex/agent-configuration/agents-md)
+
 ### Progressive disclosure through Skills
 
 | Mechanism | Documented behavior | Relevance | Primary source |
@@ -87,9 +104,10 @@ they are not vendor guarantees:
 2. **Keep the always-on contract below roughly 150 words.** The exact threshold is
    a project budget, not a documented universal optimum. Its job is to preserve
    activation, user-priority, bounded retrieval, and honest audit status only.
-3. **Route to one primary mode and at most two display modules.** This bounds token
-   use and prevents implementation, experiment, academic, and review templates from
-   being merged into one report.
+3. **Route to one primary mode, prefer one display module, and cap at two.** This
+   bounds token use and prevents implementation, experiment, academic, and review
+   templates from being merged into one report. If a mode already contains a
+   capability, do not reload the generic module merely because the request names it.
 4. **Externalize only a tiny checkpoint during long work.** Save the reporting
    objective, audience, surface, mode, modules, and short must-show anchors. Do not
    keep the full report bundle, duplicate the task log, or store secrets.
@@ -119,7 +137,7 @@ they are not vendor guarantees:
 ```text
 host-recognized micro-contract (always present, very small)
         ↓ requests activation near long-task start or at a reporting boundary
-canonical Agent Skill (one routed mode + 0–2 display modules)
+canonical Agent Skill (one routed mode + preferably one, at most two modules)
         ↓ produces a candidate handoff
 structural audit + manual factual/evidence check
         ↓
@@ -142,7 +160,11 @@ passes. This is a separate orchestration feature, not something an `AGENTS.md`,
 - It does not guarantee that an agent reads a raw repository link.
 - It does not guarantee correctness, citation validity, scientific rigor, or visual
   quality merely because a structural audit passes.
-- It does not claim token, latency, readability, or task-quality improvement until
-  the repository benchmark records a comparable baseline and framework run.
+- It does not claim token, latency, readability, or task-quality improvement. The
+  one-pair public-case Codex pilot observed activation and pipeline mechanics only:
+  it lacks private heldout cases, external baseline isolation, a fixed provider
+  revision, multiple repeats, long-context telemetry, and blind human ratings. A
+  preregistered study satisfying those properties and every metric gate is still
+  required.
 - Vendor paths, precedence, and feature support can change; `INSTALL.md` links the
   current primary documentation and should be checked at release time.

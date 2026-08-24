@@ -1,6 +1,6 @@
 # Agent reporting index
 
-Choose exactly one primary route. Read no other route. Add at most two display modules only when the content requires them. Explicit user format wins.
+Choose exactly one primary route. Read no other route. Prefer one display module; add a second only for a distinct need the route does not already cover. Explicit user format wins.
 
 ## Primary routes
 

@@ -4,10 +4,13 @@
 表格、论文、故障、决策和代码交付提供可复用的语义骨架，同时避免所有回答
 都被塞进同一个大模板；实际遵循程度仍取决于宿主和模型。
 
-当前版本是已发布的 `v0.2.0`。14 份正负 fixture、7 个场景路由和 5 个
-post-activation 路由代理均达到声明预期；3 组 fresh-agent 开发测试保留了
-失败迭代与最终门禁。这些都不是真实宿主激活率或人类盲评，因此本仓库
-不宣称已经测得“提升了 Agent 输出质量”。
+当前版本为 `v0.3.0`。除 14 份正负 fixture、7 个场景和 5 个
+post-activation 路由代理外，本版新增了预注册、生成记录、真实宿主计划、
+显式执行、盲化、独立评分冻结和成对汇总流水线。一次最小 Codex pilot
+观察到 treatment 读取了 Skill，baseline/framework 分别通过 9/10 与 10/10
+机器检查；但它只有一个公开 case、一个未固定 revision 的模型和一次重复，
+且 framework 输出从 358 增至 980 tokens。因此该 pilot 永久标记为
+`insufficient_evidence`，本仓库不宣称已经测得质量、可读性或效率提升。
 
 ## 它解决什么
 
@@ -32,13 +35,15 @@ flowchart LR
     D --> E
     E --> F[到达汇报边界]
     F --> G[重载 checkpoint 或选择一个主协议]
-    G --> H[零到两个展示模块]
+    G --> H[优先一个展示模块\n最多两个非重叠模块]
     H --> I[用同一 checkpoint 结构审计并核验事实]
     I --> J[最终汇报]
 ```
 
 - 常驻层只负责“何时调用”，不加载完整手册。
-- Skill 通过渐进式披露一次只取一个主协议和最多两个展示模块。
+- Skill 通过渐进式披露一次只取一个主协议，优先一个展示模块，最多加入
+  两个不重叠模块。实验模式已内含结论纪律，不会因用户写了“结论”而重复
+  加载通用结论模块。
 - 长任务把少量汇报意图保存为 checkpoint，最终阶段从磁盘重新加载并以
   同一 checkpoint 审计，降低仅依赖早期对话记忆而遗忘的风险。
 - 审计器检查可机械判断的结构错误；事实、科学结论和证据仍需人工或领域
@@ -100,7 +105,7 @@ Skill 位于 `skills/agentic-reporting/`。Agent 应把 `<skill-dir>` 解析为�
 python3 <skill-dir>/scripts/reportctl.py list
 python3 <skill-dir>/scripts/reportctl.py bundle \
   --task "汇报五次独立运行的实验结果" \
-  --mode experiment-report --module tables --module conclusions
+  --mode experiment-report --module tables
 python3 <skill-dir>/scripts/reportctl.py audit \
   --file report.md --mode experiment-report
 ```
@@ -183,6 +188,51 @@ JSON 是展示层的单一真源；原始日志、论文、测试或数据仍是
 `validate-spec` 为准，因为 evidence ID 唯一性、跨记录引用和当前协议语义
 无法全部由独立 JSON Schema 表达。
 
+## v0.3 评测流水线
+
+确定性研究控制器不会隐式调用模型。先在 Git worktree 之外创建权限受限的
+私有目录，复制模板，并把三个全零 `framework` 收据替换为本次实际 commit、
+安装后 Skill manifest 和 active adapter SHA-256，再冻结输入：
+
+```bash
+cp evals/templates/pilot-study-plan.json <private-dir>/plan.json
+python3 scripts/presentation_study.py init \
+  --plan <private-dir>/plan.json \
+  --cases-file evals/presentation-cases.json \
+  --output <private-dir>/run
+```
+
+离线或外部系统生成的结果走
+`import-output → validate → blind → rating-template → freeze-ratings → aggregate`。
+真实 Codex 宿主则先冻结固定 argv、可执行文件与工作区收据；只有第二条命令
+带有字面 `--execute` 时才会产生模型调用、网络/认证使用和费用：
+
+```bash
+python3 scripts/presentation_study.py host-plan \
+  --run-dir <private-dir>/run --unit-id <unit-id> \
+  --executable <absolute-codex-binary> --workspace <isolated-workspace>
+python3 scripts/presentation_study.py host-run \
+  --run-dir <private-dir>/run --unit-id <unit-id> --execute
+```
+
+删除 `--execute` 会故意失败关闭。`host-plan` 与其他确定性命令不调用模型。
+Codex 适配器强制 timeout、响应/转录/stderr 字节上限和无 shell 启动，但当前
+计划还会冻结完整 argv、transcript format 和宿主适配器源码 SHA-256；运行前
+重新构建后必须逐项相等，完成收据也会再次绑定这些身份。当前仍
+不能强制 provider 级 output-token 或费用上限；计划中的 token 值属于预注册
+约束和提示，不是宿主保证。只有 `host-run` 能把冻结计划、完成的执行收据和
+完整记录绑定为 `host_adapter` 证据；普通 `import-output` 不能自报该来源或
+强制 token cap。pilot 可使用 `pilot-summary`，其 schema 固定拒绝
+效果声明；只有私有 heldout、外部隔离收据、共享且已审计的全局指令、多个
+可验证 revision/重复/上下文条件和冻结盲评全部满足后，`aggregate` 才会评估
+公开声明门禁。调用方生成记录与控制器存档记录使用不同 schema；调用方不能
+注入机器评测。转录只记录成功且精确匹配的命令观察，不能证明 checkpoint 与
+报告字节确实被同一审计绑定；当前 Codex 适配器因此把 checkpoint receipt 记为
+未验证。公开 profile 还要求每个生成单元使用不同的控制器锁定工作区、外部收据
+覆盖新鲜的逐单元隔离、required/forbidden visual 均有覆盖、图片/表格必需检查
+100% 通过，且每千 output token 的人评语义位不劣于 baseline。详见 [BENCHMARK.md](BENCHMARK.md) 与
+[evals/README.md](evals/README.md)。
+
 ## 仓库结构
 
 ```text
@@ -196,8 +246,13 @@ skills/agentic-reporting/
   scripts/reportctl.py         # route/bundle/checkpoint/audit/render
   scripts/markdown_image_scanner.py # audit 与 benchmark 共用的有界扫描器
 dist/                          # 无 CLI 时的一文件路由包
-evals/                         # 激活与输出质量评测用例
-scripts/presentation_benchmark.py
+evals/
+  schema/                      # study、生成、盲化、评分与汇总 JSON Schema
+  templates/                   # 可编辑的 pilot 计划模板，不是运行收据
+  runs/pilot/                  # 仅可发布脱敏聚合，不含原始私有运行数据
+scripts/presentation_benchmark.py # 确定性 fixture harness
+scripts/presentation_study.py     # 私有研究状态机与声明门禁
+scripts/presentation_hosts.py     # 纯 typed argv/JSONL 宿主适配层
 docs/adr/                      # 架构决策记录
 ```
 
@@ -211,9 +266,11 @@ python3 scripts/presentation_benchmark.py smoke
 
 `smoke` 验证已知好/坏 fixture、场景路由和正例进入 Skill 后的路由代理。
 它明确输出 `host_activation_observed: false`：未调用真实宿主或模型。开发期
-fresh-agent 记录见 [evals/runs/forward/README.md](evals/runs/forward/README.md)。真实
-效果声明所需的隔离基线、长上下文压力、盲评与统计门槛见
-[BENCHMARK.md](BENCHMARK.md)。
+fresh-agent 记录见 [evals/runs/forward/README.md](evals/runs/forward/README.md)。
+最小真实宿主记录见
+[evals/runs/pilot/codex-20260824/README.md](evals/runs/pilot/codex-20260824/README.md)，
+它只证明一次流水线/激活观测，不能证明效果。真实效果声明所需的外部隔离
+基线、heldout、长上下文压力、盲评与统计门槛见 [BENCHMARK.md](BENCHMARK.md)。
 
 ## 设计与来源
 

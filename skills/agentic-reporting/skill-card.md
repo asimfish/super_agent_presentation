@@ -3,7 +3,7 @@
 ## Identity
 
 - Owner: `asimfish`
-- Version: `0.2.0`
+- Version: `0.3.0`
 - Status: released
 - License: MIT
 - Source: `skills/agentic-reporting/SKILL.md`
@@ -28,7 +28,8 @@ execution and reload it at the reporting boundary.
 ## Inputs and outputs
 
 - Inputs: a reporting objective or checkpoint, one primary mode, optional audience
-  and surface, at most two display modules, and bounded literal must-show anchors.
+  and surface, preferably one and at most two non-overlapping display modules, and
+  bounded literal must-show anchors.
 - Context output: a bounded Markdown bundle containing the universal contract, one
   mode, and selected modules.
 - Optional artifacts: checkpoint JSON, report-spec JSON, rendered Markdown, and
@@ -82,6 +83,10 @@ explicit `--append-adapter` path creates a backup before appending a marked bloc
 
 See `evals/activation.json` for the declarative activation contract, its four case
 categories, five governance rubrics, and locally testable positive-route proxies.
-No host activation is observed by those cases. `BENCHMARK.md` defines the claim
-boundary; repository-level tests and the full presentation harness live outside the
+No host activation is observed by those cases. A repository-level one-pair Codex
+pilot observed one treatment Skill read, but it used a public case, one unpinned
+model alias, one repeat, same-account workspaces, and no blind ratings; it is not
+effectiveness evidence. That pilot motivated removal of redundant automatic
+`conclusions` retrieval from `experiment-report`. `BENCHMARK.md` defines the claim
+boundary; repository-level tests and the full study controller live outside the
 installable package.

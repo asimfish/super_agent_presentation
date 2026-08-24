@@ -3,13 +3,18 @@
 ## Threat contract
 
 - Assets: existing project/user instructions, installed Skills, generated reports,
-  checkpoints, benchmark integrity, and any sensitive task text placed in them.
+  checkpoints, benchmark/study integrity, private prompts and responses, blind keys,
+  ratings, host credentials, and any sensitive task text placed in them.
 - Actor and privilege: a local user invokes the CLI with that user's filesystem
   permissions. There is no authentication or multi-tenant boundary.
-- Entry points: CLI arguments, report Markdown, report/checkpoint JSON, output paths,
-  install targets, existing instruction files, and packaged protocol data.
-- Dependencies: Python standard library, the local filesystem, GitHub Actions for CI,
-  and the eventual Markdown renderer. The tools make no network request.
+- Entry points: CLI arguments, report Markdown, report/checkpoint/study JSON, output
+  and artifact paths, host executable/workspace, install targets, existing
+  instruction files, JSONL transcripts, ratings, and packaged protocol data.
+- Dependencies: Python standard library, the local filesystem, GitHub Actions for
+  CI, and the eventual Markdown renderer. Deterministic tools make no network
+  request. The explicitly authorized host process is an external dependency that
+  may use network access, inherited authentication, paid services, and provider
+  state.
 - Required properties: never execute report content; fail closed on invalid schema,
   unsafe URI schemes, checkpoint input or output symlink chains, implicit
   replacement, or unsupported
@@ -19,7 +24,9 @@
 - Credible abuse cases: path redirection through a repository symlink, overwriting an
   existing Skill/rule, oversized-file resource exhaustion, Markdown/HTML injection
   through a strict report spec, unsafe link schemes, a packaged source symlink, and
-  accidental checkpoint disclosure.
+  accidental checkpoint/study disclosure, baseline contamination through shared
+  instructions, malicious artifact paths, host substitution, and accidental paid
+  execution.
 - Out of scope: a malicious process with the same account racing filesystem checks,
   a compromised Python runtime or GitHub runner, renderer vulnerabilities, and a
   local user deliberately authorizing an exact `--force` overwrite.
@@ -36,6 +43,10 @@
 | Install target and host | static scope map and copied Skill | another project/user config | explicit target/scope, project `.git` check, active Codex override selection, unsupported scope denial, target/source/destination symlink rejection, preflight, digest-verified identical-Skill reuse only, best-effort rollback |
 | Existing instruction file | marker check and optional append | host instruction integrity | 2 MiB UTF-8 bound, preserve by default, explicit append, timestamped backup, mode-preserving atomic replacement |
 | Benchmark response | bounded UTF-8 parse and invariant checks | development score | 4 MiB and 100,000-line bounds; 1,000-image truncation signal; no model call or executable interpretation |
+| Study plan/cases/artifacts | bounded schema and path validation, copy plus digests | owner-only private run | new root outside Git, `0700`, symlink/traversal/nonregular rejection, per-file/aggregate caps, frozen SHA-256 receipts |
+| Executable/workspace/prompt receipts | exact digest and activation checks, typed fixed argv | external Codex subprocess | side-effect-free `host-plan` freezes complete argv, transcript format, and adapter-source SHA; literal `--execute` gate; exact rebuild comparison; executable SHA verification; `shell=False`; timeout and bounded local captures |
+| Host JSONL transcript | bounded parse and conservative event extraction | immutable generation record and telemetry | transcript/stderr/response caps, allowlisted successful-command grammar, no substring/failed/help/unknown-option/compound-shell credit, no tool-output execution, content digests, unsupported controls and unverified checkpoint receipts recorded false |
+| Blind packet and rating batches | randomized A/B mapping, owner-only copy and freeze | deblinded case-level aggregate | assignment key `0600`, condition metadata and checks omitted, response bytes preserved with explicit residual content/style unblinding risk, incomplete template cannot freeze, independent-rater validation, ratings lock before deblinding |
 
 ## Findings and remediation
 
@@ -228,15 +239,64 @@
   400,000-digit JSON numbers, and 20,001 unknown keys reject within bounded time and
   output.
 
+### SR-13 — Real-host evaluation could leak data, incur cost, or contaminate baseline
+
+- Severity: high if execution were implicit or claims accepted a shared baseline;
+  bounded by explicit execution and claim gates, with residual external-service risk.
+- Source → sink: study prompt/workspace and inherited host credentials → external
+  Codex CLI/model service → network transmission, charges, provider state, or a
+  comparison influenced by global instructions.
+- Control: `host-plan` is pure and freezes the exact executable SHA, fixed argv
+  vector, transcript format, adapter-source SHA, workspace activation state, Skill
+  manifest, and active instruction digest. Only
+  `host-run --execute` launches it, without a shell, under a bounded timeout and
+  local evidence caps. It binds the frozen plan and completed execution receipt to
+  the entire stored generation record; ordinary imports cannot self-report adapter
+  telemetry or an enforced cap. A framework workspace must match the preregistered
+  installed receipts; a baseline workspace must not contain the project activation
+  files.
+  The completed receipt must repeat the frozen argv, transcript format, and adapter
+  source digest; plan-to-run drift fails before execution.
+- Evidence distinction: successful exact Skill/checkpoint/bundle/audit command
+  events are conservative observations only. They do not bind checkpoint/report
+  bytes; the current Codex adapter records the artifact receipt as unverified.
+- Claim boundary: a clean same-account workspace does not prove isolation from user
+  configuration, credentials, or service behavior. Public eligibility therefore
+  requires an `external-sandbox` receipt, `shared-and-audited` global instructions,
+  a distinct controller-locked workspace for each generation unit, multiple
+  verifiable provider revisions, complete telemetry, and an unpolluted baseline.
+  The external receipt must cover fresh per-unit isolation. The current adapter
+  records `output_token_cap_enforced: false` and
+  `checkpoint_receipt_verified: false`; it does not claim a hard cost ceiling or
+  persisted checkpoint proof.
+- Regression: tests verify inert planning, missing-`--execute` failure, exact fixed
+  argv, executable/workspace digest mismatch rejection, framework/baseline
+  activation separation, bounded fake-host JSONL import, timeout enforcement even
+  when a child never reads a large stdin, private artifact copying, blind-key
+  permissions, full blind-packet binding at rating freeze, bounded JSON
+  depth/numbers, unhashable enum/list inputs without tracebacks, caller/stored
+  generation-schema separation, Cartesian-matrix rejection, exact release
+  thresholds, visual-denominator fail-closed behavior, unique public workspaces,
+  and pilot
+  `insufficient_evidence` output. A denied-path test rejects manual records that
+  impersonate host telemetry; post-import manual-record drift and host-binding drift
+  both invalidate the generation matrix.
+- Residual: an approved external executable remains trusted code with the user's
+  authority. Its hash does not pin provider routing, remote model weights, data
+  retention, authentication scope, or service-side mutations.
+
 ## Supply-chain controls
 
-The runtime installs no Python dependency. CI installs the version-pinned
+The controller and adapters install no Python dependency. CI installs the version-pinned
 `jsonschema` validation-only test dependency so shared Draft 2020-12/CLI boundary
 tests cannot silently skip; it is not copied into the Skill. The portable schema is
 a structural and conditional preflight, while `validate-spec` remains authoritative
 for complete Unicode printability, identifier uniqueness, cross-record references,
 and catalog-derived semantics that JSON Schema cannot fully express. CI actions are
-pinned to exact Git commit identities rather than movable tags. The Skill has an
+pinned to exact Git commit identities rather than movable tags. Real-host evaluation
+additionally depends on a separately installed, reviewed, SHA-pinned Codex binary
+and its remote service; that pin does not establish an immutable model revision or
+credential boundary. The Skill has an
 independent provenance record and includes no copied third-party assets. These
 controls reduce ambiguity; they do
 not prove publisher identity or runtime safety.
@@ -258,5 +318,15 @@ not prove publisher identity or runtime safety.
   The normal free-form report path is not transformed by the strict renderer.
 - Checkpoint matching is a conservative lexical proxy, not renderer equivalence or a
   semantic assertion. A same-account writer can replace and re-fingerprint a file.
+- Raw study runs can contain prompts, responses, transcripts, local paths, hidden
+  cases, and rater identities. They must remain outside Git in an owner-only parent;
+  file modes and unkeyed hashes do not defend against a malicious same-account
+  operator.
+- An authorized host run can transmit study data, spend money, and change remote
+  state. The current adapter has no enforceable provider output-token or cost cap,
+  and a model revision label may be descriptive rather than immutable.
+- Local output caps are monitored while the external process runs; one polling
+  interval of excess bytes can be written before termination and cleanup. The caps
+  bound accepted evidence, not instantaneous filesystem writes.
 - Clean tests and static inspection are not proof of security. The release gate must
   retain the documented trust assumptions and rerun source-to-sink regression tests.

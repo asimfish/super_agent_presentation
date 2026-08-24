@@ -63,3 +63,6 @@ The machine checks establish only that specified structural and lexical constrai
 hold. With no untreated baseline, token telemetry, cross-model sample, or human blind
 ratings, this record does **not** establish that the framework improves readability,
 correctness, consistency, or efficiency in general.
+
+The sanitized real-host integration record is documented in the
+[Codex development pilot](../pilot/codex-20260824/README.md).

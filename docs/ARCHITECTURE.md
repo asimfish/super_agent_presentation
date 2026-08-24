@@ -72,9 +72,14 @@ exactly one primary mode:
 - `postmortem`
 - `risk-report`
 
-It may add no more than two orthogonal modules when the content requires them:
+It prefers one orthogonal module and may add no more than two when the needs do not
+overlap:
 `visuals`, `tables`, `conclusions`, `evidence`, or `academic-display`. Core content
 is bundled with the selected mode so the agent does not read the protocol catalog.
+Modes may declare an `embedded_modules` capability to prevent automatic duplication;
+for example, `experiment-report` already carries conclusion calibration, so its
+default bundle loads only `tables`. Explicit module selection remains available for
+a genuinely separate decision policy.
 
 ### Layer 3 — finalization gate
 
@@ -192,6 +197,65 @@ checkpoint, and bundle commands do not pay the scanner import cost.
 This removes security-sensitive parser drift without claiming full CommonMark
 rendering equivalence. See ADR-004.
 
+## Evaluation control plane
+
+The v0.3 study architecture keeps deterministic evidence processing separate from
+model side effects:
+
+```mermaid
+flowchart LR
+    A[Frozen plan, cases, artifacts] --> B[presentation_study controller]
+    B --> C[Manual import and machine evaluation]
+    B --> D[Typed host plan receipt]
+    D -->|explicit --execute only| E[Exact host executable]
+    E --> F[Bounded response and JSONL evidence]
+    F --> M[Controller-owned execution binding]
+    C --> G[Blind A/B packet]
+    M --> G
+    G --> H[Independent owner-only ratings]
+    H --> I[Rating freeze and case-level aggregate]
+    I --> J{Design prerequisites and metric gates}
+    J -->|missing| K[insufficient_evidence]
+    J -->|complete| L[pass or fail report]
+```
+
+`presentation_benchmark.py` remains a pure fixture evaluator. The study controller
+owns the private state machine, immutable receipts, blind packet, rating lock, and
+claim gate. `presentation_hosts.py` is side-effect-free: it constructs a fixed Codex
+argument vector and parses JSONL telemetry. The only model boundary is
+`presentation_study.py host-run --execute`, which verifies the previously frozen
+executable/workspace receipts, launches with `shell=False`, enforces timeout and
+local evidence-size limits, then imports the result.
+The host plan also freezes the complete argv, transcript format, and
+`presentation_hosts.py` digest. `host-run` rebuilds the command and requires exact
+equality before launching; binding validation repeats that comparison against the
+completed execution receipt.
+
+Adapter telemetry is accepted only through that path: the controller binds the
+frozen host plan and completed execution receipt to the complete stored record.
+Manual imports remain useful for pilots or externally generated evidence, but they
+cannot self-report adapter telemetry or an adapter-enforced output cap, and a public
+claim profile cannot contain manual-host models.
+
+Raw caller records validate against `generation-record.schema.json`; after machine
+evaluation the controller changes the schema identity to
+`stored-generation-record.schema.json`, adds the machine result, and locks the full
+stored bytes. This keeps caller authority separate from derived evidence.
+
+The host receipt distinguishes supported controls from declared settings. In the
+current Codex adapter, the planned `max_output_tokens` is not a provider-enforced
+cap. Same-account workspaces are accepted only for pilot mechanics; public claim
+eligibility requires an external-sandbox receipt and a shared-and-audited global
+instruction policy. Public repeats also require a distinct controller-locked
+workspace per generation unit; the external receipt must cover fresh per-unit
+isolation. Transcript events only establish exact successful-command observations.
+Because the current Codex adapter cannot bind persisted checkpoint/report bytes, it
+records `checkpoint_receipt_verified: false`. See ADR-006.
+Host telemetry separates the common strict `final_audit_passed` observation from
+the checkpoint-backed audit observation. Fresh short tasks can satisfy the former
+with `audit --mode ... --strict`; required compaction strata must satisfy both the
+checkpoint lifecycle and its stronger receipt gate.
+
 ## Portability boundary
 
 The canonical artifact is an Agent Skill. Adapters declare when specific hosts
@@ -204,9 +268,14 @@ enforcement requires a wrapper with an equivalent finalization gate.
 ## Security and trust
 
 Task content, retrieved sources, and embedded report text are untrusted data. They
-cannot override the framework or higher-priority instructions. The CLI does not
-execute report content, fetch remote resources, or mutate another project by
-default. A checkpoint is also untrusted, potentially sensitive local data: reads are
+cannot override the framework or higher-priority instructions. `reportctl`, the
+fixture benchmark, and deterministic study commands do not execute report content,
+fetch remote resources, or call a model. The explicitly authorized
+`host-run --execute` boundary launches an external host that may use the network,
+credentials, paid services, and provider-side state. A checkpoint is also untrusted,
+potentially sensitive local data: reads are
 bounded and reject user-controlled symlink components, while writes are explicit and
 atomic. Its checksum is not a trust boundary. Installation is an explicit operation
-and must preserve existing host instructions.
+and must preserve existing host instructions. Raw study runs belong in an owner-only
+directory outside every Git worktree; only reviewed aggregate summaries may enter
+the repository.
