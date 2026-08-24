@@ -27,17 +27,50 @@ import time
 from pathlib import Path
 from pathlib import PurePosixPath
 from types import ModuleType
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
+from urllib.parse import unquote, urlsplit
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BENCHMARK_SCRIPT = REPO_ROOT / "scripts" / "presentation_benchmark.py"
 HOSTS_SCRIPT = REPO_ROOT / "scripts" / "presentation_hosts.py"
+REPORTCTL_SCRIPT = (
+    REPO_ROOT / "skills" / "agentic-reporting" / "scripts" / "reportctl.py"
+)
+CHECKPOINT_AUDITOR_RELATIVE_FILES = (
+    PurePosixPath("scripts/reportctl.py"),
+    PurePosixPath("scripts/markdown_image_scanner.py"),
+    PurePosixPath("references/protocols.json"),
+)
+CHECKPOINT_CAPTURE_DIRECTORY = ".agentic-reporting"
+CHECKPOINT_CAPTURE_PATH = ".agentic-reporting/checkpoint.json"
+CHECKPOINT_REPORT_PATH = ".agentic-reporting/draft.md"
+CHECKPOINT_CAPTURE_IGNORE_PATH = ".agentic-reporting/.gitignore"
+CHECKPOINT_CAPTURE_IGNORE_BYTES = b"*\n"
+CHECKPOINT_AGENT_CONTRACT = (
+    "Study-only checkpoint receipt contract: use "
+    ".agentic-reporting/checkpoint.json for checkpoint creation and the later "
+    "bundle reload, then audit .agentic-reporting/draft.md with that checkpoint "
+    "in strict mode. Invoke all three receipt commands with the literal prefix "
+    "python3 .agents/skills/agentic-reporting/scripts/reportctl.py so the JSONL "
+    "adapter can recognize them. The controller precreated and Git-ignored .agentic-reporting "
+    "with mode 0700. "
+    "For supplied local images, embed the exact workspace-relative artifact path "
+    "shown in the task (never prefix ../); the controller mirrors those paths "
+    "beneath the draft directory so the same Markdown target remains valid after "
+    "storage and blinding. "
+    "Keep both files mode 0600 before each successful command event, and deliver "
+    "the audited draft bytes exactly as the final response."
+)
 PUBLIC_CASES = REPO_ROOT / "evals" / "presentation-cases.json"
 MAX_JSON_BYTES = 2 * 1024 * 1024
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 MAX_TRANSCRIPT_BYTES = 16 * 1024 * 1024
 MAX_HOST_STDERR_BYTES = 2 * 1024 * 1024
+MAX_CHECKPOINT_BYTES = 2 * 1024 * 1024
+MAX_CHECKPOINT_REPORT_BYTES = 1 * 1024 * 1024
+MAX_CHECKPOINT_CAPTURE_EVENTS = 16
+MAX_AUDITOR_OUTPUT_BYTES = 2 * 1024 * 1024
 MAX_ARTIFACT_BYTES = 8 * 1024 * 1024
 MAX_ARTIFACT_TOTAL_BYTES = 32 * 1024 * 1024
 MAX_ARTIFACTS = 32
@@ -138,6 +171,7 @@ class StudyError(ValueError):
 
 _BENCHMARK_MODULE: ModuleType | None = None
 _HOST_MODULE: ModuleType | None = None
+_CHECKPOINT_IMAGE_SCANNER: ModuleType | None = None
 
 
 def _load_benchmark_module() -> ModuleType:
@@ -180,6 +214,31 @@ def _load_host_module() -> ModuleType:
         sys.modules.pop(module_name, None)
         raise StudyError(f"Cannot load host adapters {HOSTS_SCRIPT}: {exc}") from exc
     _HOST_MODULE = module
+    return module
+
+
+def _load_checkpoint_image_scanner() -> ModuleType:
+    """Load the auditor-pinned Markdown image scanner without changing sys.path."""
+
+    global _CHECKPOINT_IMAGE_SCANNER
+    if _CHECKPOINT_IMAGE_SCANNER is not None:
+        return _CHECKPOINT_IMAGE_SCANNER
+    path = REPORTCTL_SCRIPT.with_name("markdown_image_scanner.py")
+    module_name = "_agentic_reporting_study_markdown_image_scanner"
+    try:
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None or spec.loader is None:
+            raise ImportError("no module loader is available")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        for name in ("scan_markdown_images", "decode_commonmark_entities"):
+            if not callable(getattr(module, name, None)):
+                raise ImportError(f"image scanner export is missing: {name}")
+    except Exception as exc:
+        sys.modules.pop(module_name, None)
+        raise StudyError(f"Cannot load checkpoint image scanner {path}: {exc}") from exc
+    _CHECKPOINT_IMAGE_SCANNER = module
     return module
 
 
@@ -263,6 +322,155 @@ def _read_bounded_bytes(path: Path, *, maximum: int, label: str) -> bytes:
         return path.read_bytes()
     except OSError as exc:
         raise StudyError(f"Cannot read {label} {path}: {exc}") from exc
+
+
+def _portable_workspace_relative_path(value: str, label: str) -> PurePosixPath:
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value) > 4096
+        or "\\" in value
+        or "\x00" in value
+    ):
+        raise StudyError(f"{label} must be a bounded portable workspace-relative path")
+    relative = PurePosixPath(value)
+    if (
+        relative.is_absolute()
+        or len(relative.parts) > 16
+        or any(
+            part in {"", ".", ".."}
+            or len(part) > 255
+            or re.fullmatch(r"[A-Za-z0-9._-]+", part) is None
+            for part in relative.parts
+        )
+        or relative.as_posix() != value
+    ):
+        raise StudyError(f"{label} must be a canonical portable path inside the workspace")
+    return relative
+
+
+def _read_workspace_artifact(
+    workspace: Path,
+    path_text: str,
+    *,
+    maximum: int,
+    label: str,
+) -> tuple[PurePosixPath, bytes, dict[str, Any]]:
+    """Read one agent-owned artifact without following any workspace path link."""
+
+    required_flags = ("O_CLOEXEC", "O_DIRECTORY", "O_NOFOLLOW", "O_NONBLOCK")
+    if os.name != "posix" or any(not hasattr(os, name) for name in required_flags):
+        raise StudyError("Controller checkpoint capture requires POSIX no-follow reads")
+    relative = _portable_workspace_relative_path(path_text, label)
+    root_descriptor = -1
+    descriptor = -1
+    opened_directories: list[int] = []
+    flags = os.O_RDONLY | os.O_CLOEXEC
+    directory_flags = flags | os.O_DIRECTORY | os.O_NOFOLLOW
+
+    def validate_directory(
+        metadata: os.stat_result, *, directory_label: str, private: bool
+    ) -> None:
+        if not stat.S_ISDIR(metadata.st_mode):
+            raise StudyError(f"{directory_label} must be a regular directory")
+        if metadata.st_uid != os.geteuid():
+            raise StudyError(f"{directory_label} must be owned by the controller user")
+        mode = stat.S_IMODE(metadata.st_mode)
+        if private:
+            if mode != 0o700:
+                raise StudyError(f"{directory_label} must have mode 0700")
+        elif mode & 0o022:
+            raise StudyError(
+                f"{directory_label} must not grant group or other write permissions"
+            )
+
+    try:
+        root_descriptor = os.open(str(workspace), directory_flags)
+        root_before = os.fstat(root_descriptor)
+        validate_directory(
+            root_before,
+            directory_label=f"{label} workspace root",
+            private=False,
+        )
+        parent_descriptor = root_descriptor
+        for component in relative.parts[:-1]:
+            next_descriptor = os.open(
+                component,
+                directory_flags,
+                dir_fd=parent_descriptor,
+            )
+            metadata = os.fstat(next_descriptor)
+            validate_directory(
+                metadata,
+                directory_label=f"{label} parent {component}",
+                private=True,
+            )
+            opened_directories.append(next_descriptor)
+            parent_descriptor = next_descriptor
+        descriptor = os.open(
+            relative.parts[-1],
+            flags | os.O_NOFOLLOW | os.O_NONBLOCK,
+            dir_fd=parent_descriptor,
+        )
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode):
+            raise StudyError(f"{label} must be a regular file")
+        if before.st_nlink != 1:
+            raise StudyError(f"{label} must have exactly one hard link")
+        if before.st_uid != os.geteuid():
+            raise StudyError(f"{label} must be owned by the controller user")
+        if stat.S_IMODE(before.st_mode) != 0o600:
+            raise StudyError(
+                f"{label} must have mode 0600 without group or other permissions"
+            )
+        if before.st_size > maximum:
+            raise StudyError(f"{label} exceeds {maximum} bytes")
+        chunks: list[bytes] = []
+        remaining = maximum + 1
+        while remaining:
+            chunk = os.read(descriptor, min(65_536, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        data = b"".join(chunks)
+        if len(data) > maximum:
+            raise StudyError(f"{label} exceeds {maximum} bytes")
+        after = os.fstat(descriptor)
+        stable_fields = ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
+        if any(getattr(before, field) != getattr(after, field) for field in stable_fields):
+            raise StudyError(f"{label} changed while the controller read it")
+        if len(data) != after.st_size:
+            raise StudyError(f"{label} size changed while the controller read it")
+        root_after = os.fstat(root_descriptor)
+        directory_stable_fields = ("st_dev", "st_ino", "st_mode", "st_uid", "st_ctime_ns")
+        if any(
+            getattr(root_before, field) != getattr(root_after, field)
+            for field in directory_stable_fields
+        ):
+            raise StudyError(f"{label} workspace root changed during controller capture")
+        for directory_descriptor in opened_directories:
+            parent_after = os.fstat(directory_descriptor)
+            validate_directory(
+                parent_after,
+                directory_label=f"{label} parent",
+                private=True,
+            )
+        return relative, data, {
+            "bytes": len(data),
+            "sha256": hashlib.sha256(data).hexdigest(),
+        }
+    except StudyError:
+        raise
+    except OSError as exc:
+        raise StudyError(f"Cannot securely read {label}: {exc}") from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        for directory_descriptor in reversed(opened_directories):
+            os.close(directory_descriptor)
+        if root_descriptor >= 0:
+            os.close(root_descriptor)
 
 
 def _read_json(path: Path, *, label: str = "JSON") -> dict[str, Any]:
@@ -376,6 +584,47 @@ def _safe_relative_artifact(value: Any, label: str = "artifact path") -> PurePos
     if suffix not in ARTIFACT_MEDIA_TYPES:
         raise StudyError(f"{label} must use a supported renderable image suffix")
     return relative
+
+
+def _checkpoint_local_artifact_targets(report_bytes: bytes) -> set[str]:
+    """Return portable local image targets that must survive storage and blinding."""
+
+    try:
+        text = report_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise StudyError("Checkpoint report must be UTF-8") from exc
+    scanner = _load_checkpoint_image_scanner()
+    try:
+        records = scanner.scan_markdown_images(
+            text,
+            record_limit=MAX_ARTIFACTS + 1,
+        )
+    except (TypeError, ValueError) as exc:
+        raise StudyError(f"Cannot scan checkpoint report images: {exc}") from exc
+    if len(records) > MAX_ARTIFACTS:
+        raise StudyError(
+            f"Checkpoint report contains more than {MAX_ARTIFACTS} image references"
+        )
+    targets: set[str] = set()
+    for index, record in enumerate(records):
+        if not record.canonical:
+            raise StudyError("Checkpoint report contains noncanonical image syntax")
+        normalized = scanner.decode_commonmark_entities(record.target)
+        try:
+            parsed = urlsplit(normalized)
+        except ValueError as exc:
+            raise StudyError("Checkpoint report contains an invalid image target") from exc
+        if parsed.scheme.casefold() in {"http", "https"} and parsed.netloc:
+            continue
+        if parsed.scheme or parsed.netloc or normalized.startswith("//"):
+            raise StudyError("Checkpoint report contains an unsupported image target")
+        local_path = unquote(parsed.path)
+        relative = _safe_relative_artifact(
+            local_path,
+            f"checkpoint report local image {index}",
+        )
+        targets.add(relative.as_posix())
+    return targets
 
 
 def _artifact_destination(root: Path, relative: PurePosixPath) -> Path:
@@ -1154,6 +1403,25 @@ def _validate_generation_record(
         raise StudyError(
             "An enforced output-token cap requires a controller-owned host execution binding"
         )
+    if observations["checkpoint_receipt_verified"] is True:
+        if (
+            not host_execution_bound
+            or record["condition"] != "framework"
+            or observations["telemetry_source"] != "host_adapter"
+        ):
+            raise StudyError(
+                "A verified checkpoint receipt requires a controller-owned host execution binding for a framework record"
+            )
+        required_observations = (
+            "checkpoint_created",
+            "checkpoint_reloaded",
+            "checkpoint_audit_passed",
+            "final_audit_passed",
+        )
+        if any(observations[field] is not True for field in required_observations):
+            raise StudyError(
+                "A verified checkpoint receipt requires the complete checkpoint command chain"
+            )
     if host_execution_bound and observations["telemetry_source"] != "host_adapter":
         raise StudyError("A host execution binding requires host_adapter telemetry")
 
@@ -1490,6 +1758,127 @@ def _host_adapter_source_sha256() -> str:
     return _sha256(HOSTS_SCRIPT)
 
 
+def _checkpoint_auditor_receipt(skill_root: Path | None = None) -> dict[str, Any]:
+    """Fingerprint the complete fixed-path dependency closure for strict audit."""
+
+    root = (
+        skill_root
+        if skill_root is not None
+        else REPO_ROOT / "skills" / "agentic-reporting"
+    )
+    files: list[dict[str, Any]] = []
+    for relative in CHECKPOINT_AUDITOR_RELATIVE_FILES:
+        path = root.joinpath(*relative.parts)
+        data = _read_bounded_bytes(
+            path,
+            maximum=MAX_JSON_BYTES,
+            label="checkpoint auditor dependency",
+        )
+        files.append(
+            {
+                "path": relative.as_posix(),
+                "bytes": len(data),
+                "sha256": hashlib.sha256(data).hexdigest(),
+            }
+        )
+    canonical = json.dumps(
+        files, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    ).encode("ascii")
+    return {
+        "profile": "reportctl-audit-closure-v1",
+        "files": files,
+        "sha256": hashlib.sha256(canonical).hexdigest(),
+    }
+
+
+def _checkpoint_auditor_sha256() -> str:
+    """Identify the controller-owned strict-audit dependency closure."""
+
+    return _checkpoint_auditor_receipt()["sha256"]
+
+
+def _compose_host_prompt(prompt: bytes, agent_contract: str | None) -> bytes:
+    if agent_contract is None:
+        return prompt
+    separator = b"\n\n" if prompt.endswith(b"\n") else b"\n\n\n"
+    return prompt + separator + agent_contract.encode("utf-8") + b"\n"
+
+
+def _prepare_checkpoint_capture_workspace(
+    workspace: Path, profile: dict[str, Any]
+) -> None:
+    if not profile["enabled"]:
+        return
+    if os.name != "posix" or not hasattr(os, "geteuid"):
+        raise StudyError("Framework checkpoint capture workspace requires POSIX modes")
+    capture_directory = workspace / profile["workspace_directory"]
+    _reject_symlink_chain(capture_directory, "checkpoint capture directory")
+    if capture_directory.exists() or capture_directory.is_symlink():
+        raise StudyError(
+            "Framework study workspace checkpoint capture directory must start absent"
+        )
+    try:
+        capture_directory.mkdir(mode=0o700)
+        capture_directory.chmod(0o700)
+        _write_bytes_atomic(
+            capture_directory / ".gitignore",
+            CHECKPOINT_CAPTURE_IGNORE_BYTES,
+            mode=0o600,
+        )
+        for index, artifact in enumerate(profile["artifact_mirror"]):
+            relative, digest, _ = _artifact_record(
+                artifact,
+                label=f"checkpoint artifact mirror {index}",
+            )
+            _copy_artifact(
+                source_root=workspace,
+                destination_root=capture_directory,
+                relative=relative,
+                expected_sha256=digest,
+                label="checkpoint artifact mirror",
+            )
+        metadata = capture_directory.stat()
+    except OSError as exc:
+        raise StudyError(f"Cannot prepare checkpoint capture directory: {exc}") from exc
+    if (
+        not stat.S_ISDIR(metadata.st_mode)
+        or metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(metadata.st_mode) != 0o700
+    ):
+        raise StudyError("Checkpoint capture directory is not owner-only")
+
+
+def _verify_checkpoint_artifact_mirror(
+    workspace: Path,
+    profile: dict[str, Any],
+    *,
+    required_paths: set[str] | None = None,
+) -> None:
+    """Verify private report-relative copies against their frozen artifact receipts."""
+
+    artifacts = {
+        artifact["path"]: artifact for artifact in profile["artifact_mirror"]
+    }
+    selected = set(artifacts) if required_paths is None else required_paths
+    if not selected.issubset(artifacts):
+        raise StudyError("Checkpoint report references an unmirrored local image")
+    for path_text in sorted(selected):
+        artifact = artifacts[path_text]
+        relative, digest, _ = _artifact_record(
+            artifact,
+            label="checkpoint artifact mirror",
+        )
+        mirror_path = PurePosixPath(profile["workspace_directory"]) / relative
+        _, _, evidence = _read_workspace_artifact(
+            workspace,
+            mirror_path.as_posix(),
+            maximum=MAX_ARTIFACT_BYTES,
+            label="checkpoint artifact mirror",
+        )
+        if evidence["sha256"] != digest:
+            raise StudyError(f"Checkpoint artifact mirror changed: {path_text}")
+
+
 def command_host_plan(args: argparse.Namespace) -> int:
     run_dir = Path(args.run_dir)
     plan, _, expected = _load_run(run_dir)
@@ -1512,12 +1901,55 @@ def command_host_plan(args: argparse.Namespace) -> int:
         raise StudyError("Host executable does not match the preregistered SHA-256")
     workspace = _resolve_workspace(Path(args.workspace))
     workspace_receipt = _workspace_receipt(workspace, unit["condition"])
+    checkpoint_auditor_receipt = _checkpoint_auditor_receipt()
+    checkpoint_auditor_digest = checkpoint_auditor_receipt["sha256"]
     if unit["condition"] == "framework":
         activation = workspace_receipt["activation"]
         if activation["skill"]["manifest_sha256"] != plan["framework"]["skill_manifest_sha256"]:
             raise StudyError("Installed Skill does not match the preregistered framework manifest")
         if activation["active_instruction"]["sha256"] != plan["framework"]["adapter_sha256"]:
             raise StudyError("Active host instruction does not match the preregistered adapter digest")
+        installed_skill_root = workspace / ".agents" / "skills" / "agentic-reporting"
+        if _checkpoint_auditor_receipt(installed_skill_root) != checkpoint_auditor_receipt:
+            raise StudyError(
+                "Installed checkpoint auditor closure does not match the controller-owned implementation"
+            )
+    context = next(item for item in plan["contexts"] if item["id"] == unit["context_id"])
+    capture_enabled = unit["condition"] == "framework"
+    agent_contract = CHECKPOINT_AGENT_CONTRACT if capture_enabled else None
+    checkpoint_capture_profile = {
+        "enabled": capture_enabled,
+        "required": capture_enabled and context["compaction_required"],
+        "capture_protocol": "posix-openat-event-snapshot-v1",
+        "assurance": "controller-event-snapshot-final-audit",
+        "workspace_directory": CHECKPOINT_CAPTURE_DIRECTORY,
+        "checkpoint_path": CHECKPOINT_CAPTURE_PATH,
+        "report_path": CHECKPOINT_REPORT_PATH,
+        "ignore_path": CHECKPOINT_CAPTURE_IGNORE_PATH,
+        "ignore_sha256": hashlib.sha256(CHECKPOINT_CAPTURE_IGNORE_BYTES).hexdigest(),
+        "directory_mode": "0700",
+        "file_mode": "0600",
+        "artifact_mirror": (
+            _input_artifacts_for_case(run_dir, unit["case_id"])
+            if capture_enabled
+            else []
+        ),
+        "agent_contract": agent_contract,
+        "agent_contract_sha256": (
+            hashlib.sha256(agent_contract.encode("utf-8")).hexdigest()
+            if agent_contract is not None
+            else None
+        ),
+    }
+    prompt_path = run_dir / unit["prompt"]
+    prompt_bytes = _read_bounded_bytes(
+        prompt_path, maximum=MAX_RESPONSE_BYTES, label="frozen host-plan prompt"
+    )
+    if hashlib.sha256(prompt_bytes).hexdigest() != unit["prompt_sha256"]:
+        raise StudyError("Frozen host-plan prompt changed")
+    host_prompt_sha256 = hashlib.sha256(
+        _compose_host_prompt(prompt_bytes, agent_contract)
+    ).hexdigest()
     planned_command = adapter.build_command(
         executable=executable,
         workspace=workspace,
@@ -1528,7 +1960,7 @@ def command_host_plan(args: argparse.Namespace) -> int:
     if _host_adapter_source_sha256() != adapter_source_digest:
         raise StudyError("Host adapter source changed while building host-plan")
     host_plan = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "study_id": plan["study_id"],
         "unit_id": unit["unit_id"],
         "condition": unit["condition"],
@@ -1539,9 +1971,12 @@ def command_host_plan(args: argparse.Namespace) -> int:
         "executable": str(executable),
         "executable_sha256": executable_digest,
         "host_adapter_source_sha256": adapter_source_digest,
+        "checkpoint_auditor_sha256": checkpoint_auditor_digest,
+        "checkpoint_auditor_receipt": checkpoint_auditor_receipt,
         "workspace": str(workspace),
         "workspace_receipt": workspace_receipt,
         "prompt_sha256": unit["prompt_sha256"],
+        "host_prompt_sha256": host_prompt_sha256,
         "planned_argv": list(planned_command.argv),
         "planned_transcript_format": planned_command.transcript_format,
         "command_profile": {
@@ -1554,6 +1989,7 @@ def command_host_plan(args: argparse.Namespace) -> int:
             "explicit_execution_required": True,
             "output_token_cap_enforced": planned_command.output_token_cap_enforced,
         },
+        "checkpoint_capture_profile": checkpoint_capture_profile,
     }
     plans_dir = run_dir / "private" / "host-plans"
     if not plans_dir.exists():
@@ -1583,6 +2019,9 @@ def _load_host_plan(run_dir: Path, unit_id: str) -> dict[str, Any]:
     if lock.get("host_plan_sha256") != _sha256(path):
         raise StudyError("Host plan changed after it was frozen")
     host_plan = _read_json(path, label="host plan")
+    version = host_plan.get("schema_version")
+    if version not in {"1.0", "1.1"}:
+        raise StudyError("Unsupported frozen host plan schema version")
     _require_object_shape(
         host_plan,
         "host plan",
@@ -1592,6 +2031,13 @@ def _load_host_plan(run_dir: Path, unit_id: str) -> dict[str, Any]:
             "host_adapter_source_sha256", "workspace", "workspace_receipt",
             "prompt_sha256", "planned_argv", "planned_transcript_format",
             "command_profile",
+        ) + (
+            (
+                "checkpoint_auditor_sha256", "checkpoint_auditor_receipt",
+                "checkpoint_capture_profile", "host_prompt_sha256",
+            )
+            if version == "1.1"
+            else ()
         ),
     )
     adapter_digest = host_plan["host_adapter_source_sha256"]
@@ -1614,6 +2060,127 @@ def _load_host_plan(run_dir: Path, unit_id: str) -> dict[str, Any]:
         "frozen host plan transcript format",
         maximum=200,
     )
+    if version == "1.1":
+        auditor_digest = host_plan["checkpoint_auditor_sha256"]
+        if not isinstance(auditor_digest, str) or not re.fullmatch(
+            r"[0-9a-f]{64}", auditor_digest
+        ):
+            raise StudyError("Frozen host plan checkpoint auditor digest is invalid")
+        auditor_receipt = host_plan["checkpoint_auditor_receipt"]
+        if not isinstance(auditor_receipt, dict):
+            raise StudyError("Frozen checkpoint auditor receipt must be an object")
+        _require_object_shape(
+            auditor_receipt,
+            "frozen checkpoint auditor receipt",
+            required=("profile", "files", "sha256"),
+        )
+        if (
+            auditor_receipt["profile"] != "reportctl-audit-closure-v1"
+            or auditor_receipt["sha256"] != auditor_digest
+            or not isinstance(auditor_receipt["files"], list)
+            or len(auditor_receipt["files"])
+            != len(CHECKPOINT_AUDITOR_RELATIVE_FILES)
+        ):
+            raise StudyError("Frozen checkpoint auditor receipt is invalid")
+        expected_paths = [path.as_posix() for path in CHECKPOINT_AUDITOR_RELATIVE_FILES]
+        canonical_files: list[dict[str, Any]] = []
+        for index, file_receipt in enumerate(auditor_receipt["files"]):
+            if not isinstance(file_receipt, dict):
+                raise StudyError("Frozen checkpoint auditor file receipt is invalid")
+            _require_object_shape(
+                file_receipt,
+                "frozen checkpoint auditor file receipt",
+                required=("path", "bytes", "sha256"),
+            )
+            if (
+                file_receipt["path"] != expected_paths[index]
+                or isinstance(file_receipt["bytes"], bool)
+                or not isinstance(file_receipt["bytes"], int)
+                or file_receipt["bytes"] < 1
+                or file_receipt["bytes"] > MAX_JSON_BYTES
+                or not isinstance(file_receipt["sha256"], str)
+                or re.fullmatch(r"[0-9a-f]{64}", file_receipt["sha256"]) is None
+            ):
+                raise StudyError("Frozen checkpoint auditor file receipt is invalid")
+            canonical_files.append(file_receipt)
+        canonical = json.dumps(
+            canonical_files,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("ascii")
+        if hashlib.sha256(canonical).hexdigest() != auditor_digest:
+            raise StudyError("Frozen checkpoint auditor closure digest is invalid")
+        profile = host_plan["checkpoint_capture_profile"]
+        if not isinstance(profile, dict):
+            raise StudyError("Frozen checkpoint capture profile must be an object")
+        _require_object_shape(
+            profile,
+            "frozen checkpoint capture profile",
+            required=(
+                "enabled", "required", "capture_protocol", "assurance",
+                "workspace_directory", "checkpoint_path", "report_path",
+                "ignore_path", "ignore_sha256",
+                "directory_mode", "file_mode", "artifact_mirror", "agent_contract",
+                "agent_contract_sha256",
+            ),
+        )
+        if not isinstance(profile["enabled"], bool) or not isinstance(
+            profile["required"], bool
+        ):
+            raise StudyError("Frozen checkpoint capture booleans are invalid")
+        if profile["required"] and not profile["enabled"]:
+            raise StudyError("A required checkpoint capture profile must be enabled")
+        if (
+            profile["capture_protocol"] != "posix-openat-event-snapshot-v1"
+            or profile["assurance"] != "controller-event-snapshot-final-audit"
+            or profile["workspace_directory"] != CHECKPOINT_CAPTURE_DIRECTORY
+            or profile["checkpoint_path"] != CHECKPOINT_CAPTURE_PATH
+            or profile["report_path"] != CHECKPOINT_REPORT_PATH
+            or profile["ignore_path"] != CHECKPOINT_CAPTURE_IGNORE_PATH
+            or profile["ignore_sha256"]
+            != hashlib.sha256(CHECKPOINT_CAPTURE_IGNORE_BYTES).hexdigest()
+            or profile["directory_mode"] != "0700"
+            or profile["file_mode"] != "0600"
+        ):
+            raise StudyError("Frozen checkpoint capture profile is unsupported")
+        artifact_mirror = profile["artifact_mirror"]
+        if (
+            not isinstance(artifact_mirror, list)
+            or len(artifact_mirror) > MAX_ARTIFACTS
+        ):
+            raise StudyError("Frozen checkpoint artifact mirror is invalid")
+        seen_artifact_paths: set[str] = set()
+        for index, artifact in enumerate(artifact_mirror):
+            relative, _, _ = _artifact_record(
+                artifact,
+                label=f"frozen checkpoint artifact mirror {index}",
+            )
+            if relative.as_posix() in seen_artifact_paths:
+                raise StudyError("Frozen checkpoint artifact mirror paths must be unique")
+            seen_artifact_paths.add(relative.as_posix())
+        if not profile["enabled"] and artifact_mirror:
+            raise StudyError("Disabled checkpoint capture cannot mirror artifacts")
+        contract = profile["agent_contract"]
+        contract_digest = profile["agent_contract_sha256"]
+        if profile["enabled"]:
+            if (
+                not isinstance(contract, str)
+                or not contract
+                or len(contract) > 2_000
+                or not isinstance(contract_digest, str)
+                or re.fullmatch(r"[0-9a-f]{64}", contract_digest) is None
+                or hashlib.sha256(contract.encode("utf-8")).hexdigest()
+                != contract_digest
+            ):
+                raise StudyError("Frozen checkpoint capture agent contract is invalid")
+        elif contract is not None or contract_digest is not None:
+            raise StudyError("Frozen checkpoint capture agent contract is invalid")
+        host_prompt_digest = host_plan["host_prompt_sha256"]
+        if not isinstance(host_prompt_digest, str) or re.fullmatch(
+            r"[0-9a-f]{64}", host_prompt_digest
+        ) is None:
+            raise StudyError("Frozen host prompt digest is invalid")
     return host_plan
 
 
@@ -1639,6 +2206,362 @@ def _stage_case_inputs(run_dir: Path, workspace: Path, case_id: str) -> list[dic
     return staged
 
 
+def _finalize_checkpoint_artifact_receipt(
+    *,
+    plan: dict[str, Any],
+    unit: dict[str, Any],
+    host_plan: dict[str, Any],
+    host_plan_sha256: str,
+    execution_root: Path,
+    response_bytes: bytes,
+    transcript_sha256: str,
+    telemetry: Any,
+    capture_state: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Promote one unambiguous event-snapshot chain into private evidence."""
+
+    if (
+        unit["condition"] != "framework"
+        or host_plan.get("schema_version") != "1.1"
+        or not host_plan["checkpoint_capture_profile"]["enabled"]
+        or capture_state.get("invalid") is True
+    ):
+        return None
+    captures = capture_state.get("events")
+    if not isinstance(captures, list) or len(captures) != 3:
+        return None
+    if [item.get("phase") for item in captures] != ["create", "reload", "audit"]:
+        return None
+    capture_profile = host_plan["checkpoint_capture_profile"]
+    checkpoint_paths = [item.get("checkpoint_path") for item in captures]
+    if checkpoint_paths != [capture_profile["checkpoint_path"]] * 3:
+        return None
+    if [item.get("report_path") for item in captures] != [
+        None,
+        None,
+        capture_profile["report_path"],
+    ]:
+        return None
+    ordinals = [item.get("event_ordinal") for item in captures]
+    if (
+        any(isinstance(value, bool) or not isinstance(value, int) for value in ordinals)
+        or ordinals != sorted(ordinals)
+        or len(set(ordinals)) != 3
+    ):
+        return None
+    telemetry_events = [
+        (
+            event.phase,
+            event.event_ordinal,
+            event.checkpoint_path,
+            event.report_path,
+        )
+        for event in telemetry.checkpoint_events
+    ]
+    captured_events = [
+        (
+            item["phase"],
+            item["event_ordinal"],
+            item["checkpoint_path"],
+            item.get("report_path"),
+        )
+        for item in captures
+    ]
+    if telemetry_events != captured_events:
+        return None
+    if not (
+        telemetry.checkpoint_created
+        and telemetry.checkpoint_reloaded
+        and telemetry.checkpoint_audit_passed
+        and telemetry.final_audit_passed
+    ):
+        return None
+    checkpoint_buffers = [item.get("checkpoint_bytes") for item in captures]
+    if any(not isinstance(value, bytes) for value in checkpoint_buffers):
+        return None
+    if not all(value == checkpoint_buffers[0] for value in checkpoint_buffers[1:]):
+        return None
+    report_bytes = captures[-1].get("report_bytes")
+    if not isinstance(report_bytes, bytes) or report_bytes != response_bytes:
+        return None
+    try:
+        local_image_targets = _checkpoint_local_artifact_targets(report_bytes)
+    except StudyError:
+        return None
+    mirrored_artifact_paths = {
+        artifact["path"] for artifact in capture_profile["artifact_mirror"]
+    }
+    if not local_image_targets.issubset(mirrored_artifact_paths):
+        return None
+    workspace = Path(host_plan["workspace"])
+    try:
+        _verify_checkpoint_artifact_mirror(
+            workspace,
+            capture_profile,
+            required_paths=local_image_targets,
+        )
+    except StudyError:
+        return None
+    if host_plan["checkpoint_auditor_sha256"] != _checkpoint_auditor_sha256():
+        return None
+
+    capture_directory = workspace / capture_profile[
+        "workspace_directory"
+    ]
+    checkpoint_descriptor = -1
+    report_descriptor = -1
+    checkpoint_temporary = ""
+    report_temporary = ""
+    try:
+        checkpoint_descriptor, checkpoint_temporary = tempfile.mkstemp(
+            prefix=".controller-reaudit-checkpoint.",
+            suffix=".json",
+            dir=str(capture_directory),
+        )
+        os.fchmod(checkpoint_descriptor, 0o600)
+        with os.fdopen(checkpoint_descriptor, "wb") as handle:
+            checkpoint_descriptor = -1
+            handle.write(checkpoint_buffers[0])
+            handle.flush()
+            os.fsync(handle.fileno())
+        report_descriptor, report_temporary = tempfile.mkstemp(
+            prefix=".controller-reaudit-report.",
+            suffix=".md",
+            dir=str(capture_directory),
+        )
+        os.fchmod(report_descriptor, 0o600)
+        with os.fdopen(report_descriptor, "wb") as handle:
+            report_descriptor = -1
+            handle.write(report_bytes)
+            handle.flush()
+            os.fsync(handle.fileno())
+        checkpoint_path = Path(checkpoint_temporary)
+        report_path = Path(report_temporary)
+        argv = (
+            sys.executable,
+            "-I",
+            str(REPORTCTL_SCRIPT),
+            "audit",
+            "--file",
+            str(report_path),
+            "--checkpoint",
+            str(checkpoint_path),
+            "--strict",
+            "--json",
+        )
+        audited = subprocess.run(
+            list(argv),
+            cwd=REPO_ROOT,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            timeout=15,
+            check=False,
+            env={
+                "LANG": "C.UTF-8",
+                "LC_ALL": "C.UTF-8",
+                "PYTHONIOENCODING": "utf-8",
+            },
+        )
+        _verify_checkpoint_artifact_mirror(
+            workspace,
+            capture_profile,
+            required_paths=local_image_targets,
+        )
+        checkpoint_relative = checkpoint_path.relative_to(
+            workspace
+        ).as_posix()
+        report_relative = report_path.relative_to(workspace).as_posix()
+        _, reaudit_checkpoint_bytes, _ = _read_workspace_artifact(
+            workspace,
+            checkpoint_relative,
+            maximum=MAX_CHECKPOINT_BYTES,
+            label="controller re-audit checkpoint",
+        )
+        _, reaudit_report_bytes, _ = _read_workspace_artifact(
+            workspace,
+            report_relative,
+            maximum=MAX_CHECKPOINT_REPORT_BYTES,
+            label="controller re-audit report",
+        )
+    except (OSError, ValueError, StudyError, subprocess.SubprocessError):
+        return None
+    finally:
+        if checkpoint_descriptor >= 0:
+            os.close(checkpoint_descriptor)
+        if report_descriptor >= 0:
+            os.close(report_descriptor)
+        for temporary in (checkpoint_temporary, report_temporary):
+            if temporary:
+                try:
+                    os.unlink(temporary)
+                except OSError:
+                    pass
+    if (
+        audited.returncode != 0
+        or len(audited.stdout) > MAX_AUDITOR_OUTPUT_BYTES
+        or len(audited.stderr) > MAX_AUDITOR_OUTPUT_BYTES
+        or reaudit_checkpoint_bytes != checkpoint_buffers[0]
+        or reaudit_report_bytes != report_bytes
+    ):
+        return None
+    try:
+        audit_result = json.loads(audited.stdout.decode("utf-8"))
+        checkpoint = json.loads(checkpoint_buffers[0].decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
+        return None
+    if _json_structure_limit_error(audit_result) or _json_structure_limit_error(checkpoint):
+        return None
+    checkpoint_audit = audit_result.get("checkpoint") if isinstance(audit_result, dict) else None
+    if (
+        not isinstance(checkpoint, dict)
+        or checkpoint.get("schema_version") != 2
+        or checkpoint.get("kind") != "agentic-report-checkpoint"
+        or not isinstance(checkpoint.get("intent_sha256"), str)
+        or re.fullmatch(r"[0-9a-f]{64}", checkpoint["intent_sha256"]) is None
+        or not isinstance(audit_result, dict)
+        or audit_result.get("schema_version") != 1
+        or audit_result.get("errors") != 0
+        or audit_result.get("warnings") != 0
+        or not isinstance(checkpoint_audit, dict)
+        or checkpoint_audit.get("schema_version") != 2
+        or checkpoint_audit.get("must_show_missing") != 0
+        or isinstance(checkpoint_audit.get("must_show_checked"), bool)
+        or not isinstance(checkpoint_audit.get("must_show_checked"), int)
+        or checkpoint_audit["must_show_checked"] < 0
+    ):
+        return None
+    intent_fields = ("task", "mode", "surface", "audience", "modules", "must_show")
+    if any(field not in checkpoint for field in intent_fields) or not isinstance(
+        checkpoint["must_show"], list
+    ):
+        return None
+    try:
+        canonical_intent = json.dumps(
+            {field: checkpoint[field] for field in intent_fields},
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("ascii")
+    except (TypeError, ValueError, UnicodeEncodeError):
+        return None
+    audit_inputs = audit_result.get("input_receipts")
+    audit_report_input = (
+        audit_inputs.get("report") if isinstance(audit_inputs, dict) else None
+    )
+    audit_checkpoint_input = (
+        audit_inputs.get("checkpoint") if isinstance(audit_inputs, dict) else None
+    )
+    if (
+        hashlib.sha256(canonical_intent).hexdigest() != checkpoint["intent_sha256"]
+        or checkpoint_audit["must_show_checked"] != len(checkpoint["must_show"])
+        or not isinstance(audit_report_input, dict)
+        or audit_report_input.get("bytes") != len(report_bytes)
+        or audit_report_input.get("sha256")
+        != hashlib.sha256(report_bytes).hexdigest()
+        or not isinstance(audit_checkpoint_input, dict)
+        or audit_checkpoint_input.get("intent_sha256")
+        != checkpoint["intent_sha256"]
+    ):
+        return None
+
+    artifact_root = execution_root / "checkpoint-artifacts"
+    events_root = artifact_root / "events"
+    if artifact_root.exists() or artifact_root.is_symlink():
+        return None
+    artifact_root.mkdir(mode=0o700)
+    events_root.mkdir(mode=0o700)
+    event_receipts: list[dict[str, Any]] = []
+    for item in captures:
+        prefix = f"{item['event_ordinal']:06d}-{item['phase']}"
+        checkpoint_stored = f"checkpoint-artifacts/events/{prefix}-checkpoint.json"
+        _write_bytes_atomic(
+            execution_root / checkpoint_stored,
+            item["checkpoint_bytes"],
+            mode=0o600,
+        )
+        event_receipt: dict[str, Any] = {
+            "phase": item["phase"],
+            "transcript_event_ordinal": item["event_ordinal"],
+            "checkpoint": {
+                "stored_path": checkpoint_stored,
+                "bytes": len(item["checkpoint_bytes"]),
+                "sha256": hashlib.sha256(item["checkpoint_bytes"]).hexdigest(),
+            },
+        }
+        if item["phase"] == "audit":
+            report_stored = f"checkpoint-artifacts/events/{prefix}-report.md"
+            _write_bytes_atomic(
+                execution_root / report_stored,
+                item["report_bytes"],
+                mode=0o600,
+            )
+            event_receipt["report"] = {
+                "stored_path": report_stored,
+                "bytes": len(item["report_bytes"]),
+                "sha256": hashlib.sha256(item["report_bytes"]).hexdigest(),
+            }
+        event_receipts.append(event_receipt)
+
+    checkpoint_digest = hashlib.sha256(checkpoint_buffers[0]).hexdigest()
+    response_digest = hashlib.sha256(response_bytes).hexdigest()
+    _write_bytes_atomic(
+        artifact_root / "checkpoint.json", checkpoint_buffers[0], mode=0o600
+    )
+    _write_bytes_atomic(
+        artifact_root / "audited-report.md", report_bytes, mode=0o600
+    )
+    receipt = {
+        "$schema": "checkpoint-artifact-receipt.schema.json",
+        "schema_version": "1.0",
+        "kind": "checkpoint-artifact-receipt",
+        "assurance": "controller-event-snapshot-final-audit",
+        "study_id": plan["study_id"],
+        "unit_id": unit["unit_id"],
+        "condition": "framework",
+        "host_plan_sha256": host_plan_sha256,
+        "host_adapter_source_sha256": host_plan["host_adapter_source_sha256"],
+        "transcript_sha256": transcript_sha256,
+        "capture_profile": host_plan["checkpoint_capture_profile"]["capture_protocol"],
+        "checkpoint": {
+            "workspace_relative_path": checkpoint_paths[0],
+            "stored_path": "checkpoint-artifacts/checkpoint.json",
+            "bytes": len(checkpoint_buffers[0]),
+            "sha256": checkpoint_digest,
+            "schema_version": 2,
+            "intent_sha256": checkpoint["intent_sha256"],
+        },
+        "report": {
+            "workspace_relative_path": captures[-1]["report_path"],
+            "stored_path": "checkpoint-artifacts/audited-report.md",
+            "bytes": len(report_bytes),
+            "sha256": response_digest,
+            "delivered_response_sha256": response_digest,
+        },
+        "events": event_receipts,
+        "controller_reaudit": {
+            "auditor_path": REPORTCTL_SCRIPT.relative_to(REPO_ROOT).as_posix(),
+            "auditor_profile": host_plan["checkpoint_auditor_receipt"]["profile"],
+            "auditor_sha256": host_plan["checkpoint_auditor_sha256"],
+            "argv_profile": "python-isolated-audit-captured-byte-pair-strict-json",
+            "shell": False,
+            "exit_code": 0,
+            "schema_version": 1,
+            "errors": 0,
+            "warnings": 0,
+            "report_bytes": len(report_bytes),
+            "report_sha256": response_digest,
+            "checkpoint_intent_sha256": checkpoint["intent_sha256"],
+            "must_show_checked": checkpoint_audit["must_show_checked"],
+            "must_show_missing": 0,
+        },
+    }
+    receipt_path = artifact_root / "checkpoint-artifact-receipt.json"
+    _write_json_atomic(receipt_path, receipt, mode=0o600)
+    return receipt
+
+
 def _terminate_process_group(process: subprocess.Popen[Any]) -> None:
     try:
         if os.name == "posix":
@@ -1657,8 +2580,10 @@ def _run_bounded_host(
     stderr_path: Path,
     response_path: Path,
     timeout_seconds: int,
+    event_callback: Callable[[str, int], None] | None = None,
 ) -> tuple[int, int]:
     started = time.monotonic()
+    returncode = -1
     try:
         with tempfile.TemporaryFile(mode="w+b") as prompt_handle:
             with transcript_path.open("xb", buffering=0) as stdout_handle, stderr_path.open(
@@ -1678,24 +2603,68 @@ def _run_bounded_host(
                 )
                 try:
                     failure: str | None = None
-                    while process.poll() is None:
-                        elapsed = time.monotonic() - started
-                        transcript_size = transcript_path.stat().st_size
-                        stderr_size = stderr_path.stat().st_size
-                        response_size = response_path.stat().st_size if response_path.exists() else 0
-                        if elapsed > timeout_seconds:
-                            failure = f"Host execution exceeded {timeout_seconds} seconds"
-                        elif transcript_size > MAX_TRANSCRIPT_BYTES:
-                            failure = "Host transcript exceeded its byte limit"
-                        elif stderr_size > MAX_HOST_STDERR_BYTES:
-                            failure = "Host stderr exceeded its byte limit"
-                        elif response_size > MAX_RESPONSE_BYTES:
-                            failure = "Host response exceeded its byte limit"
-                        if failure:
-                            _terminate_process_group(process)
-                            process.wait(timeout=10)
-                            raise StudyError(failure)
-                        time.sleep(0.05)
+                    pending = bytearray()
+                    transcript_offset = 0
+                    event_ordinal = 0
+
+                    def consume_events(reader: Any, *, final: bool) -> None:
+                        nonlocal transcript_offset, event_ordinal
+                        reader.seek(transcript_offset)
+                        chunk = reader.read()
+                        transcript_offset += len(chunk)
+                        if transcript_offset > MAX_TRANSCRIPT_BYTES:
+                            raise StudyError("Host transcript exceeded its byte limit")
+                        pending.extend(chunk)
+                        while b"\n" in pending:
+                            raw, _, remainder = pending.partition(b"\n")
+                            pending.clear()
+                            pending.extend(remainder)
+                            event_ordinal += 1
+                            if event_callback is not None and raw.strip():
+                                try:
+                                    event_callback(raw.decode("utf-8"), event_ordinal)
+                                except UnicodeDecodeError as exc:
+                                    raise StudyError(
+                                        "Host transcript event must be UTF-8"
+                                    ) from exc
+                        if final and pending:
+                            event_ordinal += 1
+                            if event_callback is not None and pending.strip():
+                                try:
+                                    event_callback(pending.decode("utf-8"), event_ordinal)
+                                except UnicodeDecodeError as exc:
+                                    raise StudyError(
+                                        "Host transcript event must be UTF-8"
+                                    ) from exc
+                            pending.clear()
+
+                    with transcript_path.open("rb", buffering=0) as transcript_reader:
+                        while process.poll() is None:
+                            elapsed = time.monotonic() - started
+                            transcript_size = transcript_path.stat().st_size
+                            stderr_size = stderr_path.stat().st_size
+                            response_size = (
+                                response_path.stat().st_size
+                                if response_path.exists()
+                                else 0
+                            )
+                            if transcript_size < transcript_offset:
+                                failure = "Host transcript changed size while executing"
+                            elif elapsed > timeout_seconds:
+                                failure = f"Host execution exceeded {timeout_seconds} seconds"
+                            elif transcript_size > MAX_TRANSCRIPT_BYTES:
+                                failure = "Host transcript exceeded its byte limit"
+                            elif stderr_size > MAX_HOST_STDERR_BYTES:
+                                failure = "Host stderr exceeded its byte limit"
+                            elif response_size > MAX_RESPONSE_BYTES:
+                                failure = "Host response exceeded its byte limit"
+                            if failure:
+                                _terminate_process_group(process)
+                                process.wait(timeout=10)
+                                raise StudyError(failure)
+                            consume_events(transcript_reader, final=False)
+                            time.sleep(0.05)
+                        consume_events(transcript_reader, final=True)
                     returncode = int(process.returncode or 0)
                 except Exception:
                     if process.poll() is None:
@@ -1744,12 +2713,49 @@ def command_host_run(args: argparse.Namespace) -> int:
     for field, value in expected_identity.items():
         if host_plan.get(field) != value:
             raise StudyError(f"Frozen host plan {field} no longer matches the study")
+    if host_plan["schema_version"] == "1.1":
+        context = next(
+            item for item in plan["contexts"] if item["id"] == unit["context_id"]
+        )
+        profile = host_plan["checkpoint_capture_profile"]
+        if profile["enabled"] is not (unit["condition"] == "framework") or profile[
+            "required"
+        ] is not (
+            unit["condition"] == "framework" and context["compaction_required"]
+        ):
+            raise StudyError("Frozen checkpoint capture profile no longer matches the study")
+        expected_contract = (
+            CHECKPOINT_AGENT_CONTRACT if unit["condition"] == "framework" else None
+        )
+        expected_contract_digest = (
+            hashlib.sha256(expected_contract.encode("utf-8")).hexdigest()
+            if expected_contract is not None
+            else None
+        )
+        if (
+            profile["agent_contract"] != expected_contract
+            or profile["agent_contract_sha256"] != expected_contract_digest
+        ):
+            raise StudyError("Frozen checkpoint capture contract changed after host-plan")
+        expected_artifact_mirror = (
+            _input_artifacts_for_case(run_dir, unit["case_id"])
+            if unit["condition"] == "framework"
+            else []
+        )
+        if profile["artifact_mirror"] != expected_artifact_mirror:
+            raise StudyError("Frozen checkpoint artifact mirror changed after host-plan")
     executable = _resolve_executable(Path(host_plan["executable"]))
     if _sha256(executable) != host_plan["executable_sha256"]:
         raise StudyError("Host executable changed after host-plan")
     adapter_source_digest = _host_adapter_source_sha256()
     if adapter_source_digest != host_plan["host_adapter_source_sha256"]:
         raise StudyError("Host adapter source changed after host-plan")
+    if (
+        host_plan["schema_version"] == "1.1"
+        and _checkpoint_auditor_sha256()
+        != host_plan["checkpoint_auditor_sha256"]
+    ):
+        raise StudyError("Checkpoint auditor changed after host-plan")
     workspace = _resolve_workspace(Path(host_plan["workspace"]))
     if _workspace_receipt(workspace, unit["condition"]) != host_plan["workspace_receipt"]:
         raise StudyError("Host workspace activation receipt changed after host-plan")
@@ -1757,6 +2763,18 @@ def command_host_run(args: argparse.Namespace) -> int:
     prompt = _read_bounded_bytes(prompt_path, maximum=MAX_RESPONSE_BYTES, label="frozen prompt")
     if _sha256(prompt_path) != unit["prompt_sha256"]:
         raise StudyError("Frozen host prompt changed")
+    agent_contract = (
+        host_plan["checkpoint_capture_profile"]["agent_contract"]
+        if host_plan["schema_version"] == "1.1"
+        else None
+    )
+    host_prompt = _compose_host_prompt(prompt, agent_contract)
+    if (
+        host_plan["schema_version"] == "1.1"
+        and hashlib.sha256(host_prompt).hexdigest()
+        != host_plan["host_prompt_sha256"]
+    ):
+        raise StudyError("Frozen delivered host prompt changed after host-plan")
 
     execution_root = run_dir / "private" / "host-executions" / unit["unit_id"]
     _reject_symlink_chain(execution_root, "host execution directory")
@@ -1789,10 +2807,77 @@ def command_host_run(args: argparse.Namespace) -> int:
     ):
         raise StudyError("Host adapter output-token capability changed after host-plan")
     staged = _stage_case_inputs(run_dir, workspace, unit["case_id"])
+    if host_plan["schema_version"] == "1.1":
+        _prepare_checkpoint_capture_workspace(
+            workspace, host_plan["checkpoint_capture_profile"]
+        )
     execution_root.parent.mkdir(mode=0o700, exist_ok=True)
     execution_root.mkdir(mode=0o700)
+    capture_state: dict[str, Any] = {"invalid": False, "events": []}
+    event_callback: Callable[[str, int], None] | None = None
+    if (
+        host_plan["schema_version"] == "1.1"
+        and host_plan["checkpoint_capture_profile"]["enabled"]
+    ):
+        def capture_checkpoint_event(line: str, event_ordinal: int) -> None:
+            try:
+                event = adapter.parse_checkpoint_event(line, event_ordinal)
+            except Exception:
+                capture_state["invalid"] = True
+                return
+            if event is None:
+                return
+            capture_profile = host_plan["checkpoint_capture_profile"]
+            if (
+                event.checkpoint_path != capture_profile["checkpoint_path"]
+                or (
+                    event.phase == "audit"
+                    and event.report_path != capture_profile["report_path"]
+                )
+                or (event.phase != "audit" and event.report_path is not None)
+            ):
+                capture_state["invalid"] = True
+                return
+            if len(capture_state["events"]) >= MAX_CHECKPOINT_CAPTURE_EVENTS:
+                capture_state["invalid"] = True
+                return
+            try:
+                checkpoint_relative, checkpoint_bytes, _ = _read_workspace_artifact(
+                    workspace,
+                    event.checkpoint_path,
+                    maximum=MAX_CHECKPOINT_BYTES,
+                    label="checkpoint event artifact",
+                )
+                captured: dict[str, Any] = {
+                    "phase": event.phase,
+                    "event_ordinal": event.event_ordinal,
+                    "checkpoint_path": checkpoint_relative.as_posix(),
+                    "report_path": event.report_path,
+                    "checkpoint_bytes": checkpoint_bytes,
+                }
+                if event.phase == "audit":
+                    if event.report_path is None:
+                        raise StudyError("Checkpoint audit event lacks a report path")
+                    report_relative, report_bytes, _ = _read_workspace_artifact(
+                        workspace,
+                        event.report_path,
+                        maximum=MAX_CHECKPOINT_REPORT_BYTES,
+                        label="checkpoint audit report",
+                    )
+                    captured.update(
+                        {
+                            "report_path": report_relative.as_posix(),
+                            "report_bytes": report_bytes,
+                        }
+                    )
+                capture_state["events"].append(captured)
+            except StudyError:
+                capture_state["invalid"] = True
+
+        event_callback = capture_checkpoint_event
+    execution_schema_version = host_plan["schema_version"]
     execution_receipt: dict[str, Any] = {
-        "schema_version": "1.0",
+        "schema_version": execution_schema_version,
         "study_id": plan["study_id"],
         "unit_id": unit["unit_id"],
         "host_plan_sha256": _sha256(_host_plan_path(run_dir, unit["unit_id"])),
@@ -1804,28 +2889,41 @@ def command_host_run(args: argparse.Namespace) -> int:
         "staged_artifacts": staged,
         "status": "started",
     }
+    if execution_schema_version == "1.1":
+        execution_receipt.update(
+            {
+                "condition": unit["condition"],
+                "checkpoint_auditor_sha256": host_plan[
+                    "checkpoint_auditor_sha256"
+                ],
+                "checkpoint_receipt": None,
+                "host_prompt_sha256": host_plan["host_prompt_sha256"],
+            }
+        )
     _write_json_atomic(execution_root / "execution-receipt.json", execution_receipt)
     try:
         returncode, latency_ms = _run_bounded_host(
             argv=command.argv,
-            prompt=prompt,
+            prompt=host_prompt,
             transcript_path=transcript_path,
             stderr_path=stderr_path,
             response_path=response_path,
             timeout_seconds=plan["generation"]["timeout_seconds"],
+            event_callback=event_callback,
         )
-        execution_receipt.update(
-            {
-                "status": "completed" if returncode == 0 else "host_error",
-                "returncode": returncode,
-                "latency_ms": latency_ms,
-                "transcript_sha256": _sha256(transcript_path),
-                "stderr_sha256": _sha256(stderr_path),
-                "response_sha256": _sha256(response_path) if response_path.is_file() else None,
-            }
-        )
-        _write_json_atomic(execution_root / "execution-receipt.json", execution_receipt)
+        execution_outcome = {
+            "status": "completed" if returncode == 0 else "host_error",
+            "returncode": returncode,
+            "latency_ms": latency_ms,
+            "transcript_sha256": _sha256(transcript_path),
+            "stderr_sha256": _sha256(stderr_path),
+            "response_sha256": _sha256(response_path) if response_path.is_file() else None,
+        }
         if returncode != 0:
+            execution_receipt.update(execution_outcome)
+            _write_json_atomic(
+                execution_root / "execution-receipt.json", execution_receipt
+            )
             raise StudyError(f"Host exited with status {returncode}; private stderr was preserved")
         response_bytes = _read_bounded_bytes(response_path, maximum=MAX_RESPONSE_BYTES, label="host response")
         try:
@@ -1841,6 +2939,20 @@ def command_host_run(args: argparse.Namespace) -> int:
             telemetry = adapter.parse_transcript(transcript_bytes.decode("utf-8").splitlines())
         except Exception as exc:
             raise StudyError(f"Cannot parse host transcript: {exc}") from exc
+        if _workspace_receipt(workspace, unit["condition"]) != host_plan["workspace_receipt"]:
+            raise StudyError("Host workspace activation receipt changed during execution")
+        if (
+            host_plan["schema_version"] == "1.1"
+            and host_plan["checkpoint_capture_profile"]["enabled"]
+        ):
+            _, ignore_bytes, _ = _read_workspace_artifact(
+                workspace,
+                host_plan["checkpoint_capture_profile"]["ignore_path"],
+                maximum=16,
+                label="checkpoint capture ignore marker",
+            )
+            if ignore_bytes != CHECKPOINT_CAPTURE_IGNORE_BYTES:
+                raise StudyError("Checkpoint capture Git ignore marker changed")
         for artifact in staged:
             relative, digest, _ = _artifact_record(
                 {field: artifact[field] for field in ("path", "sha256", "media_type")},
@@ -1849,6 +2961,27 @@ def command_host_run(args: argparse.Namespace) -> int:
             path = workspace.joinpath(*relative.parts)
             if not path.is_file() or path.is_symlink() or _sha256(path) != digest:
                 raise StudyError(f"Host changed a staged input artifact: {relative.as_posix()}")
+        if (
+            host_plan["schema_version"] == "1.1"
+            and host_plan["checkpoint_capture_profile"]["enabled"]
+        ):
+            profile = host_plan["checkpoint_capture_profile"]
+            _verify_checkpoint_artifact_mirror(workspace, profile)
+        checkpoint_receipt = _finalize_checkpoint_artifact_receipt(
+            plan=plan,
+            unit=unit,
+            host_plan=host_plan,
+            host_plan_sha256=execution_receipt["host_plan_sha256"],
+            execution_root=execution_root,
+            response_bytes=response_bytes,
+            transcript_sha256=execution_outcome["transcript_sha256"],
+            telemetry=telemetry,
+            capture_state=capture_state,
+        )
+        if execution_schema_version == "1.1":
+            execution_outcome["checkpoint_receipt"] = checkpoint_receipt
+        execution_receipt.update(execution_outcome)
+        _write_json_atomic(execution_root / "execution-receipt.json", execution_receipt)
         record = {
             "$schema": "generation-record.schema.json",
             "schema_version": "1.0",
@@ -1886,7 +3019,7 @@ def command_host_run(args: argparse.Namespace) -> int:
                 "checkpoint_reloaded": telemetry.checkpoint_reloaded,
                 "checkpoint_audit_passed": telemetry.checkpoint_audit_passed,
                 "final_audit_passed": telemetry.final_audit_passed,
-                "checkpoint_receipt_verified": telemetry.checkpoint_receipt_verified,
+                "checkpoint_receipt_verified": checkpoint_receipt is not None,
                 "output_token_cap_enforced": command.output_token_cap_enforced,
             },
         }
@@ -1965,6 +3098,303 @@ def _validate_record_lock(directory: Path, record: dict[str, Any]) -> None:
         raise StudyError("Stored host execution binding changed after import")
 
 
+def _validate_private_checkpoint_file(
+    execution_root: Path,
+    stored_path: str,
+    *,
+    maximum: int,
+    expected_bytes: int,
+    expected_sha256: str,
+    label: str,
+) -> bytes:
+    if os.name != "posix" or not hasattr(os, "geteuid"):
+        raise StudyError("Checkpoint artifact validation requires POSIX ownership metadata")
+    relative = _portable_workspace_relative_path(stored_path, label)
+    if not relative.parts or relative.parts[0] != "checkpoint-artifacts":
+        raise StudyError(f"{label} must remain inside checkpoint-artifacts")
+    path = execution_root.joinpath(*relative.parts)
+    data = _read_bounded_bytes(path, maximum=maximum, label=label)
+    metadata = path.stat()
+    if (
+        metadata.st_nlink != 1
+        or metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(metadata.st_mode) & 0o077
+    ):
+        raise StudyError(f"{label} has unsafe ownership, links, or permissions")
+    if (
+        isinstance(expected_bytes, bool)
+        or not isinstance(expected_bytes, int)
+        or expected_bytes < 0
+        or expected_bytes > maximum
+        or len(data) != expected_bytes
+        or not isinstance(expected_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", expected_sha256) is None
+        or hashlib.sha256(data).hexdigest() != expected_sha256
+    ):
+        raise StudyError(f"{label} does not match its receipt")
+    return data
+
+
+def _validate_checkpoint_artifact_receipt(
+    *,
+    execution_root: Path,
+    record: dict[str, Any],
+    host_plan: dict[str, Any],
+    execution: dict[str, Any],
+) -> None:
+    if os.name != "posix" or not hasattr(os, "geteuid"):
+        raise StudyError("Checkpoint artifact receipts require POSIX validation")
+    receipt = execution.get("checkpoint_receipt")
+    verified = record["observations"]["checkpoint_receipt_verified"]
+    if verified is not True:
+        if receipt is not None:
+            raise StudyError("Unverified execution may not retain a checkpoint receipt claim")
+        return
+    if not isinstance(receipt, dict):
+        raise StudyError("Verified checkpoint execution lacks its artifact receipt")
+    _require_object_shape(
+        receipt,
+        "checkpoint artifact receipt",
+        required=(
+            "$schema", "schema_version", "kind", "assurance", "study_id",
+            "unit_id", "condition", "host_plan_sha256",
+            "host_adapter_source_sha256", "transcript_sha256", "capture_profile",
+            "checkpoint", "report", "events", "controller_reaudit",
+        ),
+    )
+    if (
+        receipt["$schema"] != "checkpoint-artifact-receipt.schema.json"
+        or receipt["schema_version"] != "1.0"
+        or receipt["kind"] != "checkpoint-artifact-receipt"
+        or receipt["assurance"] != "controller-event-snapshot-final-audit"
+        or receipt["study_id"] != record["study_id"]
+        or receipt["unit_id"] != record["unit_id"]
+        or receipt["condition"] != "framework"
+        or record["condition"] != "framework"
+        or receipt["host_plan_sha256"] != execution["host_plan_sha256"]
+        or receipt["host_adapter_source_sha256"]
+        != execution["host_adapter_source_sha256"]
+        or receipt["transcript_sha256"] != record["transcript_sha256"]
+        or receipt["capture_profile"]
+        != host_plan["checkpoint_capture_profile"]["capture_protocol"]
+    ):
+        raise StudyError("Checkpoint artifact receipt identity is invalid")
+    receipt_path = execution_root / "checkpoint-artifacts" / "checkpoint-artifact-receipt.json"
+    archived_receipt = _read_json(receipt_path, label="checkpoint artifact receipt archive")
+    if archived_receipt != receipt:
+        raise StudyError("Archived checkpoint receipt differs from the execution receipt")
+    receipt_metadata = receipt_path.stat()
+    if (
+        receipt_metadata.st_nlink != 1
+        or receipt_metadata.st_uid != os.geteuid()
+        or stat.S_IMODE(receipt_metadata.st_mode) & 0o077
+    ):
+        raise StudyError("Archived checkpoint receipt permissions are unsafe")
+
+    checkpoint_record = receipt["checkpoint"]
+    report_record = receipt["report"]
+    if not isinstance(checkpoint_record, dict) or not isinstance(report_record, dict):
+        raise StudyError("Checkpoint receipt artifact records must be objects")
+    _require_object_shape(
+        checkpoint_record,
+        "checkpoint receipt checkpoint",
+        required=(
+            "workspace_relative_path", "stored_path", "bytes", "sha256",
+            "schema_version", "intent_sha256",
+        ),
+    )
+    _require_object_shape(
+        report_record,
+        "checkpoint receipt report",
+        required=(
+            "workspace_relative_path", "stored_path", "bytes", "sha256",
+            "delivered_response_sha256",
+        ),
+    )
+    _portable_workspace_relative_path(
+        checkpoint_record["workspace_relative_path"], "checkpoint workspace path"
+    )
+    _portable_workspace_relative_path(
+        report_record["workspace_relative_path"], "checkpoint report workspace path"
+    )
+    if (
+        checkpoint_record["workspace_relative_path"]
+        != host_plan["checkpoint_capture_profile"]["checkpoint_path"]
+        or report_record["workspace_relative_path"]
+        != host_plan["checkpoint_capture_profile"]["report_path"]
+        or checkpoint_record["stored_path"] != "checkpoint-artifacts/checkpoint.json"
+        or report_record["stored_path"] != "checkpoint-artifacts/audited-report.md"
+        or checkpoint_record["schema_version"] != 2
+        or not isinstance(checkpoint_record["intent_sha256"], str)
+        or re.fullmatch(r"[0-9a-f]{64}", checkpoint_record["intent_sha256"]) is None
+        or report_record["sha256"] != record["response_sha256"]
+        or report_record["delivered_response_sha256"] != record["response_sha256"]
+    ):
+        raise StudyError("Checkpoint receipt artifact binding is invalid")
+    checkpoint_bytes = _validate_private_checkpoint_file(
+        execution_root,
+        checkpoint_record["stored_path"],
+        maximum=MAX_CHECKPOINT_BYTES,
+        expected_bytes=checkpoint_record["bytes"],
+        expected_sha256=checkpoint_record["sha256"],
+        label="archived checkpoint",
+    )
+    report_bytes = _validate_private_checkpoint_file(
+        execution_root,
+        report_record["stored_path"],
+        maximum=MAX_CHECKPOINT_REPORT_BYTES,
+        expected_bytes=report_record["bytes"],
+        expected_sha256=report_record["sha256"],
+        label="archived audited report",
+    )
+    if hashlib.sha256(report_bytes).hexdigest() != execution["response_sha256"]:
+        raise StudyError("Archived audited report differs from the delivered response")
+    local_image_targets = _checkpoint_local_artifact_targets(report_bytes)
+    mirrored_artifact_paths = {
+        artifact["path"]
+        for artifact in host_plan["checkpoint_capture_profile"]["artifact_mirror"]
+    }
+    if not local_image_targets.issubset(mirrored_artifact_paths):
+        raise StudyError("Archived report references an unmirrored local image")
+    try:
+        checkpoint = json.loads(checkpoint_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise StudyError("Archived checkpoint is not bounded UTF-8 JSON") from exc
+    intent_fields = ("task", "mode", "surface", "audience", "modules", "must_show")
+    if (
+        not isinstance(checkpoint, dict)
+        or _json_structure_limit_error(checkpoint)
+        or checkpoint.get("schema_version") != 2
+        or checkpoint.get("kind") != "agentic-report-checkpoint"
+        or any(field not in checkpoint for field in intent_fields)
+    ):
+        raise StudyError("Archived checkpoint schema is invalid")
+    intent = {field: checkpoint[field] for field in intent_fields}
+    canonical_intent = json.dumps(
+        intent, ensure_ascii=True, sort_keys=True, separators=(",", ":")
+    ).encode("ascii")
+    observed_intent = hashlib.sha256(canonical_intent).hexdigest()
+    if (
+        checkpoint.get("intent_sha256") != observed_intent
+        or checkpoint_record["intent_sha256"] != observed_intent
+    ):
+        raise StudyError("Archived checkpoint intent fingerprint is invalid")
+
+    events = receipt["events"]
+    if not isinstance(events, list) or len(events) != 3:
+        raise StudyError("Checkpoint receipt must contain exactly three event snapshots")
+    if [item.get("phase") for item in events if isinstance(item, dict)] != [
+        "create", "reload", "audit"
+    ]:
+        raise StudyError("Checkpoint receipt event order is invalid")
+    ordinals: list[int] = []
+    for index, event in enumerate(events):
+        if not isinstance(event, dict):
+            raise StudyError("Checkpoint receipt event must be an object")
+        phase = ("create", "reload", "audit")[index]
+        _require_object_shape(
+            event,
+            f"checkpoint {phase} event",
+            required=("phase", "transcript_event_ordinal", "checkpoint")
+            + (("report",) if phase == "audit" else ()),
+        )
+        ordinal = event["transcript_event_ordinal"]
+        if (
+            isinstance(ordinal, bool)
+            or not isinstance(ordinal, int)
+            or ordinal < 1
+            or ordinal > 100_000
+        ):
+            raise StudyError("Checkpoint receipt event ordinal is invalid")
+        ordinals.append(ordinal)
+        artifact = event["checkpoint"]
+        if not isinstance(artifact, dict):
+            raise StudyError("Checkpoint event artifact must be an object")
+        _require_object_shape(
+            artifact,
+            "checkpoint event artifact",
+            required=("stored_path", "bytes", "sha256"),
+        )
+        expected_path = (
+            f"checkpoint-artifacts/events/{ordinal:06d}-{phase}-checkpoint.json"
+        )
+        if artifact["stored_path"] != expected_path:
+            raise StudyError("Checkpoint event artifact path is invalid")
+        event_bytes = _validate_private_checkpoint_file(
+            execution_root,
+            artifact["stored_path"],
+            maximum=MAX_CHECKPOINT_BYTES,
+            expected_bytes=artifact["bytes"],
+            expected_sha256=artifact["sha256"],
+            label=f"{phase} checkpoint snapshot",
+        )
+        if event_bytes != checkpoint_bytes:
+            raise StudyError("Checkpoint bytes changed across event snapshots")
+        if phase == "audit":
+            event_report = event["report"]
+            if not isinstance(event_report, dict):
+                raise StudyError("Checkpoint audit report record must be an object")
+            _require_object_shape(
+                event_report,
+                "checkpoint audit event report",
+                required=("stored_path", "bytes", "sha256"),
+            )
+            expected_report_path = (
+                f"checkpoint-artifacts/events/{ordinal:06d}-audit-report.md"
+            )
+            if event_report["stored_path"] != expected_report_path:
+                raise StudyError("Checkpoint audit report snapshot path is invalid")
+            event_report_bytes = _validate_private_checkpoint_file(
+                execution_root,
+                event_report["stored_path"],
+                maximum=MAX_CHECKPOINT_REPORT_BYTES,
+                expected_bytes=event_report["bytes"],
+                expected_sha256=event_report["sha256"],
+                label="audit report event snapshot",
+            )
+            if event_report_bytes != report_bytes:
+                raise StudyError("Audit report snapshot differs from the archived report")
+    if ordinals != sorted(ordinals) or len(set(ordinals)) != 3:
+        raise StudyError("Checkpoint receipt event ordinals are not strictly ordered")
+
+    reaudit = receipt["controller_reaudit"]
+    if not isinstance(reaudit, dict):
+        raise StudyError("Checkpoint controller re-audit record must be an object")
+    _require_object_shape(
+        reaudit,
+        "checkpoint controller re-audit",
+        required=(
+            "auditor_path", "auditor_profile", "auditor_sha256", "argv_profile", "shell",
+            "exit_code", "schema_version", "errors", "warnings", "report_bytes",
+            "report_sha256", "checkpoint_intent_sha256",
+            "must_show_checked", "must_show_missing",
+        ),
+    )
+    if (
+        reaudit["auditor_path"]
+        != REPORTCTL_SCRIPT.relative_to(REPO_ROOT).as_posix()
+        or reaudit["auditor_profile"] != "reportctl-audit-closure-v1"
+        or reaudit["auditor_sha256"] != host_plan["checkpoint_auditor_sha256"]
+        or reaudit["argv_profile"]
+        != "python-isolated-audit-captured-byte-pair-strict-json"
+        or reaudit["shell"] is not False
+        or reaudit["exit_code"] != 0
+        or reaudit["schema_version"] != 1
+        or reaudit["errors"] != 0
+        or reaudit["warnings"] != 0
+        or reaudit["report_bytes"] != len(report_bytes)
+        or reaudit["report_sha256"] != hashlib.sha256(report_bytes).hexdigest()
+        or reaudit["checkpoint_intent_sha256"] != observed_intent
+        or reaudit["must_show_missing"] != 0
+        or reaudit["must_show_checked"] != len(checkpoint["must_show"])
+        or isinstance(reaudit["must_show_checked"], bool)
+        or not isinstance(reaudit["must_show_checked"], int)
+        or reaudit["must_show_checked"] < 0
+        or reaudit["must_show_checked"] > 20
+    ):
+        raise StudyError("Checkpoint controller re-audit record is invalid")
+
+
 def _validate_host_execution_binding(
     run_dir: Path,
     directory: Path,
@@ -2017,17 +3447,27 @@ def _validate_host_execution_binding(
     if binding["execution_receipt_sha256"] != _sha256(execution_path):
         raise StudyError("Host execution receipt does not match its record binding")
     execution = _read_json(execution_path, label="host execution receipt")
-    required_execution_fields = {
+    common_execution_fields = {
         "schema_version", "study_id", "unit_id", "host_plan_sha256",
         "host_adapter_source_sha256", "argv",
         "shell", "output_token_cap_enforced", "transcript_format", "staged_artifacts",
         "status", "returncode", "latency_ms", "transcript_sha256", "stderr_sha256",
         "response_sha256",
     }
+    execution_version = execution.get("schema_version")
+    required_execution_fields = common_execution_fields | (
+        {
+            "condition", "checkpoint_auditor_sha256", "checkpoint_receipt",
+            "host_prompt_sha256",
+        }
+        if execution_version == "1.1"
+        else set()
+    )
     if set(execution) != required_execution_fields:
         raise StudyError("Completed host execution receipt has an invalid shape")
     if (
-        execution["schema_version"] != "1.0"
+        execution_version not in {"1.0", "1.1"}
+        or host_plan["schema_version"] != execution_version
         or execution["study_id"] != record["study_id"]
         or execution["unit_id"] != record["unit_id"]
         or execution["status"] != "completed"
@@ -2046,6 +3486,23 @@ def _validate_host_execution_binding(
         is not execution["output_token_cap_enforced"]
     ):
         raise StudyError("Completed host execution receipt does not match the stored record")
+    if execution_version == "1.0":
+        if record["observations"]["checkpoint_receipt_verified"] is True:
+            raise StudyError("Legacy execution receipts cannot verify checkpoint artifacts")
+    else:
+        if (
+            execution["condition"] != record["condition"]
+            or execution["checkpoint_auditor_sha256"]
+            != host_plan["checkpoint_auditor_sha256"]
+            or execution["host_prompt_sha256"] != host_plan["host_prompt_sha256"]
+        ):
+            raise StudyError("Checkpoint execution receipt does not match its host plan")
+        _validate_checkpoint_artifact_receipt(
+            execution_root=execution_path.parent,
+            record=record,
+            host_plan=host_plan,
+            execution=execution,
+        )
 
 
 def _validate_records(run_dir: Path, expected: dict[str, Any]) -> dict[str, Any]:

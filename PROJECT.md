@@ -31,7 +31,9 @@ long work sessions without keeping a large reporting manual in active context.
   claims when design prerequisites or metric gates are absent.
 - A typed Codex host adapter separates side-effect-free planning from an explicit
   `host-run --execute` boundary, pins the executable and installed framework
-  receipts, avoids a shell, and records unsupported provider controls honestly.
+  receipts, avoids a shell, and records unsupported provider controls honestly;
+  the controller can bind one ordered checkpoint lifecycle to private event
+  snapshots and an independent pinned strict audit without trusting adapter claims.
 - The skill passes structural validation, repository tests, security review, and a
   fresh-agent user journey.
 - The public GitHub repository is created and pushed under the requested name.
@@ -61,6 +63,11 @@ long work sessions without keeping a large reporting manual in active context.
 - D5: Keep deterministic evaluation separate from typed, opt-in host execution;
   pilots can validate integration but can never become effectiveness claims. See
   ADR-006.
+- D6: Derive checkpoint artifact verification only from controller event snapshots,
+  exact predeclared paths, final-response equality, and a pinned independent audit
+  over the captured bytes; bind local figures through frozen report-relative mirrors;
+  never derive verification from adapter or
+  caller self-report. See ADR-007.
 
 ## Risks and controls
 
@@ -77,18 +84,19 @@ long work sessions without keeping a large reporting manual in active context.
 | Host execution uses credentials, network, and paid model services | Cost, privacy, or provider-side effects | Make planning inert; require literal `--execute`; pin executable identity; bound time and local evidence; keep raw runs private |
 | A planned output-token budget is not enforced by the host | Conditions may have unequal effective budgets | Record `output_token_cap_enforced: false`; block strong budget-equivalence claims until the provider exposes an enforceable control |
 | Caller labels an unpinned provider model as a revision | Apparent reproducibility without immutable model identity | Require verifiable multiple revisions for public eligibility and disclose unpinned pilot aliases |
-| Transcript text is mistaken for checkpoint proof | Echoes or commands could overstate long-context compliance | Credit only successful exact commands; require a separate controller-side receipt for public compaction evidence |
+| Transcript text is mistaken for checkpoint proof | Echoes or commands could overstate long-context compliance | Credit only successful exact ordered commands; derive v1.1 verification from controller event snapshots, byte equality, and a pinned strict re-audit; retain the same-UID race boundary |
+| A local figure resolves under the draft but breaks after storage or blinding | Visual cases become unreviewable or receipt evidence binds a different target | Mirror frozen inputs at the same report-relative path, reject traversal/unmirrored targets, and verify path, mode, ownership, bytes, and digest before and after controller audit |
 | Repeats reuse one mutable worktree | Cross-run state contaminates nominally independent samples | Require a unique controller-locked workspace per public generation unit plus an external fresh-state receipt |
 | An installed Skill tree contains excessive ignored entries | Receipt planning materializes or scans attacker-influenced filesystem state without a useful bound | Count every inspected entry, prune `__pycache__`, accept at most 4,096, reject when entry 4,097 is observed, and sort only the bounded canonical manifest |
 
 ## Current frontier
 
-The `v0.3.1` hardening patch bounds installed-Skill receipt traversal and moves the
-immutable CI action pins to Node 24. The v0.3 study mechanics and one-pair real-host
-pilot remain complete at the integration-evidence level. The pilot exposed a
-redundant experiment conclusion module, now removed from automatic routing with a
-bundle-size regression. The next frontier is M6: an externally isolated,
-preregistered, blind, private-heldout study.
-The current Codex path still lacks both an enforced output cap and a verified
-checkpoint-artifact receipt, so no general effectiveness or efficiency claim is
-currently eligible.
+The `v0.3.2` hardening patch adds controller-verified checkpoint artifact receipts
+to the explicit framework study path. It preserves v1.0 validation without
+backfilling evidence and leaves ordinary Skill routing and token use unchanged.
+The v0.3 study mechanics and one-pair real-host pilot remain complete only at the
+integration-evidence level. The next frontier is M6: an externally isolated,
+preregistered, blind, private-heldout study. The current Codex path still lacks an
+enforced provider output cap, complete context/compaction telemetry, fixed provider
+revisions, and the remaining public-study evidence, so no general effectiveness or
+efficiency claim is currently eligible.

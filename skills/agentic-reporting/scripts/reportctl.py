@@ -289,7 +289,8 @@ def _read_text_bounded(path: Path, max_bytes: int, label: str) -> str:
     if size > max_bytes:
         raise ReportCtlError(f"{label} is {size} bytes; limit is {max_bytes} bytes")
     try:
-        return path.read_text(encoding="utf-8")
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            return handle.read()
     except UnicodeDecodeError as exc:
         raise ReportCtlError(f"{label} must be UTF-8 text: {path}") from exc
     except OSError as exc:
@@ -1533,6 +1534,17 @@ def command_audit(args: argparse.Namespace) -> int:
         "mode": mode,
         "errors": errors,
         "warnings": warnings,
+        "input_receipts": {
+            "report": {
+                "bytes": len(text.encode("utf-8")),
+                "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            },
+            "checkpoint": (
+                {"intent_sha256": checkpoint["intent_sha256"]}
+                if checkpoint is not None
+                else None
+            ),
+        },
         "manual_checks_required": [
             "latest-state accuracy",
             "claim and number fidelity",

@@ -4,8 +4,9 @@
 表格、论文、故障、决策和代码交付提供可复用的语义骨架，同时避免所有回答
 都被塞进同一个大模板；实际遵循程度仍取决于宿主和模型。
 
-当前版本为 `v0.3.1`。该补丁把安装后 Skill 收据改为有界流式遍历，并把
-CI 的官方 actions 升级为 immutable-SHA 固定的 Node 24 版本。除 14 份正负
+当前版本为 `v0.3.2`。该补丁为显式研究宿主增加控制器验证的 checkpoint
+artifact receipt，同时保留 v0.3.1 的有界 Skill 收据遍历和 immutable-SHA
+Node 24 actions。除 14 份正负
 fixture、7 个场景和 5 个 post-activation 路由代理外，v0.3 系列新增了
 预注册、生成记录、真实宿主计划、
 显式执行、盲化、独立评分冻结和成对汇总流水线。一次最小 Codex pilot
@@ -54,6 +55,11 @@ flowchart LR
 这些 prompt 层只能降低遗忘风险。要机械阻断不合格交付，需由外部 wrapper 或 CI
 强制“创建 checkpoint 成功，且最终 `audit --checkpoint` 返回 0”；本仓库不宣称 prompt
 本身能做到强制。
+
+私有研究控制器可以在真实宿主运行中额外生成 controller-verified checkpoint
+artifact receipt。该机制位于显式 `host-run --execute` 的控制平面，不会给日常
+Agent 增加提示、模型调用或输出 token；它也不改变普通 checkpoint、bundle 或
+audit 工作流。
 
 ## 部署与约束层级
 
@@ -218,9 +224,9 @@ python3 scripts/presentation_study.py host-run \
 ```
 
 删除 `--execute` 会故意失败关闭。`host-plan` 与其他确定性命令不调用模型。
-Codex 适配器强制 timeout、响应/转录/stderr 字节上限和无 shell 启动，但当前
-计划还会冻结完整 argv、transcript format 和宿主适配器源码 SHA-256；运行前
-重新构建后必须逐项相等，完成收据也会再次绑定这些身份。当前仍
+Codex 适配器强制 timeout、响应/转录/stderr 字节上限和无 shell 启动；计划还会
+冻结完整 argv、transcript format、宿主适配器源码和 checkpoint auditor
+依赖闭包的 SHA-256，运行前重新构建后必须逐项相等，完成收据也会再次绑定这些身份。当前仍
 不能强制 provider 级 output-token 或费用上限；计划中的 token 值属于预注册
 约束和提示，不是宿主保证。只有 `host-run` 能把冻结计划、完成的执行收据和
 完整记录绑定为 `host_adapter` 证据；普通 `import-output` 不能自报该来源或
@@ -228,9 +234,25 @@ Codex 适配器强制 timeout、响应/转录/stderr 字节上限和无 shell �
 效果声明；只有私有 heldout、外部隔离收据、共享且已审计的全局指令、多个
 可验证 revision/重复/上下文条件和冻结盲评全部满足后，`aggregate` 才会评估
 公开声明门禁。调用方生成记录与控制器存档记录使用不同 schema；调用方不能
-注入机器评测。转录只记录成功且精确匹配的命令观察，不能证明 checkpoint 与
-报告字节确实被同一审计绑定；当前 Codex 适配器因此把 checkpoint receipt 记为
-未验证。公开 profile 还要求每个生成单元使用不同的控制器锁定工作区、外部收据
+注入机器评测或自行把 checkpoint receipt 标为已验证。
+
+对于 framework 的 v1.1 宿主执行，转录适配器只产出按顺序成功匹配的
+create → reload → strict-audit 候选。控制器在这些事件到达时分别从冻结工作区
+抓取受限快照。为避免 Agent 猜测安全路径，study 控制器会预创建 owner-only、
+目录内自带忽略规则的 `.agentic-reporting/`，并只在该次 framework host prompt 后附加一段已哈希的
+study-only 契约，指定唯一 checkpoint/draft 路径与 `0600` 文件模式；控制器会把冻结的
+本地图片按原 workspace-relative 路径复制到 draft 目录下，并要求 Markdown 使用同一
+无 `../` 的路径，使 Agent 审计、控制器复审、存储记录和盲评包都能解析同一目标；实际交付 prompt
+的摘要也进入 v1.1 计划和执行收据。它不进入普通 Agent 的 Skill 上下文。
+控制器要求三阶段 checkpoint 字节完全相同、audit 阶段的 report 与
+最终 response 字节完全相同，并从这些内存字节新建同目录的私有复审文件，以计划中固定的仓库 `reportctl` 再执行一次
+strict audit；只有全部成立时才派生 `checkpoint_receipt_verified: true`。
+v1.0 宿主计划和执行收据仍可读取验证，但不能回填这项证据。checkpoint、快照
+和收据均保留在 owner-only 私有运行目录，不进入盲评包、聚合结果或发布制品。
+这项窄保证说明控制器在三个事件边界观察到一致字节并完成最终复审；它不证明
+命令执行瞬间不存在同 UID 竞态，也不证明模型语义上记住了 checkpoint。
+
+公开 profile 还要求每个生成单元使用不同的控制器锁定工作区、外部收据
 覆盖新鲜的逐单元隔离、required/forbidden visual 均有覆盖、图片/表格必需检查
 100% 通过，且每千 output token 的人评语义位不劣于 baseline。详见 [BENCHMARK.md](BENCHMARK.md) 与
 [evals/README.md](evals/README.md)。

@@ -2,6 +2,9 @@
 
 - Status: Accepted
 - Date: 2026-08-24
+- Update: ADR-007 partially supersedes the checkpoint-receipt limitation below;
+  adapters still cannot assert verification, while v1.1 `host-run` can derive it
+  from controller-owned event snapshots and an independent audit.
 
 ## Context
 

@@ -21,6 +21,8 @@ MAX_EVENT_LINES = 100_000
 MAX_JSON_NUMBER_CHARS = 128
 MAX_EVENT_DEPTH = 100
 MAX_EVENT_VALUES = 10_000
+MAX_CHECKPOINT_EVENTS = 64
+MAX_EVENT_PATH_CHARS = 4096
 
 
 class HostAdapterError(ValueError):
@@ -37,6 +39,16 @@ class HostCommand:
 
 
 @dataclass(frozen=True)
+class HostCheckpointEvent:
+    """One allowlisted successful checkpoint command in transcript order."""
+
+    phase: str
+    event_ordinal: int
+    checkpoint_path: str
+    report_path: str | None = None
+
+
+@dataclass(frozen=True)
 class HostTelemetry:
     """Conservative observations derived from one host event stream."""
 
@@ -49,6 +61,7 @@ class HostTelemetry:
     checkpoint_audit_passed: bool
     final_audit_passed: bool
     checkpoint_receipt_verified: bool
+    checkpoint_events: tuple[HostCheckpointEvent, ...]
     event_count: int
 
 
@@ -70,6 +83,11 @@ class HostAdapter(Protocol):
 
     def parse_transcript(self, lines: Iterable[str]) -> HostTelemetry:
         """Extract conservative telemetry from a bounded host event stream."""
+
+    def parse_checkpoint_event(
+        self, line: str, event_ordinal: int
+    ) -> HostCheckpointEvent | None:
+        """Interpret one completed JSONL event for controller-side capture."""
 
 
 def _bounded_nonnegative_integer(value: Any) -> int | None:
@@ -228,6 +246,85 @@ def _parse_event(line: str, index: int) -> dict[str, Any]:
     return parsed
 
 
+def _bounded_event_path(value: str) -> str | None:
+    if not value or len(value) > MAX_EVENT_PATH_CHARS or "\x00" in value:
+        return None
+    return value
+
+
+def _checkpoint_event(
+    event: dict[str, Any], event_ordinal: int
+) -> HostCheckpointEvent | None:
+    command = _completed_command(event)
+    if command is None:
+        return None
+    argv, exit_code = command
+    if exit_code != 0:
+        return None
+    invocation = _reportctl_invocation(argv)
+    if invocation is None:
+        return None
+    subcommand, arguments = invocation
+    if subcommand == "checkpoint":
+        parsed = _parse_known_options(
+            arguments,
+            value_options={
+                "--task", "--checkpoint", "--mode", "--surface",
+                "--audience", "--module", "--must-show", "--output",
+            },
+            flag_options={"--force"},
+            repeatable={"--module", "--must-show"},
+        )
+        values = parsed.get("--output", []) if parsed is not None else []
+        path = _bounded_event_path(values[0]) if len(values) == 1 else None
+        return (
+            HostCheckpointEvent("create", event_ordinal, path)
+            if path is not None
+            else None
+        )
+    if subcommand == "bundle":
+        parsed = _parse_known_options(
+            arguments,
+            value_options={
+                "--task", "--checkpoint", "--mode", "--surface",
+                "--audience", "--module", "--must-show", "--max-chars",
+            },
+            repeatable={"--module", "--must-show"},
+        )
+        values = parsed.get("--checkpoint", []) if parsed is not None else []
+        path = _bounded_event_path(values[0]) if len(values) == 1 else None
+        return (
+            HostCheckpointEvent("reload", event_ordinal, path)
+            if path is not None
+            else None
+        )
+    if subcommand == "audit":
+        parsed = _parse_known_options(
+            arguments,
+            value_options={"--file", "--mode", "--checkpoint"},
+            flag_options={"--json", "--strict"},
+        )
+        if parsed is None or "--strict" not in parsed or "--mode" in parsed:
+            return None
+        checkpoint_values = parsed.get("--checkpoint", [])
+        report_values = parsed.get("--file", [])
+        checkpoint_path = (
+            _bounded_event_path(checkpoint_values[0])
+            if len(checkpoint_values) == 1
+            else None
+        )
+        report_path = (
+            _bounded_event_path(report_values[0])
+            if len(report_values) == 1
+            else None
+        )
+        if checkpoint_path is not None and report_path is not None:
+            return HostCheckpointEvent(
+                "audit", event_ordinal, checkpoint_path, report_path
+            )
+    return None
+
+
 class CodexAdapter:
     """Adapter for OpenAI Codex CLI's documented non-interactive JSONL mode."""
 
@@ -270,9 +367,17 @@ class CodexAdapter:
             transcript_format="codex-jsonl-v1",
         )
 
+    def parse_checkpoint_event(
+        self, line: str, event_ordinal: int
+    ) -> HostCheckpointEvent | None:
+        if event_ordinal < 1 or event_ordinal > MAX_EVENT_LINES:
+            raise HostAdapterError("Codex checkpoint event ordinal is out of bounds")
+        return _checkpoint_event(_parse_event(line, event_ordinal), event_ordinal)
+
     def parse_transcript(self, lines: Iterable[str]) -> HostTelemetry:
         events: list[dict[str, Any]] = []
         completed_commands: list[tuple[list[str], int]] = []
+        checkpoint_events: list[HostCheckpointEvent] = []
         for index, line in enumerate(lines, start=1):
             if index > MAX_EVENT_LINES:
                 raise HostAdapterError(f"Codex transcript exceeds {MAX_EVENT_LINES} events")
@@ -283,6 +388,13 @@ class CodexAdapter:
             command = _completed_command(value)
             if command is not None:
                 completed_commands.append(command)
+            checkpoint_event = _checkpoint_event(value, index)
+            if checkpoint_event is not None:
+                checkpoint_events.append(checkpoint_event)
+                if len(checkpoint_events) > MAX_CHECKPOINT_EVENTS:
+                    raise HostAdapterError(
+                        f"Codex transcript exceeds {MAX_CHECKPOINT_EVENTS} checkpoint events"
+                    )
 
         if not events:
             raise HostAdapterError("Codex transcript contains no events")
@@ -294,38 +406,41 @@ class CodexAdapter:
         successful = [argv for argv, exit_code in completed_commands if exit_code == 0]
         skill_read = any(_is_skill_read(argv) for argv in successful)
         created_paths: set[str] = set()
-        reloaded_paths: set[str] = set()
-        audited_paths: set[str] = set()
+        reloaded_after_create: set[str] = set()
+        audited_after_reload: set[str] = set()
+        pending_create: dict[str, HostCheckpointEvent] = {}
+        pending_reload: dict[
+            str, tuple[HostCheckpointEvent, HostCheckpointEvent]
+        ] = {}
+        complete_checkpoint_events: list[HostCheckpointEvent] = []
+        for event in checkpoint_events:
+            if event.phase == "create":
+                created_paths.add(event.checkpoint_path)
+                pending_create[event.checkpoint_path] = event
+                pending_reload.pop(event.checkpoint_path, None)
+            elif event.phase == "reload" and event.checkpoint_path in created_paths:
+                reloaded_after_create.add(event.checkpoint_path)
+                pending_reload[event.checkpoint_path] = (
+                    pending_create[event.checkpoint_path],
+                    event,
+                )
+            elif (
+                event.phase == "audit"
+                and event.checkpoint_path in reloaded_after_create
+                and event.checkpoint_path in pending_reload
+            ):
+                audited_after_reload.add(event.checkpoint_path)
+                create_event, reload_event = pending_reload.pop(event.checkpoint_path)
+                complete_checkpoint_events.extend(
+                    (create_event, reload_event, event)
+                )
         mode_audit_passed = False
         for argv in successful:
             invocation = _reportctl_invocation(argv)
             if invocation is None:
                 continue
             subcommand, arguments = invocation
-            if subcommand == "checkpoint":
-                parsed = _parse_known_options(
-                    arguments,
-                    value_options={
-                        "--task", "--checkpoint", "--mode", "--surface",
-                        "--audience", "--module", "--must-show", "--output",
-                    },
-                    flag_options={"--force"},
-                    repeatable={"--module", "--must-show"},
-                )
-                if parsed is not None and len(parsed.get("--output", [])) == 1:
-                    created_paths.add(parsed["--output"][0])
-            elif subcommand == "bundle":
-                parsed = _parse_known_options(
-                    arguments,
-                    value_options={
-                        "--task", "--checkpoint", "--mode", "--surface",
-                        "--audience", "--module", "--must-show", "--max-chars",
-                    },
-                    repeatable={"--module", "--must-show"},
-                )
-                if parsed is not None and len(parsed.get("--checkpoint", [])) == 1:
-                    reloaded_paths.add(parsed["--checkpoint"][0])
-            elif subcommand == "audit":
+            if subcommand == "audit":
                 parsed = _parse_known_options(
                     arguments,
                     value_options={"--file", "--mode", "--checkpoint"},
@@ -338,15 +453,11 @@ class CodexAdapter:
                 ):
                     checkpoint_values = parsed.get("--checkpoint", [])
                     mode_values = parsed.get("--mode", [])
-                    if len(checkpoint_values) == 1 and not mode_values:
-                        audited_paths.add(checkpoint_values[0])
-                    elif len(mode_values) == 1 and not checkpoint_values:
+                    if len(mode_values) == 1 and not checkpoint_values:
                         mode_audit_passed = True
-        created_and_reloaded = created_paths & reloaded_paths
-        complete_checkpoint_paths = created_and_reloaded & audited_paths
         checkpoint_created = bool(created_paths)
-        checkpoint_reloaded = bool(created_and_reloaded)
-        checkpoint_audit_passed = bool(complete_checkpoint_paths)
+        checkpoint_reloaded = bool(reloaded_after_create)
+        checkpoint_audit_passed = bool(audited_after_reload)
         # A checkpoint-based final audit is only credible when the same checkpoint
         # was created and reloaded successfully.  A mode-only audit is intentionally
         # independent because short tasks do not create a checkpoint.
@@ -364,6 +475,7 @@ class CodexAdapter:
             # proving that the persisted checkpoint/report bytes were the audited
             # artifacts. No current adapter implements that stronger binding.
             checkpoint_receipt_verified=False,
+            checkpoint_events=tuple(complete_checkpoint_events),
             event_count=len(events),
         )
 

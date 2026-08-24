@@ -29,8 +29,11 @@ provider model or credential boundary. The adapter enforces a timeout and bounde
 local response/transcript/stderr capture; it does not currently enforce a Codex
 provider output-token or monetary cap.
 The frozen host plan includes the complete argv, transcript format, and adapter
-source SHA-256. `host-run` rejects any rebuild drift before execution, and record
-validation checks the completed receipt against those frozen identities.
+source SHA-256. A v1.1 plan also pins the repository checkpoint-auditor closure
+(`reportctl.py`, its Markdown scanner, and protocol catalog), and a framework plan
+requires the installed copy to match. `host-run` rejects any rebuild drift
+before execution, and record validation checks the completed receipt against those
+frozen identities.
 Installed-Skill receipts traverse with iterative `os.scandir`: every inspected
 entry, including ignored top-level cache files, consumes the 4,096-entry budget;
 `__pycache__` subtrees are pruned; symlinks and nonregular entries are rejected
@@ -52,17 +55,18 @@ controlled errors rather than tracebacks.
 Codex transcript parsing treats only successful exact command events as
 observations. Echoed command text, failed executions, compound shell syntax, wrong
 Skill paths, help/version or unknown-option forms, and mismatched checkpoint paths
-do not count. Even a matched command
-does not prove which persisted bytes were audited; current Codex runs therefore set
-`checkpoint_receipt_verified: false`. Public compaction evidence requires a future
-controller-side artifact receipt in addition to transcript observations.
+do not count. The adapter can identify an ordered create → reload → strict-audit
+candidate, but it cannot set `checkpoint_receipt_verified`; that field is derived
+only by the controller after the artifact checks described below. Manual imports,
+baseline records, and legacy v1.0 host/execution receipts cannot set it true.
 
 ## Private study boundary
 
 A study output root must not already exist, must remain outside every Git worktree,
 and is created owner-only (`0700` on POSIX). Plans, held-out cases, prompts,
 responses, generated artifacts, JSONL transcripts, host plans, assignment keys,
-rating forms, and deblinding material are private evidence. Do not commit them,
+checkpoint snapshots and artifact receipts, rating forms, and deblinding material
+are private evidence. Do not commit them,
 include their absolute paths in release artifacts, or pass secrets through study
 metadata. A reviewed aggregate pilot summary may be published only after removing
 raw content and local identifiers.
@@ -80,6 +84,50 @@ process remains outside the filesystem-race boundary. For public effectiveness
 claims, a same-account baseline workspace is insufficient: use a recorded external
 sandbox, one controller-locked workspace per generation unit, a receipt that covers
 the fresh per-unit starting state, and an audited shared global-instruction policy.
+
+## Controller-verified checkpoint artifact boundary
+
+This boundary applies only to explicit framework study executions on platforms that
+support the required descriptor-relative POSIX file checks. When one successful,
+exact create → reload → strict-audit sequence arrives over JSONL, the controller
+has already created `.agentic-reporting/` as `0700` with an owner-only nested
+ignore rule, then appended a hashed study-only
+contract to the framework host prompt specifying the two exact relative paths and `0600`
+file modes. The delivered-prompt digest is locked in both v1.1 receipts. It then
+opens the named files beneath the frozen workspace without following path
+components. It rejects absolute or escaping paths, symlinks, nonregular files,
+multiple hard links, wrong ownership, permissive group/other modes, excessive size,
+and metadata drift; the workspace root may be readable but cannot be group/other
+writable, and every scratch parent must remain exactly `0700`. It snapshots the checkpoint at all three event boundaries and
+the report at the audit boundary.
+
+Frozen local input figures are copied beneath the private draft directory using
+their original workspace-relative paths. A receipt rejects traversal-bearing or
+unmirrored local Markdown targets. The controller verifies each referenced mirror's
+no-follow path, ownership, mode, bytes, and digest before and after final audit, so
+the same target resolves in the draft, stored record, and blind packet.
+
+The controller accepts exactly one candidate only when the three checkpoint byte
+sequences are identical, the report bytes exactly equal the final stored response,
+the framework activation receipt still matches, and a fresh private pair written
+from those captured in-memory bytes passes an independent `--strict --json` audit by
+the plan-pinned repository `reportctl`. The controller re-reads that exact pair before
+archival and requires the auditor-returned report size/SHA-256 and checkpoint intent
+fingerprint to match the captured inputs.
+The v1.1 execution receipt binds the study/unit/condition, frozen plan, transcript,
+response, checkpoint, normalized workspace locators, auditor identity, and audit
+result. The accepted checkpoint and receipt remain owner-only controller evidence
+and are excluded from blind packets, aggregate output, and release artifacts.
+
+This is a narrow controller-observation receipt, not host-native attestation. It
+does not prove the exact bytes read inside an earlier child command, close the
+interval between that command and the controller's event-time read against a
+malicious same-UID process, prove that the model semantically remembered the
+checkpoint, authenticate an operator who controls all unkeyed locks, or pin remote
+provider behavior. Legacy v1.0 plans and execution receipts remain readable for
+validation but cannot be upgraded or backfilled with verified checkpoint evidence.
+The mechanism runs only in the study control plane and adds no instructions, model
+calls, or token overhead to normal agent reporting.
 
 ## Untrusted input
 

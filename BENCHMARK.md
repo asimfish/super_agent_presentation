@@ -106,10 +106,34 @@ that limitation instead of claiming equal budgets. Transcript telemetry credits
 only successful, exactly tokenized Skill/reportctl command executions; echoed text,
 failed commands, shell operators, help/version or unknown-option forms, and
 mismatched checkpoint paths receive no credit.
-Those observations still do not bind persisted checkpoint bytes to the audited
-report. The current Codex adapter therefore records
-`checkpoint_receipt_verified: false`, which makes it ineligible for a public claim
-in compaction-required strata until a controller-side receipt is implemented.
+The adapter turns one ordered create → reload → strict-audit sequence into a bounded
+candidate, but it cannot mark that evidence verified. For a framework v1.1 host
+execution, the controller precreates an owner-only, self-ignored `.agentic-reporting/` directory
+and appends a hashed study-only path/mode contract to the delivered host prompt.
+The named checkpoint and report paths are promotion invariants, not suggestions.
+Frozen local input images are mirrored below the report directory at their exact
+workspace-relative paths; traversal-bearing or unmirrored local targets receive no
+receipt, so the same Markdown target remains valid in agent audit, controller audit,
+stored records, and blind packets.
+The full delivered-prompt digest is frozen in the plan and execution receipt; this
+contract is not part of ordinary Skill use. The controller then snapshots the checkpoint as each successful event arrives
+and snapshots the report at the audit event. It accepts exactly one candidate only
+when all three checkpoint byte sequences match, the report bytes equal the final
+host response, the framework workspace receipt remains unchanged, and an
+independent strict audit over a fresh private pair written from those captured bytes
+by the plan-pinned repository `reportctl` succeeds. The controller re-reads that pair
+and every referenced mirrored image after audit before promotion. Only
+then does `host-run` derive `checkpoint_receipt_verified: true`. Manual imports,
+baseline records, ambiguous candidates, unsafe paths, and legacy v1.0 receipts
+cannot obtain or retroactively acquire that evidence.
+
+The checkpoint and artifact receipt remain private execution evidence; they are not
+copied into the blind packet, aggregate, or release artifact. The receipt establishes
+controller observations at the three event boundaries plus a final independent
+audit. It does not prove the exact bytes used internally by each child command,
+continuous immutability against a same-UID process, semantic checkpoint recall, or
+operator honesty. It adds no instructions, calls, or token cost to ordinary agent
+reporting outside this explicit study path.
 
 `pilot-summary` is available only for `study_kind=pilot` and always emits
 `status: insufficient_evidence` with `effectiveness_claim_eligible: false`.
@@ -172,6 +196,13 @@ unless the frozen design includes all of the following:
 Passing these prerequisites does not itself establish effectiveness; every
 provisional metric gate below must also pass. Unkeyed SHA-256 receipts detect drift,
 not a dishonest operator or compromised environment.
+
+No checked-in run currently satisfies this design. In particular, the planned
+fresh/50%/85% context-occupancy and compaction matrix has not been executed, Codex
+does not provide the controller an enforceable provider output-token or monetary
+cap, and a model revision label does not by itself pin provider routing or weights.
+Controller-verified checkpoint receipts retire only one evidence gap; they do not
+make the published pilot eligible for an effectiveness claim.
 
 The release controller accepts at most 1,500 generation records and also rejects a
 serialized expected-record manifest above 2 MiB. This accommodates the minimum

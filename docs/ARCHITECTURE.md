@@ -209,7 +209,9 @@ flowchart LR
     B --> D[Typed host plan receipt]
     D -->|explicit --execute only| E[Exact host executable]
     E --> F[Bounded response and JSONL evidence]
-    F --> M[Controller-owned execution binding]
+    F --> N[Ordered checkpoint candidates]
+    N --> O[Controller event snapshots<br/>and pinned strict re-audit]
+    O --> M[Controller-owned execution binding]
     C --> G[Blind A/B packet]
     M --> G
     G --> H[Independent owner-only ratings]
@@ -227,9 +229,11 @@ argument vector and parses JSONL telemetry. The only model boundary is
 executable/workspace receipts, launches with `shell=False`, enforces timeout and
 local evidence-size limits, then imports the result.
 The host plan also freezes the complete argv, transcript format, and
-`presentation_hosts.py` digest. `host-run` rebuilds the command and requires exact
-equality before launching; binding validation repeats that comparison against the
-completed execution receipt.
+`presentation_hosts.py` digest. A v1.1 plan additionally freezes the repository
+checkpoint auditor dependency-closure digest; framework planning requires the
+installed entrypoint, Markdown scanner, and protocol catalog to match.
+`host-run` rebuilds the command and requires exact equality before launching;
+binding validation repeats that comparison against the completed execution receipt.
 
 Adapter telemetry is accepted only through that path: the controller binds the
 frozen host plan and completed execution receipt to the complete stored record.
@@ -248,9 +252,34 @@ cap. Same-account workspaces are accepted only for pilot mechanics; public claim
 eligibility requires an external-sandbox receipt and a shared-and-audited global
 instruction policy. Public repeats also require a distinct controller-locked
 workspace per generation unit; the external receipt must cover fresh per-unit
-isolation. Transcript events only establish exact successful-command observations.
-Because the current Codex adapter cannot bind persisted checkpoint/report bytes, it
-records `checkpoint_receipt_verified: false`. See ADR-006.
+isolation.
+
+The adapter does not decide that checkpoint evidence is verified. It emits a
+bounded candidate only for an ordered successful create, later reload, and later
+strict-audit trace using the same literal checkpoint path. For this explicit
+framework-study path, the controller precreates an owner-only, self-ignored workspace scratch
+directory and appends a frozen, hashed path/mode micro-contract to the delivered
+host prompt; baseline and ordinary Skill flows do not receive it. At each event boundary,
+the controller reads the candidate beneath the frozen workspace with bounded,
+descriptor-relative no-follow operations; the audit event also snapshots the named
+report. The contract paths are exact promotion invariants. Supplied local images are
+mirrored under the draft directory using their frozen workspace-relative paths;
+local Markdown targets must name that allowlist without traversal, which preserves
+the same target after record storage and blinding. Claim-eligible evidence requires exactly one candidate, identical checkpoint
+bytes at all three boundaries, report bytes identical to the final host response,
+an unchanged framework activation receipt, and a successful independent strict
+audit by the pinned repository `reportctl` over a new private pair written from the
+captured in-memory bytes, followed by byte and referenced-image revalidation. The controller then locks the checkpoint
+and its artifact receipt in the private execution evidence and derives
+`checkpoint_receipt_verified`; ordinary imports and baseline records cannot do so.
+
+New host plans and execution receipts use v1.1. Legacy v1.0 receipts remain
+validation-readable but cannot acquire verified checkpoint evidence retroactively.
+The receipt proves controller observations at the three event boundaries and the
+independent final audit, not the exact bytes read inside each earlier child command,
+continuous immutability against a same-UID racer, semantic memory, or an honest
+operator. These controller-only operations add no normal-agent instructions, model
+calls, or token overhead. See ADR-006 and ADR-007.
 Host telemetry separates the common strict `final_audit_passed` observation from
 the checkpoint-backed audit observation. Fresh short tasks can satisfy the former
 with `audit --mode ... --strict`; required compaction strata must satisfy both the

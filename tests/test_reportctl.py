@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import runpy
@@ -266,10 +267,9 @@ class ReportCtlTests(unittest.TestCase):
                 str(checkpoint),
             )
             self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
-            report.write_text(
-                "Result: complete within the stated boundary.\n\n"
-                "Verification   evidence is recorded.\n",
-                encoding="utf-8",
+            report.write_bytes(
+                b"Result: complete within the stated boundary.\r\n\r\n"
+                b"Verification   evidence is recorded.\r\n"
             )
             accepted = run_cli(
                 "audit",
@@ -286,6 +286,19 @@ class ReportCtlTests(unittest.TestCase):
             self.assertEqual(accepted_payload["checkpoint"]["schema_version"], 2)
             self.assertEqual(accepted_payload["checkpoint"]["must_show_checked"], 1)
             self.assertEqual(accepted_payload["checkpoint"]["must_show_missing"], 0)
+            report_bytes = report.read_bytes()
+            self.assertEqual(
+                accepted_payload["input_receipts"]["report"],
+                {
+                    "bytes": len(report_bytes),
+                    "sha256": hashlib.sha256(report_bytes).hexdigest(),
+                },
+            )
+            checkpoint_value = json.loads(checkpoint.read_text(encoding="utf-8"))
+            self.assertEqual(
+                accepted_payload["input_receipts"]["checkpoint"],
+                {"intent_sha256": checkpoint_value["intent_sha256"]},
+            )
 
             report.write_text("Result: complete within the stated boundary.\n", encoding="utf-8")
             rejected = run_cli(

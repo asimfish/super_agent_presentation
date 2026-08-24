@@ -25,8 +25,8 @@
   existing Skill/rule, oversized-file resource exhaustion, Markdown/HTML injection
   through a strict report spec, unsafe link schemes, a packaged source symlink, and
   accidental checkpoint/study disclosure, baseline contamination through shared
-  instructions, malicious artifact paths, host substitution, and accidental paid
-  execution.
+  instructions, malicious checkpoint aliases or replacements, malicious artifact
+  paths, host substitution, and accidental paid execution.
 - Out of scope: a malicious process with the same account racing filesystem checks,
   a compromised Python runtime or GitHub runner, renderer vulnerabilities, and a
   local user deliberately authorizing an exact `--force` overwrite.
@@ -44,8 +44,9 @@
 | Existing instruction file | marker check and optional append | host instruction integrity | 2 MiB UTF-8 bound, preserve by default, explicit append, timestamped backup, mode-preserving atomic replacement |
 | Benchmark response | bounded UTF-8 parse and invariant checks | development score | 4 MiB and 100,000-line bounds; 1,000-image truncation signal; no model call or executable interpretation |
 | Study plan/cases/artifacts | bounded schema and path validation, copy plus digests | owner-only private run | new root outside Git, `0700`, symlink/traversal/nonregular rejection, per-file/aggregate caps, frozen SHA-256 receipts |
-| Executable/workspace/prompt receipts | exact digest and activation checks, typed fixed argv | external Codex subprocess | side-effect-free `host-plan` freezes complete argv, transcript format, and adapter-source SHA; literal `--execute` gate; exact rebuild comparison; executable SHA verification; `shell=False`; timeout and bounded local captures |
-| Host JSONL transcript | bounded parse and conservative event extraction | immutable generation record and telemetry | transcript/stderr/response caps, allowlisted successful-command grammar, no substring/failed/help/unknown-option/compound-shell credit, no tool-output execution, content digests, unsupported controls and unverified checkpoint receipts recorded false |
+| Executable/workspace/prompt receipts | exact digest and activation checks, typed fixed argv | external Codex subprocess | side-effect-free v1.1 `host-plan` freezes complete argv, transcript format, adapter-source SHA, delivered-prompt SHA, and checkpoint-auditor dependency closure; framework planning also verifies the installed closure; literal `--execute` gate; exact rebuild comparison; executable SHA verification; `shell=False`; timeout and bounded local captures |
+| Host JSONL transcript | bounded parse and conservative ordered event extraction | immutable generation record and telemetry | transcript/stderr/response caps, allowlisted successful-command grammar, no substring/failed/help/unknown-option/compound-shell credit, no tool-output execution, content digests; adapter returns bounded candidates but never a verification boolean |
+| Checkpoint/report paths from host events | study-only hashed prompt contract, descriptor-relative reads, event-time snapshots, byte equality, independent pinned audit | private checkpoint artifact receipt and controller-derived record field | framework-only v1.1 path; controller-prepared self-ignored `0700` scratch and exact named `0600` files; non-writable workspace root; delivered-prompt digest; exact create → reload → strict-audit order; frozen-workspace confinement; no-follow/regular/single-link/owner-only/size/metadata checks; three identical checkpoint snapshots; report equals final response; controller re-audit pair rebuilt from captured memory and re-read; frozen local figures mirrored at stable report-relative targets and checked before/after audit; unchanged activation receipt; one unambiguous candidate; owner-only locked evidence excluded from blind/aggregate/release output |
 | Blind packet and rating batches | randomized A/B mapping, owner-only copy and freeze | deblinded case-level aggregate | assignment key `0600`, condition metadata and checks omitted, response bytes preserved with explicit residual content/style unblinding risk, incomplete template cannot freeze, independent-rater validation, ratings lock before deblinding |
 
 ## Findings and remediation
@@ -248,7 +249,10 @@
   comparison influenced by global instructions.
 - Control: `host-plan` is pure and freezes the exact executable SHA, fixed argv
   vector, transcript format, adapter-source SHA, workspace activation state, Skill
-  manifest, and active instruction digest. Only
+  manifest, and active instruction digest. A v1.1 plan additionally freezes the
+  repository checkpoint-auditor entrypoint, Markdown scanner, and protocol catalog
+  as one dependency closure; framework planning requires the installed closure to
+  match. Only
   `host-run --execute` launches it, without a shell, under a bounded timeout and
   local evidence caps. It binds the frozen plan and completed execution receipt to
   the entire stored generation record; ordinary imports cannot self-report adapter
@@ -258,17 +262,20 @@
   The completed receipt must repeat the frozen argv, transcript format, and adapter
   source digest; plan-to-run drift fails before execution.
 - Evidence distinction: successful exact Skill/checkpoint/bundle/audit command
-  events are conservative observations only. They do not bind checkpoint/report
-  bytes; the current Codex adapter records the artifact receipt as unverified.
+  events are conservative observations only. The adapter may emit a bounded ordered
+  candidate, but only the controller can derive verified checkpoint evidence after
+  event-time snapshots, byte equality, workspace revalidation, and an independent
+  pinned strict audit. See SR-14.
 - Claim boundary: a clean same-account workspace does not prove isolation from user
   configuration, credentials, or service behavior. Public eligibility therefore
   requires an `external-sandbox` receipt, `shared-and-audited` global instructions,
   a distinct controller-locked workspace for each generation unit, multiple
   verifiable provider revisions, complete telemetry, and an unpolluted baseline.
   The external receipt must cover fresh per-unit isolation. The current adapter
-  records `output_token_cap_enforced: false` and
-  `checkpoint_receipt_verified: false`; it does not claim a hard cost ceiling or
-  persisted checkpoint proof.
+  records `output_token_cap_enforced: false`; it cannot claim a hard cost ceiling.
+  A controller-verified checkpoint artifact receipt closes only the local artifact
+  binding prerequisite for a qualifying framework v1.1 execution and does not
+  satisfy the other public-study gates.
 - Regression: tests verify inert planning, missing-`--execute` failure, exact fixed
   argv, executable/workspace digest mismatch rejection, framework/baseline
   activation separation, bounded fake-host JSONL import, timeout enforcement even
@@ -278,12 +285,61 @@
   generation-schema separation, Cartesian-matrix rejection, exact release
   thresholds, visual-denominator fail-closed behavior, unique public workspaces,
   bounded installed-Skill traversal with ignored-entry accounting, and pilot
-  `insufficient_evidence` output. A denied-path test rejects manual records that
-  impersonate host telemetry; post-import manual-record drift and host-binding drift
-  both invalidate the generation matrix.
+  `insufficient_evidence` output. Denied-path tests reject manual records that
+  impersonate host telemetry or checkpoint verification; post-import manual-record
+  drift and host-binding drift both invalidate the generation matrix.
 - Residual: an approved external executable remains trusted code with the user's
   authority. Its hash does not pin provider routing, remote model weights, data
   retention, authentication scope, or service-side mutations.
+
+### SR-14 — Agent-controlled checkpoint paths could forge study evidence
+
+- Severity: high for public-study integrity before remediation; bounded to a narrow
+  controller-observation claim after remediation.
+- Asset and security property: a framework generation may receive verified
+  checkpoint evidence only for the exact private artifacts independently observed
+  and audited by the study controller.
+- Attacker preconditions: the host child controls its workspace and JSONL command
+  events; a stronger same-UID attacker may also race filesystem state between a
+  child command and the controller read.
+- Source → transformations → sink: agent-selected checkpoint/report paths and
+  successful command events → path resolution, file snapshots, byte comparison,
+  and strict audit → private artifact receipt and
+  `checkpoint_receipt_verified` claim gate.
+- Control: the adapter recognizes only one bounded, ordered, exact successful
+  create → reload → strict-audit candidate and never sets the verification field.
+  The controller precreates the workspace-local `0700` scratch directory and
+  appends a hashed study-only path/`0600` mode contract to the framework host
+  prompt, whose delivered digest is bound in the v1.1 plan and execution receipt.
+  At each event boundary the controller confines descriptor-relative no-follow
+  reads to the frozen workspace and rejects noncontract paths, nonportable/escaping paths, symlinks,
+  nonregular or multiply linked files, wrong ownership, broad modes, excessive
+  size, and metadata drift. Acceptance requires exactly one candidate, identical
+  checkpoint bytes at all three boundaries, audit-stage report bytes equal to the
+  final response, unchanged framework activation evidence, and a second strict
+  audit by the plan-pinned repository `reportctl` over a fresh private pair rebuilt
+  from captured memory and byte-checked after audit; auditor-returned report
+  size/SHA-256 and checkpoint intent must match. Frozen local figures are
+  mirrored at their final report-relative paths; traversal/unmirrored targets fail,
+  and referenced mirrors are securely hash-checked before and after audit.
+  The v1.1 execution binding covers plan, transcript, response, checkpoint,
+  locators, auditor, and result; the archived checkpoint and receipt are owner-only
+  and excluded from blind, aggregate, and release surfaces. Manual imports,
+  baseline records, and v1.0 receipts fail closed for this field.
+- Assurance boundary: the receipt proves what the controller observed at the three
+  event boundaries and at final re-audit. It does not attest the exact child-command
+  read, eliminate the event-to-read race against a malicious same-UID process,
+  prove semantic memory, authenticate a dishonest same-account operator, or pin the
+  remote provider. Those stronger properties require a privileged watcher, signed
+  helper, or host-native attestation.
+- Required regression coverage: ordered and out-of-order event traces, zero/multiple candidates,
+  checkpoint mutation across event boundaries, report/final-response mismatch,
+  noncontract paths, traversal and cross-workspace aliases, parent/file symlinks, hard links,
+  FIFO/device inputs, broad permissions, oversized inputs, pinned-auditor drift,
+  changed or symlinked local-image mirrors, report-relative image survival through
+  agent audit/storage/blinding, captured-memory re-audit,
+  manual/baseline denial, v1.0 compatibility without backfill, receipt-lock
+  tampering, and private-surface exclusion must remain denied-path tests.
 
 ## Supply-chain controls
 
@@ -319,6 +375,9 @@ not prove publisher identity or runtime safety.
   The normal free-form report path is not transformed by the strict renderer.
 - Checkpoint matching is a conservative lexical proxy, not renderer equivalence or a
   semantic assertion. A same-account writer can replace and re-fingerprint a file.
+- Controller event snapshots detect byte drift across the observed boundaries but
+  do not eliminate the interval between a child command and the controller read;
+  same-UID lifecycle attestation remains out of scope.
 - Raw study runs can contain prompts, responses, transcripts, local paths, hidden
   cases, and rater identities. They must remain outside Git in an owner-only parent;
   file modes and unkeyed hashes do not defend against a malicious same-account

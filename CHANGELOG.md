@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.3.2 — 2026-08-24
+
+- Added controller-verified checkpoint artifact receipts for qualifying framework
+  host executions. The v1.1 control path snapshots checkpoint bytes at successful
+  create, reload, and strict-audit event boundaries; snapshots the audited report;
+  requires checkpoint stability and exact report/final-response equality; and
+  independently re-runs the plan-pinned repository `reportctl` strict audit before
+  deriving `checkpoint_receipt_verified`.
+- Added a study-only delivered-prompt contract and controller-prepared `0700`
+  workspace scratch so a real framework agent does not have to guess the receipt's
+  relative paths or `0600` file requirement. Its digest is frozen in v1.1 receipts;
+  it does not change the ordinary Skill contract.
+- Enforced the named checkpoint/report paths, exact `0700` scratch-parent and `0600`
+  file modes, and a non-writable workspace root. Final re-audit now consumes a fresh
+  private pair written from the captured in-memory bytes and re-reads those bytes
+  before issuing the receipt; the pinned auditor also returns the exact report
+  byte-count/SHA-256 and parsed checkpoint intent fingerprint for comparison.
+- Mirrored frozen local figures beneath the draft directory at their original
+  workspace-relative paths and bound every local Markdown target to that allowlist.
+  The same target is now covered end to end across agent audit, controller re-audit,
+  stored evaluation, and blind packets; traversal, mutation, and symlink cases fail
+  closed.
+- Kept verification authority out of adapter telemetry and manual imports. Unsafe,
+  ambiguous, baseline, or unverifiable candidates remain false; legacy v1.0 host
+  plans and execution receipts stay validation-readable but cannot gain or backfill
+  verified checkpoint evidence.
+- Bound the receipt to private controller evidence and excluded checkpoint snapshots
+  from blind packets, aggregates, and release artifacts. The receipt proves narrow
+  event-boundary observations and a final controller audit, not continuous
+  same-UID immutability, semantic recall, provider identity, or public
+  effectiveness. Ordinary agent routing and reporting incur no new instructions,
+  model calls, or token overhead.
+
 ## 0.3.1 — 2026-08-24
 
 - Replaced full-tree `Path.rglob` materialization in installed-Skill receipts with

@@ -11,7 +11,8 @@ that the reporting framework improves quality or efficiency.
   it is not a collection of model outputs or human judgments.
 - `schema/` contains the JSON Schema contracts for case catalogs, frozen study
   plans, caller generation records, controller-stored generation records, blind
-  assignments, rating batches, aggregate study reports, and public pilot summaries.
+  assignments, rating batches, controller checkpoint-artifact receipts, aggregate
+  study reports, and public pilot summaries.
   Only the stored-record schema permits controller-produced machine evaluation.
   Schema validity establishes shape, not the truth of a claim.
 - `templates/` contains starting points for study plans. Copy a template into a
@@ -33,7 +34,8 @@ that the reporting framework improves quality or efficiency.
 Create every executable study run in a new private directory outside every Git
 worktree and set that directory to owner-only mode (`0700`). Keep the complete
 frozen inputs, execution receipts, and adjudication trail there. Do not commit raw
-provider prompts, model responses, JSONL transcripts, host plans, assignment
+provider prompts, model responses, JSONL transcripts, host plans, checkpoint
+snapshots or receipts, assignment
 keys, rating files, credentials, or records containing absolute local paths.
 
 Only a deliberately sanitized aggregate may be copied into `runs/pilot/`. Before
@@ -52,6 +54,13 @@ workspace identity, while an external receipt must separately cover the fresh
 per-unit isolation semantics. Required/forbidden visual coverage, 100% mandatory
 image/table checks, nonempty visual denominators, and semantic-slot density are
 explicit release gates rather than narrative review items.
+
+Framework v1.1 checkpoint plans freeze exact checkpoint/report paths and any local
+input-image mirror records. The controller mirrors those files below the private
+draft directory, accepts only literal non-traversing targets from that allowlist,
+and verifies the same target through agent audit, controller re-audit, stored
+evaluation, and blind copying. Controller receipts and event snapshots remain under
+`private/` and are never copied into evaluation packets.
 
 ## Interpretation rule
 

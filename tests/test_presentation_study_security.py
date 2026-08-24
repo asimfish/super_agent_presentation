@@ -174,6 +174,7 @@ class PresentationStudySecurityTests(unittest.TestCase):
         *,
         telemetry_source: object = "manual",
         output_token_cap_enforced: bool | None = None,
+        checkpoint_receipt_verified: bool | None = None,
         unit_id_override: object | None = None,
         expect_success: bool = True,
     ) -> subprocess.CompletedProcess[str]:
@@ -218,7 +219,7 @@ class PresentationStudySecurityTests(unittest.TestCase):
                 "checkpoint_reloaded": None,
                 "checkpoint_audit_passed": None,
                 "final_audit_passed": None,
-                "checkpoint_receipt_verified": None,
+                "checkpoint_receipt_verified": checkpoint_receipt_verified,
                 "output_token_cap_enforced": output_token_cap_enforced,
             },
         }
@@ -456,6 +457,32 @@ class PresentationStudySecurityTests(unittest.TestCase):
                     self.assertFalse(
                         (run_dir / "records" / "experiment-null-result--manual-model--fresh--s7--baseline").exists()
                     )
+
+    def test_manual_import_cannot_self_report_checkpoint_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            run_dir = self.prepare(root)
+
+            result = self.import_condition(
+                root,
+                run_dir,
+                "framework",
+                checkpoint_receipt_verified=True,
+                expect_success=False,
+            )
+
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn(
+                "verified checkpoint receipt requires a controller-owned host execution binding",
+                result.stderr.casefold(),
+            )
+            self.assertFalse(
+                (
+                    run_dir
+                    / "records"
+                    / "experiment-null-result--manual-model--fresh--s7--framework"
+                ).exists()
+            )
 
     def test_unhashable_generation_fields_fail_without_traceback(self) -> None:
         probes = (

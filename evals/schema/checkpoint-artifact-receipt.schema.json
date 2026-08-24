@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/asimfish/super_agent_presentation/evals/schema/checkpoint-artifact-receipt.schema.json",
+  "title": "Controller-owned checkpoint artifact receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema", "schema_version", "kind", "assurance", "study_id", "unit_id",
+    "condition", "host_plan_sha256", "host_adapter_source_sha256",
+    "transcript_sha256", "capture_profile", "checkpoint", "report", "events",
+    "controller_reaudit"
+  ],
+  "properties": {
+    "$schema": {"const": "checkpoint-artifact-receipt.schema.json"},
+    "schema_version": {"const": "1.0"},
+    "kind": {"const": "checkpoint-artifact-receipt"},
+    "assurance": {"const": "controller-event-snapshot-final-audit"},
+    "study_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,79}$"},
+    "unit_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,239}$"},
+    "condition": {"const": "framework"},
+    "host_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "host_adapter_source_sha256": {"$ref": "#/$defs/sha256"},
+    "transcript_sha256": {"$ref": "#/$defs/sha256"},
+    "capture_profile": {"const": "posix-openat-event-snapshot-v1"},
+    "checkpoint": {"$ref": "#/$defs/checkpoint"},
+    "report": {"$ref": "#/$defs/report"},
+    "events": {
+      "type": "array",
+      "prefixItems": [
+        {"$ref": "#/$defs/createEvent"},
+        {"$ref": "#/$defs/reloadEvent"},
+        {"$ref": "#/$defs/auditEvent"}
+      ],
+      "items": false,
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "controller_reaudit": {"$ref": "#/$defs/controllerReaudit"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "portablePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(?!(?:.*/)?(?:\\.|\\.\\.)(?:/|$))(?:[A-Za-z0-9._-]{1,255}/){0,15}[A-Za-z0-9._-]{1,255}$"
+    },
+    "storedArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stored_path", "bytes", "sha256"],
+      "properties": {
+        "stored_path": {"$ref": "#/$defs/portablePath"},
+        "bytes": {"type": "integer", "minimum": 0, "maximum": 2097152},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "storedReportArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stored_path", "bytes", "sha256"],
+      "properties": {
+        "stored_path": {"$ref": "#/$defs/portablePath"},
+        "bytes": {"type": "integer", "minimum": 0, "maximum": 1048576},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_relative_path", "stored_path", "bytes", "sha256",
+        "schema_version", "intent_sha256"
+      ],
+      "properties": {
+        "workspace_relative_path": {"$ref": "#/$defs/portablePath"},
+        "stored_path": {"const": "checkpoint-artifacts/checkpoint.json"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 2097152},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"const": 2},
+        "intent_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_relative_path", "stored_path", "bytes", "sha256",
+        "delivered_response_sha256"
+      ],
+      "properties": {
+        "workspace_relative_path": {"$ref": "#/$defs/portablePath"},
+        "stored_path": {"const": "checkpoint-artifacts/audited-report.md"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "delivered_response_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "createEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "transcript_event_ordinal", "checkpoint"],
+      "properties": {
+        "phase": {"const": "create"},
+        "transcript_event_ordinal": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "checkpoint": {"$ref": "#/$defs/storedArtifact"}
+      }
+    },
+    "reloadEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "transcript_event_ordinal", "checkpoint"],
+      "properties": {
+        "phase": {"const": "reload"},
+        "transcript_event_ordinal": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "checkpoint": {"$ref": "#/$defs/storedArtifact"}
+      }
+    },
+    "auditEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "transcript_event_ordinal", "checkpoint", "report"],
+      "properties": {
+        "phase": {"const": "audit"},
+        "transcript_event_ordinal": {"type": "integer", "minimum": 1, "maximum": 100000},
+        "checkpoint": {"$ref": "#/$defs/storedArtifact"},
+        "report": {"$ref": "#/$defs/storedReportArtifact"}
+      }
+    },
+    "controllerReaudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "auditor_path", "auditor_profile", "auditor_sha256", "argv_profile", "shell", "exit_code",
+        "schema_version", "errors", "warnings", "report_bytes", "report_sha256",
+        "checkpoint_intent_sha256", "must_show_checked",
+        "must_show_missing"
+      ],
+      "properties": {
+        "auditor_path": {"const": "skills/agentic-reporting/scripts/reportctl.py"},
+        "auditor_profile": {"const": "reportctl-audit-closure-v1"},
+        "auditor_sha256": {"$ref": "#/$defs/sha256"},
+        "argv_profile": {"const": "python-isolated-audit-captured-byte-pair-strict-json"},
+        "shell": {"const": false},
+        "exit_code": {"const": 0},
+        "schema_version": {"const": 1},
+        "errors": {"const": 0},
+        "warnings": {"const": 0},
+        "report_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "report_sha256": {"$ref": "#/$defs/sha256"},
+        "checkpoint_intent_sha256": {"$ref": "#/$defs/sha256"},
+        "must_show_checked": {"type": "integer", "minimum": 0, "maximum": 20},
+        "must_show_missing": {"const": 0}
+      }
+    }
+  }
+}

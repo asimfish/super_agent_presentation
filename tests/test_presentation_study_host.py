@@ -89,11 +89,46 @@ def response_text(*, image_path: str | None = None) -> str:
     )
 
 
+def checkpoint_response_text() -> str:
+    return (
+        "Objective: compare three methods under a fixed protocol using accuracy and "
+        "latency metrics.\n\n"
+        "Results table.\n\n"
+        "| Method | Accuracy (%) ↑ | Latency (ms) ↓ |\n"
+        "|---|---:|---:|\n"
+        "| A | 72.4 ± 1.1 | 31 |\n"
+        "| B | 74.0 ± 1.0 | 38 |\n"
+        "| C | 73.9 ± 0.9 | 29 |\n\n"
+        "Accuracy is higher-is-better and latency is lower-is-better. Accuracy is the "
+        "mean ± standard deviation over five seeds. No statistical significance test "
+        "was run, so B and C cannot be declared statistically different. C has the "
+        "lowest observed latency while its mean accuracy is close to B; the evidence "
+        "boundary does not establish a universal winner.\n"
+    )
+
+
+def checkpoint_image_response_text() -> str:
+    return (
+        "Main result: the supplied mean-return curve rises through step 80 and drops "
+        "at step 90; this is a visible observation, not a diagnosis of cause.\n\n"
+        "Research question and method: we inspect the supplied training curve to "
+        "describe the late-training trend. The metric is mean return at each training "
+        "step. The shaded band is one standard deviation over five seeds.\n\n"
+        "![Line chart showing mean return rising through step 80 and dropping at step "
+        "90, with a shaded uncertainty band](evals/fixtures/assets/return-curve.svg)\n\n"
+        "*Figure 1. Mean return over training; the shaded band denotes one standard "
+        "deviation over five seeds.*\n\n"
+        "Conclusion and boundary: the observed return drops at step 90 after rising "
+        "through step 80. The plot alone cannot identify the cause of the drop.\n"
+    )
+
+
 def study_plan(
     *,
     study_id: str,
     host: str = "manual",
     executable_sha256: str | None = None,
+    case_id: str = CASE_ID,
 ) -> dict[str, object]:
     if host == "manual":
         model = {
@@ -125,7 +160,7 @@ def study_plan(
             "repository": "https://github.com/asimfish/super_agent_presentation",
             "commit_sha": "b4c014d4b87c0d4556908b492dcf35cccb8631d4",
             "skill_manifest_sha256": (
-                "abaa134681e6180ef59cc70ecf35332a5fa9cd50dc0dfcea7d0a7860e4d45749"
+                "369fdc51f159c441efcbdc129e75c0e3677873b497df1243cde5b16dd6b37163"
             ),
             "adapter_sha256": (
                 "c04ab462b766baaf60bbb38e9fffe0555e71ec6d5fb2255bcd93eb2d47108080"
@@ -140,7 +175,7 @@ def study_plan(
         "benchmark": {
             "benchmark_id": "agentic-reporting-presentation-v1",
             "cases_sha256": sha256(CASES),
-            "case_ids": [CASE_ID],
+            "case_ids": [case_id],
             "heldout": False,
             "preregistration_receipt": None,
         },
@@ -195,6 +230,157 @@ def study_plan(
 
 
 class PresentationStudyHostTests(unittest.TestCase):
+    def test_checkpoint_receipt_portable_path_schema_matches_runtime_boundaries(self) -> None:
+        schema = json.loads(
+            (
+                ROOT
+                / "evals"
+                / "schema"
+                / "checkpoint-artifact-receipt.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        validator = Draft202012Validator(schema["$defs"]["portablePath"])
+        for accepted in (
+            ".agentic-reporting/checkpoint.json",
+            "checkpoint-artifacts/events/000001-create-checkpoint.json",
+            "a" * 255,
+        ):
+            with self.subTest(accepted=accepted):
+                self.assertEqual(list(validator.iter_errors(accepted)), [])
+        for rejected in (
+            "../outside.json",
+            "a/../outside.json",
+            "./checkpoint.json",
+            "/absolute/checkpoint.json",
+            "a" * 256,
+            "a\\checkpoint.json",
+        ):
+            with self.subTest(rejected=rejected):
+                self.assertNotEqual(list(validator.iter_errors(rejected)), [])
+
+    @unittest.skipUnless(os.name == "posix", "checkpoint capture requires POSIX")
+    def test_workspace_checkpoint_capture_rejects_links_fifos_permissions_and_escape(self) -> None:
+        module = load_study_module()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            workspace = root / "workspace"
+            workspace.mkdir()
+
+            safe = workspace / "safe.json"
+            safe.write_bytes(b"{}\n")
+            safe.chmod(0o600)
+            relative, data, evidence = module._read_workspace_artifact(
+                workspace,
+                "safe.json",
+                maximum=32,
+                label="test checkpoint",
+            )
+            self.assertEqual(relative.as_posix(), "safe.json")
+            self.assertEqual(data, b"{}\n")
+            self.assertEqual(evidence["bytes"], 3)
+
+            private_parent = workspace / "private-parent"
+            private_parent.mkdir(mode=0o700)
+            private_parent.chmod(0o700)
+            nested = private_parent / "checkpoint.json"
+            nested.write_bytes(b"{}\n")
+            nested.chmod(0o600)
+            module._read_workspace_artifact(
+                workspace,
+                "private-parent/checkpoint.json",
+                maximum=32,
+                label="nested checkpoint",
+            )
+            private_parent.chmod(0o777)
+            with self.assertRaisesRegex(module.StudyError, "mode 0700"):
+                module._read_workspace_artifact(
+                    workspace,
+                    "private-parent/checkpoint.json",
+                    maximum=32,
+                    label="nested checkpoint",
+                )
+            private_parent.chmod(0o700)
+
+            workspace.chmod(0o777)
+            with self.assertRaisesRegex(module.StudyError, "write permissions"):
+                module._read_workspace_artifact(
+                    workspace,
+                    "safe.json",
+                    maximum=32,
+                    label="test checkpoint",
+                )
+            workspace.chmod(0o755)
+
+            permissive = workspace / "permissive.json"
+            permissive.write_bytes(b"{}")
+            permissive.chmod(0o644)
+            with self.assertRaisesRegex(module.StudyError, "group or other"):
+                module._read_workspace_artifact(
+                    workspace,
+                    "permissive.json",
+                    maximum=32,
+                    label="test checkpoint",
+                )
+
+            hardlinked = workspace / "hardlinked.json"
+            hardlinked.write_bytes(b"{}")
+            hardlinked.chmod(0o600)
+            os.link(hardlinked, workspace / "hardlink-alias.json")
+            with self.assertRaisesRegex(module.StudyError, "exactly one hard link"):
+                module._read_workspace_artifact(
+                    workspace,
+                    "hardlinked.json",
+                    maximum=32,
+                    label="test checkpoint",
+                )
+
+            symlink = workspace / "symlink.json"
+            symlink.symlink_to(safe)
+            with self.assertRaises(module.StudyError):
+                module._read_workspace_artifact(
+                    workspace,
+                    "symlink.json",
+                    maximum=32,
+                    label="test checkpoint",
+                )
+
+            fifo = workspace / "checkpoint.fifo"
+            os.mkfifo(fifo, mode=0o600)
+            with self.assertRaisesRegex(module.StudyError, "regular file"):
+                module._read_workspace_artifact(
+                    workspace,
+                    "checkpoint.fifo",
+                    maximum=32,
+                    label="test checkpoint",
+                )
+
+            outside = root / "outside"
+            outside.mkdir()
+            (outside / "checkpoint.json").write_bytes(b"{}")
+            (outside / "checkpoint.json").chmod(0o600)
+            (workspace / "aliased-parent").symlink_to(outside, target_is_directory=True)
+            with self.assertRaises(module.StudyError):
+                module._read_workspace_artifact(
+                    workspace,
+                    "aliased-parent/checkpoint.json",
+                    maximum=32,
+                    label="test checkpoint",
+                )
+
+            for escaped in (
+                "../outside/checkpoint.json",
+                str(outside / "checkpoint.json"),
+                "./safe.json",
+            ):
+                with self.subTest(escaped=escaped):
+                    with self.assertRaises(module.StudyError):
+                        module._read_workspace_artifact(
+                            workspace,
+                            escaped,
+                            maximum=32,
+                            label="test checkpoint",
+                        )
+
     def test_skill_tree_receipt_preserves_canonical_manifest_semantics(self) -> None:
         module = load_study_module()
         with tempfile.TemporaryDirectory() as temporary:
@@ -431,8 +617,168 @@ class PresentationStudyHostTests(unittest.TestCase):
         executable.chmod(0o700)
         return executable
 
-    def host_unit_id(self, condition: str) -> str:
-        return f"{CASE_ID}--{MODEL_ID}--{CONTEXT_ID}--s{SEED}--{condition}"
+    def make_checkpoint_fake_codex(
+        self,
+        root: Path,
+        *,
+        mutate_before_audit_event: bool = False,
+        alternate_paths: bool = False,
+        permissive_capture_directory: bool = False,
+        report_body: str | None = None,
+        must_show: str = "No statistical significance test was run",
+        deliver_post_audit_mutation: bool = False,
+        symlink_mirror_path_after_audit: str | None = None,
+    ) -> Path:
+        body = report_body if report_body is not None else checkpoint_response_text()
+        evidence_relative = (
+            "alternate-evidence" if alternate_paths else ".agentic-reporting"
+        )
+        checkpoint_relative = f"{evidence_relative}/checkpoint.json"
+        draft_relative = f"{evidence_relative}/draft.md"
+        executable = root / "fake-codex-checkpoint"
+        executable.write_text(
+            textwrap.dedent(
+                f"""\
+                #!{sys.executable}
+                import json
+                import os
+                import pathlib
+                import subprocess
+                import sys
+
+                arguments = sys.argv[1:]
+                workspace = pathlib.Path(arguments[arguments.index("-C") + 1])
+                response = pathlib.Path(
+                    arguments[arguments.index("--output-last-message") + 1]
+                )
+                received_prompt = sys.stdin.buffer.read()
+                (workspace / ".fake-checkpoint-host-prompt").write_bytes(received_prompt)
+                evidence = workspace / {evidence_relative!r}
+                evidence.mkdir(mode=0o700, exist_ok=True)
+                checkpoint = evidence / "checkpoint.json"
+                draft = evidence / "draft.md"
+                reportctl = (
+                    workspace
+                    / ".agents"
+                    / "skills"
+                    / "agentic-reporting"
+                    / "scripts"
+                    / "reportctl.py"
+                )
+                if not reportctl.is_file():
+                    response.write_text({body!r}, encoding="utf-8")
+                    print(json.dumps({{
+                        "type": "turn.completed",
+                        "usage": {{
+                            "input_tokens": 321,
+                            "cached_input_tokens": 21,
+                            "output_tokens": 123,
+                        }},
+                    }}), flush=True)
+                    raise SystemExit(0)
+
+                def run_reportctl(*reportctl_arguments):
+                    completed = subprocess.run(
+                        [sys.executable, str(reportctl), *reportctl_arguments],
+                        cwd=workspace,
+                        text=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.PIPE,
+                        check=False,
+                    )
+                    if completed.returncode != 0:
+                        sys.stderr.write(completed.stderr)
+                        raise SystemExit(completed.returncode)
+
+                def emit(command):
+                    print(json.dumps({{
+                        "type": "item.completed",
+                        "item": {{
+                            "type": "command_execution",
+                            "command": command,
+                            "exit_code": 0,
+                        }},
+                    }}), flush=True)
+
+                emit("sed -n '1,120p' .agents/skills/agentic-reporting/SKILL.md")
+                checkpoint_command = (
+                    "python3 .agents/skills/agentic-reporting/scripts/reportctl.py "
+                    "checkpoint --task 'Compare the experiment results' "
+                    "--mode experiment-report --surface chat "
+                    "--must-show {must_show!r} "
+                    "--output {checkpoint_relative}"
+                )
+                run_reportctl(
+                    "checkpoint",
+                    "--task", "Compare the experiment results",
+                    "--mode", "experiment-report",
+                    "--surface", "chat",
+                    "--must-show", {must_show!r},
+                    "--output", {checkpoint_relative!r},
+                )
+                os.chmod(checkpoint, 0o600)
+                emit(checkpoint_command)
+
+                bundle_command = (
+                    "python3 .agents/skills/agentic-reporting/scripts/reportctl.py "
+                    "bundle --checkpoint {checkpoint_relative}"
+                )
+                run_reportctl(
+                    "bundle", "--checkpoint", {checkpoint_relative!r}
+                )
+                emit(bundle_command)
+
+                draft.write_text({body!r}, encoding="utf-8")
+                os.chmod(draft, 0o600)
+                audit_command = (
+                    "python3 .agents/skills/agentic-reporting/scripts/reportctl.py "
+                    "audit --file {draft_relative} "
+                    "--checkpoint {checkpoint_relative} --strict --json"
+                )
+                run_reportctl(
+                    "audit",
+                    "--file", {draft_relative!r},
+                    "--checkpoint", {checkpoint_relative!r},
+                    "--strict",
+                    "--json",
+                )
+                if {mutate_before_audit_event!r}:
+                    draft.write_text("mutated after audit\\n", encoding="utf-8")
+                    os.chmod(draft, 0o600)
+                if {deliver_post_audit_mutation!r}:
+                    draft.write_text("mutated after audit\\n", encoding="utf-8")
+                    os.chmod(draft, 0o600)
+                if {symlink_mirror_path_after_audit!r} is not None:
+                    mirror = evidence / {symlink_mirror_path_after_audit!r}
+                    mirror.unlink()
+                    mirror.symlink_to(workspace / {symlink_mirror_path_after_audit!r})
+                if {permissive_capture_directory!r}:
+                    os.chmod(evidence, 0o777)
+                emit(audit_command)
+
+                response.write_text(
+                    "mutated after audit\\n"
+                    if {deliver_post_audit_mutation!r}
+                    else {body!r},
+                    encoding="utf-8",
+                )
+                print(json.dumps({{
+                    "type": "turn.completed",
+                    "usage": {{
+                        "input_tokens": 321,
+                        "cached_input_tokens": 21,
+                        "output_tokens": 123,
+                    }},
+                }}), flush=True)
+                """
+            ),
+            encoding="utf-8",
+        )
+        executable.chmod(0o700)
+        return executable
+
+    def host_unit_id(self, condition: str, *, case_id: str = CASE_ID) -> str:
+        return f"{case_id}--{MODEL_ID}--{CONTEXT_ID}--s{SEED}--{condition}"
 
     def manual_unit_id(self, condition: str) -> str:
         return f"{CASE_ID}--manual-model--{CONTEXT_ID}--s{SEED}--{condition}"
@@ -609,7 +955,60 @@ class PresentationStudyHostTests(unittest.TestCase):
         self.assertTrue(telemetry.checkpoint_audit_passed)
         self.assertTrue(telemetry.final_audit_passed)
         self.assertFalse(telemetry.checkpoint_receipt_verified)
+        self.assertEqual(
+            telemetry.checkpoint_events,
+            (
+                hosts.HostCheckpointEvent("create", 2, "/tmp/report.json"),
+                hosts.HostCheckpointEvent("reload", 3, "/tmp/report.json"),
+                hosts.HostCheckpointEvent(
+                    "audit", 4, "/tmp/report.json", "/tmp/draft.md"
+                ),
+            ),
+        )
         self.assertEqual(telemetry.event_count, 5)
+
+    def test_codex_checkpoint_contract_requires_create_reload_audit_order(self) -> None:
+        hosts = load_hosts_module()
+        adapter = hosts.CodexAdapter()
+        commands = (
+            (
+                "python3 .agents/skills/agentic-reporting/scripts/reportctl.py "
+                "audit --file .agentic-reporting/draft.md "
+                "--checkpoint .agentic-reporting/checkpoint.json --strict"
+            ),
+            (
+                "python3 .agents/skills/agentic-reporting/scripts/reportctl.py "
+                "bundle --checkpoint .agentic-reporting/checkpoint.json"
+            ),
+            (
+                "python3 .agents/skills/agentic-reporting/scripts/reportctl.py "
+                "checkpoint --output .agentic-reporting/checkpoint.json"
+            ),
+        )
+        events = [
+            {
+                "type": "item.completed",
+                "item": {
+                    "type": "command_execution",
+                    "command": command,
+                    "exit_code": 0,
+                },
+            }
+            for command in commands
+        ]
+        events.append({"type": "turn.completed", "usage": {}})
+
+        telemetry = adapter.parse_transcript(json.dumps(event) for event in events)
+
+        self.assertEqual(
+            telemetry.checkpoint_events,
+            (),
+        )
+        self.assertTrue(telemetry.checkpoint_created)
+        self.assertFalse(telemetry.checkpoint_reloaded)
+        self.assertFalse(telemetry.checkpoint_audit_passed)
+        self.assertFalse(telemetry.final_audit_passed)
+        self.assertFalse(telemetry.checkpoint_receipt_verified)
 
     def test_codex_transcript_does_not_credit_echoes_failed_or_mismatched_commands(self) -> None:
         hosts = load_hosts_module()
@@ -630,6 +1029,9 @@ class PresentationStudyHostTests(unittest.TestCase):
             "./python3 /tmp/.agents/skills/agentic-reporting/scripts/reportctl.py checkpoint --output /tmp/path-spoof.json",
             "./python3 /tmp/.agents/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /tmp/path-spoof.json",
             "./python3 /tmp/.agents/skills/agentic-reporting/scripts/reportctl.py audit --file /tmp/draft.md --checkpoint /tmp/path-spoof.json --strict",
+            "python3 /private/work/.agents/skills/agentic-reporting/scripts/reportctl.py checkpoint --output /tmp/absolute.json",
+            "python3 /private/work/.agents/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /tmp/absolute.json",
+            "python3 /private/work/.agents/skills/agentic-reporting/scripts/reportctl.py audit --file /tmp/draft.md --checkpoint /tmp/absolute.json --strict",
         )
         events = [
             {
@@ -650,6 +1052,7 @@ class PresentationStudyHostTests(unittest.TestCase):
         self.assertFalse(telemetry.checkpoint_audit_passed)
         self.assertFalse(telemetry.final_audit_passed)
         self.assertFalse(telemetry.checkpoint_receipt_verified)
+        self.assertEqual(telemetry.checkpoint_events, ())
 
     def test_codex_transcript_credits_strict_mode_only_final_audit_without_checkpoint(self) -> None:
         hosts = load_hosts_module()
@@ -674,6 +1077,7 @@ class PresentationStudyHostTests(unittest.TestCase):
         self.assertFalse(telemetry.checkpoint_reloaded)
         self.assertFalse(telemetry.checkpoint_audit_passed)
         self.assertFalse(telemetry.checkpoint_receipt_verified)
+        self.assertEqual(telemetry.checkpoint_events, ())
 
     def test_codex_transcript_rejects_unbounded_json_numbers_and_depth(self) -> None:
         hosts = load_hosts_module()
@@ -784,6 +1188,51 @@ class PresentationStudyHostTests(unittest.TestCase):
             self.assertFalse(
                 framework_plan["command_profile"]["output_token_cap_enforced"]
             )
+            self.assertEqual(
+                baseline_plan["host_prompt_sha256"], baseline_plan["prompt_sha256"]
+            )
+            self.assertNotEqual(
+                framework_plan["host_prompt_sha256"],
+                framework_plan["prompt_sha256"],
+            )
+            capture_profile = framework_plan["checkpoint_capture_profile"]
+            self.assertEqual(capture_profile["workspace_directory"], ".agentic-reporting")
+            self.assertEqual(capture_profile["directory_mode"], "0700")
+            self.assertEqual(capture_profile["file_mode"], "0600")
+            self.assertIn("Study-only", capture_profile["agent_contract"])
+            auditor_receipt = framework_plan["checkpoint_auditor_receipt"]
+            self.assertEqual(auditor_receipt["profile"], "reportctl-audit-closure-v1")
+            self.assertEqual(
+                [item["path"] for item in auditor_receipt["files"]],
+                [
+                    "scripts/reportctl.py",
+                    "scripts/markdown_image_scanner.py",
+                    "references/protocols.json",
+                ],
+            )
+
+            legacy_unit = self.host_unit_id("baseline")
+            legacy_plan_path = (
+                run_dir / "private" / "host-plans" / f"{legacy_unit}.json"
+            )
+            legacy_plan = json.loads(legacy_plan_path.read_text(encoding="utf-8"))
+            legacy_plan["schema_version"] = "1.0"
+            for field in (
+                "checkpoint_auditor_sha256",
+                "checkpoint_auditor_receipt",
+                "checkpoint_capture_profile",
+                "host_prompt_sha256",
+            ):
+                legacy_plan.pop(field)
+            legacy_plan_path.write_text(json.dumps(legacy_plan), encoding="utf-8")
+            legacy_lock_path = (
+                run_dir / "private" / "host-plans" / f"{legacy_unit}.lock.json"
+            )
+            legacy_lock = json.loads(legacy_lock_path.read_text(encoding="utf-8"))
+            legacy_lock["host_plan_sha256"] = sha256(legacy_plan_path)
+            legacy_lock_path.write_text(json.dumps(legacy_lock), encoding="utf-8")
+            loaded_legacy = load_study_module()._load_host_plan(run_dir, legacy_unit)
+            self.assertEqual(loaded_legacy["schema_version"], "1.0")
 
     def test_host_run_rejects_adapter_source_or_argv_drift_after_plan(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -829,6 +1278,21 @@ class PresentationStudyHostTests(unittest.TestCase):
             self.assertFalse(
                 (run_dir / "private" / "host-executions" / unit_id).exists()
             )
+
+            with patch.object(
+                module,
+                "_checkpoint_auditor_sha256",
+                return_value="e" * 64,
+            ):
+                with self.assertRaisesRegex(module.StudyError, "auditor changed"):
+                    module.command_host_run(
+                        argparse.Namespace(
+                            execute=True,
+                            run_dir=str(run_dir),
+                            unit_id=unit_id,
+                        )
+                    )
+            self.assertFalse((workspace / ".fake-host-invoked").exists())
 
             host_plan_path = (
                 run_dir / "private" / "host-plans" / f"{unit_id}.json"
@@ -967,6 +1431,481 @@ class PresentationStudyHostTests(unittest.TestCase):
             tampered = run_cli("validate", "--run-dir", str(run_dir), "--json")
             self.assertEqual(tampered.returncode, 1, tampered.stdout + tampered.stderr)
             self.assertEqual(json.loads(tampered.stdout)["invalid_record_count"], 1)
+
+    def test_framework_host_run_persists_controller_verified_checkpoint_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(temporary)
+            executable = self.make_checkpoint_fake_codex(root)
+            run_dir = self.initialize(
+                root,
+                study_plan(
+                    study_id="checkpoint-receipt-pilot",
+                    host="codex",
+                    executable_sha256=sha256(executable),
+                ),
+            )
+            workspace = self.make_workspace(root, "framework-workspace", framework=True)
+            unit_id = self.host_unit_id("framework")
+            planned = run_cli(
+                "host-plan",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--executable",
+                str(executable),
+                "--workspace",
+                str(workspace),
+            )
+            self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+            host_plan = json.loads(
+                (
+                    run_dir / "private" / "host-plans" / f"{unit_id}.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(host_plan["schema_version"], "1.1")
+            self.assertIsInstance(host_plan["checkpoint_capture_profile"], dict)
+            self.assertEqual(
+                host_plan["checkpoint_capture_profile"]["checkpoint_path"],
+                ".agentic-reporting/checkpoint.json",
+            )
+            self.assertEqual(
+                host_plan["checkpoint_capture_profile"]["file_mode"], "0600"
+            )
+
+            result = run_cli(
+                "host-run",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--execute",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn(
+                "Study-only checkpoint receipt contract",
+                (workspace / ".fake-checkpoint-host-prompt").read_text(
+                    encoding="utf-8"
+                ),
+            )
+            self.assertIn(
+                "python3 .agents/skills/agentic-reporting/scripts/reportctl.py",
+                (workspace / ".fake-checkpoint-host-prompt").read_text(
+                    encoding="utf-8"
+                ),
+            )
+            self.assertEqual(
+                stat.S_IMODE((workspace / ".agentic-reporting").stat().st_mode),
+                0o700,
+            )
+            self.assertEqual(
+                (workspace / ".agentic-reporting" / ".gitignore").read_bytes(),
+                b"*\n",
+            )
+            execution_root = run_dir / "private" / "host-executions" / unit_id
+            receipt = json.loads(
+                (execution_root / "execution-receipt.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(receipt["schema_version"], "1.1")
+            checkpoint_receipt = receipt["checkpoint_receipt"]
+            self.assertEqual(
+                checkpoint_receipt["kind"], "checkpoint-artifact-receipt"
+            )
+            self.assertEqual(
+                checkpoint_receipt["assurance"],
+                "controller-event-snapshot-final-audit",
+            )
+            for field in (
+                "checkpoint",
+                "report",
+                "controller_reaudit",
+                "events",
+            ):
+                self.assertIn(field, checkpoint_receipt)
+            reaudit = checkpoint_receipt["controller_reaudit"]
+            self.assertEqual(
+                reaudit["argv_profile"],
+                "python-isolated-audit-captured-byte-pair-strict-json",
+            )
+            self.assertEqual(
+                reaudit["report_sha256"], checkpoint_receipt["report"]["sha256"]
+            )
+            self.assertEqual(
+                reaudit["checkpoint_intent_sha256"],
+                checkpoint_receipt["checkpoint"]["intent_sha256"],
+            )
+
+            artifacts = execution_root / "checkpoint-artifacts"
+            archived_checkpoint = artifacts / "checkpoint.json"
+            archived_report = artifacts / "audited-report.md"
+            archived_receipt = artifacts / "checkpoint-artifact-receipt.json"
+            self.assertEqual(
+                stat.S_IMODE(archived_checkpoint.stat().st_mode), 0o600
+            )
+            self.assertEqual(archived_report.read_text(encoding="utf-8"), checkpoint_response_text())
+            archived_receipt_value = json.loads(
+                archived_receipt.read_text(encoding="utf-8")
+            )
+            self.assertEqual(archived_receipt_value, checkpoint_receipt)
+            receipt_schema = json.loads(
+                (
+                    ROOT
+                    / "evals"
+                    / "schema"
+                    / "checkpoint-artifact-receipt.schema.json"
+                ).read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                list(
+                    Draft202012Validator(receipt_schema).iter_errors(
+                        archived_receipt_value
+                    )
+                ),
+                [],
+            )
+
+            stored_root = run_dir / "records" / unit_id
+            stored = json.loads((stored_root / "record.json").read_text(encoding="utf-8"))
+            self.assertTrue(stored["observations"]["checkpoint_receipt_verified"])
+            validated = run_cli("validate", "--run-dir", str(run_dir), "--json")
+            self.assertEqual(validated.returncode, 1, validated.stdout + validated.stderr)
+            self.assertEqual(json.loads(validated.stdout)["invalid_record_count"], 0)
+
+            archived_checkpoint.write_bytes(b"{}\n")
+            archived_checkpoint.chmod(0o600)
+            tampered = run_cli("validate", "--run-dir", str(run_dir), "--json")
+            self.assertEqual(tampered.returncode, 1, tampered.stdout + tampered.stderr)
+            self.assertEqual(json.loads(tampered.stdout)["invalid_record_count"], 1)
+
+    def test_framework_checkpoint_receipt_detects_report_mutation_before_event_capture(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(temporary)
+            executable = self.make_checkpoint_fake_codex(
+                root, mutate_before_audit_event=True
+            )
+            run_dir = self.initialize(
+                root,
+                study_plan(
+                    study_id="checkpoint-mutation-pilot",
+                    host="codex",
+                    executable_sha256=sha256(executable),
+                ),
+            )
+            workspace = self.make_workspace(root, "framework-workspace", framework=True)
+            unit_id = self.host_unit_id("framework")
+            planned = run_cli(
+                "host-plan",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--executable",
+                str(executable),
+                "--workspace",
+                str(workspace),
+            )
+            self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+
+            result = run_cli(
+                "host-run",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--execute",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            execution_root = run_dir / "private" / "host-executions" / unit_id
+            execution = json.loads(
+                (execution_root / "execution-receipt.json").read_text(encoding="utf-8")
+            )
+            self.assertIsNone(execution["checkpoint_receipt"])
+            stored = json.loads(
+                (run_dir / "records" / unit_id / "record.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertFalse(stored["observations"]["checkpoint_receipt_verified"])
+            validated = run_cli("validate", "--run-dir", str(run_dir), "--json")
+            self.assertEqual(json.loads(validated.stdout)["invalid_record_count"], 0)
+
+    def test_controller_reaudit_rejects_captured_bytes_that_only_passed_before_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(temporary)
+            executable = self.make_checkpoint_fake_codex(
+                root, deliver_post_audit_mutation=True
+            )
+            run_dir = self.initialize(
+                root,
+                study_plan(
+                    study_id="checkpoint-memory-reaudit-pilot",
+                    host="codex",
+                    executable_sha256=sha256(executable),
+                ),
+            )
+            workspace = self.make_workspace(root, "framework-workspace", framework=True)
+            unit_id = self.host_unit_id("framework")
+            planned = run_cli(
+                "host-plan",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--executable",
+                str(executable),
+                "--workspace",
+                str(workspace),
+            )
+            self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+
+            result = run_cli(
+                "host-run",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--execute",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            execution_root = run_dir / "private" / "host-executions" / unit_id
+            execution = json.loads(
+                (execution_root / "execution-receipt.json").read_text(encoding="utf-8")
+            )
+            self.assertIsNone(execution["checkpoint_receipt"])
+            stored = json.loads(
+                (run_dir / "records" / unit_id / "record.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertFalse(stored["observations"]["checkpoint_receipt_verified"])
+
+    def test_local_image_target_survives_agent_audit_controller_receipt_storage_and_blind_copy(self) -> None:
+        image_case = "image-anomaly-boundary"
+        image_relative = Path("evals/fixtures/assets/return-curve.svg")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(temporary)
+            executable = self.make_checkpoint_fake_codex(
+                root,
+                report_body=checkpoint_image_response_text(),
+                must_show="The plot alone cannot identify the cause of the drop",
+            )
+            run_dir = self.initialize(
+                root,
+                study_plan(
+                    study_id="checkpoint-local-image-pilot",
+                    host="codex",
+                    executable_sha256=sha256(executable),
+                    case_id=image_case,
+                ),
+            )
+            unit_ids: dict[str, str] = {}
+            workspaces: dict[str, Path] = {}
+            for condition in ("baseline", "framework"):
+                workspace = self.make_workspace(
+                    root,
+                    f"{condition}-workspace",
+                    framework=condition == "framework",
+                )
+                workspaces[condition] = workspace
+                unit_id = self.host_unit_id(condition, case_id=image_case)
+                unit_ids[condition] = unit_id
+                planned = run_cli(
+                    "host-plan",
+                    "--run-dir",
+                    str(run_dir),
+                    "--unit-id",
+                    unit_id,
+                    "--executable",
+                    str(executable),
+                    "--workspace",
+                    str(workspace),
+                )
+                self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+                executed = run_cli(
+                    "host-run",
+                    "--run-dir",
+                    str(run_dir),
+                    "--unit-id",
+                    unit_id,
+                    "--execute",
+                )
+                self.assertEqual(executed.returncode, 0, executed.stdout + executed.stderr)
+
+            framework_workspace = workspaces["framework"]
+            self.assertTrue(
+                (framework_workspace / ".agentic-reporting" / image_relative).is_file()
+            )
+            framework_execution = (
+                run_dir / "private" / "host-executions" / unit_ids["framework"]
+            )
+            execution_receipt = json.loads(
+                (framework_execution / "execution-receipt.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertIsNotNone(execution_receipt["checkpoint_receipt"])
+
+            for condition in ("baseline", "framework"):
+                stored_root = run_dir / "records" / unit_ids[condition]
+                stored = json.loads(
+                    (stored_root / "record.json").read_text(encoding="utf-8")
+                )
+                self.assertTrue(stored["machine_evaluation"]["passed"])
+                self.assertTrue((stored_root / image_relative).is_file())
+
+            blinded = run_cli("blind", "--run-dir", str(run_dir))
+            self.assertEqual(blinded.returncode, 0, blinded.stdout + blinded.stderr)
+            manifest = json.loads(
+                (run_dir / "blind" / "manifest.json").read_text(encoding="utf-8")
+            )
+            pair_id = manifest["pairs"][0]["pair_id"]
+            for side in ("A", "B"):
+                side_root = run_dir / "blind" / "pairs" / pair_id / side
+                self.assertTrue((side_root / image_relative).is_file())
+                response = (side_root / "response.md").read_text(encoding="utf-8")
+                self.assertIn(f"]({image_relative.as_posix()})", response)
+
+    def test_framework_host_run_rejects_symlinked_checkpoint_artifact_mirror(self) -> None:
+        image_case = "image-anomaly-boundary"
+        image_path = "evals/fixtures/assets/return-curve.svg"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(temporary)
+            executable = self.make_checkpoint_fake_codex(
+                root,
+                report_body=checkpoint_image_response_text(),
+                must_show="The plot alone cannot identify the cause of the drop",
+                symlink_mirror_path_after_audit=image_path,
+            )
+            run_dir = self.initialize(
+                root,
+                study_plan(
+                    study_id="checkpoint-image-symlink-pilot",
+                    host="codex",
+                    executable_sha256=sha256(executable),
+                    case_id=image_case,
+                ),
+            )
+            workspace = self.make_workspace(root, "framework-workspace", framework=True)
+            unit_id = self.host_unit_id("framework", case_id=image_case)
+            planned = run_cli(
+                "host-plan",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--executable",
+                str(executable),
+                "--workspace",
+                str(workspace),
+            )
+            self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+
+            result = run_cli(
+                "host-run",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--execute",
+            )
+
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn("checkpoint artifact mirror", result.stderr.casefold())
+            self.assertFalse((run_dir / "records" / unit_id).exists())
+
+    def test_framework_checkpoint_receipt_rejects_noncontract_artifact_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(temporary)
+            executable = self.make_checkpoint_fake_codex(root, alternate_paths=True)
+            run_dir = self.initialize(
+                root,
+                study_plan(
+                    study_id="checkpoint-alternate-path-pilot",
+                    host="codex",
+                    executable_sha256=sha256(executable),
+                ),
+            )
+            workspace = self.make_workspace(root, "framework-workspace", framework=True)
+            unit_id = self.host_unit_id("framework")
+            planned = run_cli(
+                "host-plan",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--executable",
+                str(executable),
+                "--workspace",
+                str(workspace),
+            )
+            self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+
+            result = run_cli(
+                "host-run",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--execute",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            execution_root = run_dir / "private" / "host-executions" / unit_id
+            execution = json.loads(
+                (execution_root / "execution-receipt.json").read_text(encoding="utf-8")
+            )
+            self.assertIsNone(execution["checkpoint_receipt"])
+            stored = json.loads(
+                (run_dir / "records" / unit_id / "record.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertFalse(stored["observations"]["checkpoint_receipt_verified"])
+
+    def test_framework_host_run_fails_closed_when_capture_directory_becomes_permissive(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.make_root(temporary)
+            executable = self.make_checkpoint_fake_codex(
+                root, permissive_capture_directory=True
+            )
+            run_dir = self.initialize(
+                root,
+                study_plan(
+                    study_id="checkpoint-permissive-directory-pilot",
+                    host="codex",
+                    executable_sha256=sha256(executable),
+                ),
+            )
+            workspace = self.make_workspace(root, "framework-workspace", framework=True)
+            unit_id = self.host_unit_id("framework")
+            planned = run_cli(
+                "host-plan",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--executable",
+                str(executable),
+                "--workspace",
+                str(workspace),
+            )
+            self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+
+            result = run_cli(
+                "host-run",
+                "--run-dir",
+                str(run_dir),
+                "--unit-id",
+                unit_id,
+                "--execute",
+            )
+
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn("mode 0700", result.stderr)
+            self.assertFalse((run_dir / "records" / unit_id).exists())
 
     def test_imported_image_artifacts_are_copied_and_blinded_and_bad_digests_or_paths_fail(self) -> None:
         png = base64.b64decode(
