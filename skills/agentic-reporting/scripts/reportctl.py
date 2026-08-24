@@ -40,12 +40,33 @@ MODE_IDS = (
     "experiment-report",
     "decision-brief",
     "academic-synthesis",
+    "research-idea",
     "review-report",
     "incident-update",
     "postmortem",
     "risk-report",
 )
 MODULE_IDS = ("visuals", "tables", "conclusions", "evidence", "academic-display")
+PROFILE_IDS = ("reinforcement-learning", "embodied-ai", "world-models", "vla")
+SURFACE_GUIDE_IDS = ("slide",)
+PROFILE_APPLICABLE_MODES = (
+    "status-update",
+    "investigation-report",
+    "experiment-report",
+    "academic-synthesis",
+    "research-idea",
+    "review-report",
+)
+TEMPLATE_IDS = (
+    "experiment-report-detailed",
+    "research-idea",
+    "rl-experiment-report",
+    "embodied-experiment-report",
+    "world-model-experiment-report",
+    "vla-experiment-report",
+    "academic-talk-html",
+    "academic-talk-revealjs",
+)
 SURFACES = ("chat", "markdown", "issue-pr", "document", "slide")
 STATUS_VALUES = ("informational", "completed", "partial", "blocked", "failed")
 CLAIM_KINDS = ("verified", "inference", "recommendation")
@@ -387,14 +408,38 @@ def load_catalog() -> dict[str, Any]:
         raise ReportCtlError("Unsupported protocols.json schema_version; expected 1")
     modes = catalog.get("modes")
     modules = catalog.get("modules")
-    if not isinstance(modes, dict) or not isinstance(modules, dict):
-        raise ReportCtlError("protocols.json must contain object-valued modes and modules")
+    profiles = catalog.get("profiles")
+    surface_guides = catalog.get("surface_guides")
+    templates = catalog.get("templates")
+    if (
+        not isinstance(modes, dict)
+        or not isinstance(modules, dict)
+        or not isinstance(profiles, dict)
+        or not isinstance(surface_guides, dict)
+        or not isinstance(templates, dict)
+    ):
+        raise ReportCtlError(
+            "protocols.json must contain object-valued modes, modules, profiles, "
+            "surface_guides, and templates"
+        )
     missing_modes = sorted(set(MODE_IDS) - set(modes))
     missing_modules = sorted(set(MODULE_IDS) - set(modules))
-    if missing_modes or missing_modules:
+    missing_profiles = sorted(set(PROFILE_IDS) - set(profiles))
+    missing_surface_guides = sorted(set(SURFACE_GUIDE_IDS) - set(surface_guides))
+    missing_templates = sorted(set(TEMPLATE_IDS) - set(templates))
+    if (
+        missing_modes
+        or missing_modules
+        or missing_profiles
+        or missing_surface_guides
+        or missing_templates
+    ):
         raise ReportCtlError(
             "protocol catalog is incomplete: "
-            f"missing modes={missing_modes}, missing modules={missing_modules}"
+            f"missing modes={missing_modes}, missing modules={missing_modules}, "
+            f"missing profiles={missing_profiles}, "
+            f"missing surface_guides={missing_surface_guides}, "
+            f"missing templates={missing_templates}"
         )
     for mode_id, record in modes.items():
         for field in ("default_modules", "embedded_modules"):
@@ -407,6 +452,36 @@ def load_catalog() -> dict[str, Any]:
                 raise ReportCtlError(
                     f"protocol mode {mode_id!r} has invalid {field}; "
                     "expected unique known module IDs"
+                )
+    if catalog.get("surfaces") != list(SURFACES):
+        raise ReportCtlError("protocol surfaces must exactly match the supported surface IDs")
+    for profile_id, record in profiles.items():
+        if profile_id not in PROFILE_IDS or not isinstance(record, dict):
+            raise ReportCtlError(f"protocol profile {profile_id!r} is unsupported")
+        if not isinstance(record.get("file"), str) or not isinstance(record.get("signals"), list):
+            raise ReportCtlError(f"protocol profile {profile_id!r} must define file and signals")
+    for surface_id, record in surface_guides.items():
+        if surface_id not in SURFACE_GUIDE_IDS or not isinstance(record, dict) or not isinstance(record.get("file"), str):
+            raise ReportCtlError(f"surface guide {surface_id!r} is invalid")
+    for template_id, record in templates.items():
+        if template_id not in TEMPLATE_IDS or not isinstance(record, dict):
+            raise ReportCtlError(f"template {template_id!r} is unsupported")
+        if not isinstance(record.get("path"), str):
+            raise ReportCtlError(f"template {template_id!r} must define a path")
+        compatibility = (
+            ("modes", MODE_IDS),
+            ("profiles", PROFILE_IDS),
+            ("surfaces", SURFACES),
+        )
+        for field, allowed in compatibility:
+            values = record.get(field)
+            if (
+                not isinstance(values, list)
+                or len(values) != len(set(item for item in values if isinstance(item, str)))
+                or any(not isinstance(item, str) or item not in allowed for item in values)
+            ):
+                raise ReportCtlError(
+                    f"template {template_id!r} has invalid {field}; expected unique known IDs"
                 )
     return catalog
 
@@ -483,6 +558,54 @@ def infer_mode(task: str, catalog: dict[str, Any]) -> tuple[str, dict[str, int]]
         compact = re.sub(r"\s+", " ", task).strip()
         best = "concise-answer" if len(compact) <= 120 else "investigation-report"
     return best, scores
+
+
+def infer_profile(
+    task: str,
+    mode: str,
+    catalog: dict[str, Any],
+) -> tuple[str | None, dict[str, int]]:
+    scores = {
+        profile_id: _signal_score(task, catalog["profiles"][profile_id].get("signals", []))
+        for profile_id in PROFILE_IDS
+    }
+    if mode not in PROFILE_APPLICABLE_MODES:
+        return None, scores
+    lowered = task.casefold()
+    explicit_patterns = {
+        "reinforcement-learning": (400, r"\b(?:reinforcement learning|deep rl|offline rl|online rl)\b|强化学习"),
+        "embodied-ai": (600, r"\b(?:embodied ai|robot manipulation|robot navigation|real robot)\b|具身智能|机器人(?:操作|导航)"),
+        "world-models": (800, r"\b(?:world models?|learned dynamics|latent dynamics|dreamerv3|td-mpc2)\b|世界模型|潜在动力学"),
+        "vla": (1000, r"\b(?:vla|vision[- ]language[- ]action|openvla|rt-x|rt-2)\b|视觉语言动作"),
+    }
+    for profile_id, (bonus, pattern) in explicit_patterns.items():
+        if re.search(pattern, lowered):
+            scores[profile_id] += bonus
+    best = max(scores, key=lambda item: (scores[item], -PROFILE_IDS.index(item)))
+    return (best if scores[best] > 0 else None), scores
+
+
+def recommend_templates(
+    mode: str,
+    profile: str | None,
+    surface: str,
+    catalog: dict[str, Any],
+) -> list[str]:
+    compatible: list[tuple[int, str]] = []
+    for template_id in TEMPLATE_IDS:
+        record = catalog["templates"][template_id]
+        if mode not in record["modes"] or surface not in record["surfaces"]:
+            continue
+        template_profiles = record["profiles"]
+        if template_profiles and profile not in template_profiles:
+            continue
+        specificity = 2 if template_profiles else 1
+        compatible.append((specificity, template_id))
+    if not compatible:
+        return []
+    highest = max(score for score, _ in compatible)
+    selected = [template_id for score, template_id in compatible if score == highest]
+    return selected[:2]
 
 
 def select_modules(
@@ -738,6 +861,32 @@ def resolve_plan(args: argparse.Namespace, catalog: dict[str, Any]) -> dict[str,
     if mode not in catalog["modes"]:
         raise ReportCtlError(f"Unknown mode: {mode}")
 
+    inferred_profile, profile_scores = infer_profile(task, mode, catalog)
+    requested_profile = getattr(args, "profile", None)
+    if checkpoint is not None:
+        if requested_profile not in (None, "auto"):
+            explicit_profile = None if requested_profile == "none" else requested_profile
+            if explicit_profile != inferred_profile:
+                raise ReportCtlError(
+                    "Explicit profile conflicts with the checkpoint task-derived profile; "
+                    "update or recreate the checkpoint task"
+                )
+        profile = inferred_profile
+        profile_inferred = True
+    else:
+        profile = (
+            inferred_profile
+            if requested_profile in (None, "auto")
+            else (None if requested_profile == "none" else requested_profile)
+        )
+        profile_inferred = requested_profile in (None, "auto")
+    if profile is not None and profile not in catalog["profiles"]:
+        raise ReportCtlError(f"Unknown research profile: {profile}")
+    if profile is not None and mode not in PROFILE_APPLICABLE_MODES:
+        raise ReportCtlError(
+            f"Research profiles are not applicable to primary mode {mode!r}"
+        )
+
     surface = checkpoint.get("surface", "chat") if checkpoint else (getattr(args, "surface", None) or "chat")
     if surface not in SURFACES:
         raise ReportCtlError(f"Unknown surface: {surface}")
@@ -749,6 +898,8 @@ def resolve_plan(args: argparse.Namespace, catalog: dict[str, Any]) -> dict[str,
     )
     explicit_modules = checkpoint.get("modules") if checkpoint else getattr(args, "module", None)
     modules = select_modules(task, mode, explicit_modules, catalog)
+    if surface == "slide" and explicit_modules is None and len(modules) > 1:
+        modules = modules[:1]
     must_show = checkpoint.get("must_show", []) if checkpoint else (getattr(args, "must_show", None) or [])
     allow_legacy_blank_must_show = bool(
         checkpoint is not None and checkpoint.get("schema_version") == 1
@@ -771,30 +922,54 @@ def resolve_plan(args: argparse.Namespace, catalog: dict[str, Any]) -> dict[str,
         "schema_version": 1,
         "mode": mode,
         "mode_inferred": requested_mode in (None, "auto"),
+        "profile": profile,
+        "profile_inferred": profile_inferred,
         "surface": surface,
         "audience": audience,
         "modules": modules,
         "task": task,
         "must_show": list(must_show or []),
         "route_scores": scores,
+        "profile_scores": profile_scores,
         "mode_reference": catalog["modes"][mode]["file"],
+        "profile_reference": catalog["profiles"][profile]["file"] if profile else None,
+        "surface_reference": (
+            catalog["surface_guides"][surface]["file"]
+            if surface in catalog["surface_guides"]
+            else None
+        ),
         "module_references": [catalog["modules"][item]["file"] for item in modules],
+        "recommended_templates": recommend_templates(mode, profile, surface, catalog),
     }
 
 
 def _plan_markdown(plan: dict[str, Any], catalog: dict[str, Any]) -> str:
     module_text = ", ".join(plan["modules"]) if plan["modules"] else "none"
+    profile_text = plan.get("profile") or "none"
+    template_text = ", ".join(plan.get("recommended_templates", [])) or "none"
     required = catalog["modes"][plan["mode"]].get("required_semantics", [])
     audience = _escape_inline(plan["audience"])
     must_show = "; ".join(_escape_inline(item) for item in plan["must_show"]) if plan["must_show"] else "none specified"
     return "\n".join(
         [
             f"Primary mode: `{plan['mode']}`",
+            f"Research profile: `{profile_text}`",
             f"Surface: `{plan['surface']}`; audience: {audience}",
             f"Display modules: {module_text}",
+            f"Recommended exact templates: {template_text}",
             f"Required semantics: {', '.join(required)}",
             f"Must show: {must_show}",
             f"Read: `references/core-contract.md`, `{plan['mode_reference']}`",
+            *(
+                [f"Read: `{plan['profile_reference']}`"]
+                if plan.get("profile_reference")
+                else []
+            ),
+            *(
+                [f"Read: `{plan['surface_reference']}`"]
+                if plan.get("surface_reference")
+                else []
+            ),
             *(f"Read: `{item}`" for item in plan["module_references"]),
         ]
     )
@@ -810,6 +985,14 @@ def command_list(args: argparse.Namespace) -> int:
         "modules": [
             {"id": key, "summary": catalog["modules"][key]["summary"]} for key in MODULE_IDS
         ],
+        "profiles": [
+            {"id": key, "summary": catalog["profiles"][key]["summary"]}
+            for key in PROFILE_IDS
+        ],
+        "templates": [
+            {"id": key, "summary": catalog["templates"][key]["summary"]}
+            for key in TEMPLATE_IDS
+        ],
         "surfaces": list(SURFACES),
     }
     if args.json:
@@ -821,6 +1004,12 @@ def command_list(args: argparse.Namespace) -> int:
         _safe_print("\nDisplay modules (select at most two):", preserve_newlines=True)
         for item in payload["modules"]:
             _safe_print(f"  {item['id']:<24} {item['summary']}")
+        _safe_print("\nResearch profiles (select at most one):", preserve_newlines=True)
+        for item in payload["profiles"]:
+            _safe_print(f"  {item['id']:<24} {item['summary']}")
+        _safe_print("\nExact templates (retrieve one when needed):", preserve_newlines=True)
+        for item in payload["templates"]:
+            _safe_print(f"  {item['id']:<28} {item['summary']}")
         _safe_print("\nSurfaces: " + ", ".join(SURFACES), preserve_newlines=True)
     return 0
 
@@ -842,6 +1031,16 @@ def _bundle_text(plan: dict[str, Any], catalog: dict[str, Any]) -> str:
         "\n## Universal contract\n\n" + CORE_PATH.read_text(encoding="utf-8").strip(),
         "\n## Primary mode protocol\n\n" + _read_reference(plan["mode_reference"]),
     ]
+    if plan.get("profile_reference"):
+        sections.append(
+            f"\n## Research profile: {plan['profile']}\n\n"
+            + _read_reference(plan["profile_reference"])
+        )
+    if plan.get("surface_reference"):
+        sections.append(
+            f"\n## Surface guide: {plan['surface']}\n\n"
+            + _read_reference(plan["surface_reference"])
+        )
     for module_id, relative in zip(plan["modules"], plan["module_references"]):
         sections.append(f"\n## Display module: {module_id}\n\n" + _read_reference(relative))
     return "\n\n".join(sections).strip() + "\n"
@@ -910,6 +1109,12 @@ def _safe_write(path: Path, text: str, force: bool = False) -> None:
 def command_checkpoint(args: argparse.Namespace) -> int:
     catalog = load_catalog()
     plan = resolve_plan(args, catalog)
+    derived_profile, _ = infer_profile(plan["task"], plan["mode"], catalog)
+    if getattr(args, "profile", None) not in (None, "auto") and plan["profile"] != derived_profile:
+        raise ReportCtlError(
+            "Checkpoint profiles must be reproducible from the frozen task text; "
+            "mention the research domain in --task or omit --profile"
+        )
     _validate_checkpoint_must_show(plan["must_show"], 2)
     payload = {
         "schema_version": 2,
@@ -941,6 +1146,56 @@ def command_scaffold(args: argparse.Namespace) -> int:
     if SKILL_DIR.resolve() not in path.parents or not path.is_file():
         raise ReportCtlError(f"Invalid template path for {args.mode}: {relative}")
     _safe_print(path.read_text(encoding="utf-8"), end="", preserve_newlines=True)
+    return 0
+
+
+def _registered_template_path(template_id: str, catalog: dict[str, Any]) -> Path:
+    if template_id not in catalog["templates"]:
+        raise ReportCtlError(f"Unknown exact template: {template_id}")
+    relative = catalog["templates"][template_id]["path"]
+    candidate = SKILL_DIR / relative
+    _reject_symlink_chain(candidate, "template asset")
+    try:
+        path = candidate.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise ReportCtlError(f"Cannot resolve template asset {template_id}: {exc}") from exc
+    if SKILL_DIR.resolve() not in path.parents or not path.is_file():
+        raise ReportCtlError(f"Invalid template asset path for {template_id}: {relative}")
+    return path
+
+
+def command_template(args: argparse.Namespace) -> int:
+    catalog = load_catalog()
+    if args.list:
+        if args.template_id or args.output:
+            raise ReportCtlError("--list cannot be combined with a template ID or --output")
+        payload = [
+            {
+                "id": template_id,
+                "summary": catalog["templates"][template_id]["summary"],
+                "modes": catalog["templates"][template_id]["modes"],
+                "profiles": catalog["templates"][template_id]["profiles"],
+                "surfaces": catalog["templates"][template_id]["surfaces"],
+            }
+            for template_id in TEMPLATE_IDS
+        ]
+        if args.json:
+            print(_safe_json_dumps({"schema_version": 1, "templates": payload}))
+        else:
+            for item in payload:
+                _safe_print(f"{item['id']:<28} {item['summary']}")
+        return 0
+    if args.json:
+        raise ReportCtlError("--json is supported only with --list")
+    if not args.template_id:
+        raise ReportCtlError("Provide a template ID or pass --list")
+    path = _registered_template_path(args.template_id, catalog)
+    content = path.read_text(encoding="utf-8")
+    if args.output:
+        _safe_write(Path(args.output), content, args.force)
+        _safe_print(f"Copied exact template {args.template_id}: {args.output}")
+    else:
+        _safe_print(content, end="", preserve_newlines=True)
     return 0
 
 
@@ -1077,6 +1332,7 @@ def _audit_markdown_impl(
     outcome_terms = SEMANTIC_TERMS["outcome"] + SEMANTIC_TERMS["current_status"]
     opening_terms_by_mode = {
         "academic-synthesis": ("paper", "presents", "proposes", "studies", "addresses", "论文", "提出", "研究"),
+        "research-idea": ("idea", "hypothesis", "propose", "thesis", "研究想法", "假设", "提议", "主张"),
         "decision-brief": ("recommend", "decision", "choose", "建议", "决定", "选择"),
         "review-report": ("finding", "review", "no finding", "发现", "审查", "未发现"),
         "incident-update": ("impact", "incident", "outage", "影响", "事故", "中断"),
@@ -2301,11 +2557,13 @@ def command_build_dist(args: argparse.Namespace) -> int:
         raise ReportCtlError(f"Distribution output must be a directory: {output_dir}")
     route_dir = output_dir / "routes"
     module_dir = output_dir / "modules"
+    profile_dir = output_dir / "profiles"
+    surface_dir = output_dir / "surfaces"
     outputs: list[tuple[Path, str]] = []
     index_lines = [
         "# Agent reporting index",
         "",
-        "Choose exactly one primary route. Read no other route. Prefer one display module; add a second only for a distinct need the route does not already cover. Explicit user format wins.",
+        "Choose exactly one primary route and read no other route. Add at most one matching research profile, prefer one display module (at most two), and read a surface guide only when needed. Exact assets stay outside this bounded route context. Explicit user format wins.",
         "",
         "## Primary routes",
         "",
@@ -2315,12 +2573,18 @@ def command_build_dist(args: argparse.Namespace) -> int:
         index_lines.append(f"- [`{mode_id}`](routes/{mode_id}.md) — {record['summary']}")
         plan = {
             "mode": mode_id,
+            "profile": None,
             "surface": "markdown",
             "audience": "user",
             "modules": [],
             "must_show": [],
             "mode_reference": record["file"],
+            "profile_reference": None,
+            "surface_reference": None,
             "module_references": [],
+            "recommended_templates": recommend_templates(
+                mode_id, None, "markdown", catalog
+            ),
         }
         route_text = _bundle_text(plan, catalog)
         outputs.append((route_dir / f"{mode_id}.md", route_text))
@@ -2330,6 +2594,52 @@ def command_build_dist(args: argparse.Namespace) -> int:
         index_lines.append(f"- [`{module_id}`](modules/{module_id}.md) — {record['summary']}")
         module_text = f"# Display module: {module_id}\n\n" + _read_reference(record["file"]) + "\n"
         outputs.append((module_dir / f"{module_id}.md", module_text))
+    index_lines.extend(["", "## Optional research profiles", ""])
+    index_lines.append(
+        "Select at most one profile when the task is a domain research idea, "
+        "experiment, investigation, review, status, or academic synthesis."
+    )
+    index_lines.append("")
+    for profile_id in PROFILE_IDS:
+        record = catalog["profiles"][profile_id]
+        index_lines.append(
+            f"- [`{profile_id}`](profiles/{profile_id}.md) — {record['summary']}"
+        )
+        profile_text = (
+            f"# Research profile: {profile_id}\n\n"
+            + _read_reference(record["file"])
+            + "\n"
+        )
+        outputs.append((profile_dir / f"{profile_id}.md", profile_text))
+    index_lines.extend(["", "## Surface guides", ""])
+    for surface_id in SURFACES:
+        if surface_id not in catalog["surface_guides"]:
+            continue
+        record = catalog["surface_guides"][surface_id]
+        index_lines.append(
+            f"- [`{surface_id}`](surfaces/{surface_id}.md) — {record['summary']}"
+        )
+        surface_text = (
+            f"# Surface guide: {surface_id}\n\n"
+            + _read_reference(record["file"])
+            + "\n"
+        )
+        outputs.append((surface_dir / f"{surface_id}.md", surface_text))
+    index_lines.extend(
+        [
+            "",
+            "## Exact assets",
+            "",
+            "Open exactly one compatible asset only after selecting it; assets are not part of the bounded route bundle.",
+            "",
+        ]
+    )
+    for template_id in TEMPLATE_IDS:
+        record = catalog["templates"][template_id]
+        index_lines.append(
+            f"- [`{template_id}`](../skills/agentic-reporting/{record['path']}) — "
+            f"{record['summary']}"
+        )
     index_lines.extend(
         [
             "",
@@ -2380,7 +2690,7 @@ def command_build_dist(args: argparse.Namespace) -> int:
                 relative.is_absolute()
                 or ".." in relative.parts
                 or len(relative.parts) != 2
-                or relative.parts[0] not in ("routes", "modules")
+                or relative.parts[0] not in ("routes", "modules", "profiles", "surfaces")
                 or relative.suffix != ".md"
             ):
                 if item not in current_files:
@@ -2401,7 +2711,11 @@ def command_build_dist(args: argparse.Namespace) -> int:
                 + ", ".join(str(path) for path in existing[:5])
             )
     _transactional_distribution_write(outputs, stale_paths)
-    _safe_print(f"Built {len(MODE_IDS)} routes and {len(MODULE_IDS)} modules in {output_dir}")
+    _safe_print(
+        f"Built {len(MODE_IDS)} routes, {len(MODULE_IDS)} modules, "
+        f"{len(PROFILE_IDS)} profiles, and {len(SURFACE_GUIDE_IDS)} surface guides "
+        f"in {output_dir}"
+    )
     return 0
 
 
@@ -2409,6 +2723,11 @@ def add_route_arguments(parser: argparse.ArgumentParser, include_output: bool = 
     parser.add_argument("--task", help="The reporting objective or user request")
     parser.add_argument("--checkpoint", help="Resume a saved reporting checkpoint")
     parser.add_argument("--mode", choices=("auto",) + MODE_IDS)
+    parser.add_argument(
+        "--profile",
+        choices=("auto", "none") + PROFILE_IDS,
+        help="Optional research profile; checkpointed routes must reproduce it from task text",
+    )
     parser.add_argument("--surface", choices=SURFACES)
     parser.add_argument("--audience")
     parser.add_argument("--module", action="append", choices=MODULE_IDS, help="Display module; repeat at most twice")
@@ -2443,6 +2762,16 @@ def build_parser() -> argparse.ArgumentParser:
     scaffold_parser = subparsers.add_parser("scaffold", help="Print a mode-specific Markdown skeleton")
     scaffold_parser.add_argument("--mode", choices=MODE_IDS, required=True)
     scaffold_parser.set_defaults(handler=command_scaffold)
+
+    template_parser = subparsers.add_parser(
+        "template", help="List, print, or copy one exact registered template asset"
+    )
+    template_parser.add_argument("template_id", nargs="?", choices=TEMPLATE_IDS)
+    template_parser.add_argument("--list", action="store_true")
+    template_parser.add_argument("--json", action="store_true")
+    template_parser.add_argument("--output")
+    template_parser.add_argument("--force", action="store_true")
+    template_parser.set_defaults(handler=command_template)
 
     audit_parser = subparsers.add_parser("audit", help="Run limited structural checks on Markdown")
     audit_parser.add_argument("--file", required=True)

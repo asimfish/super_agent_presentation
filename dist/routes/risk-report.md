@@ -1,8 +1,10 @@
 # Routed reporting bundle
 
 Primary mode: `risk-report`
+Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
+Recommended exact templates: none
 Required semantics: risk, evidence, boundary, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/risk-report.md`

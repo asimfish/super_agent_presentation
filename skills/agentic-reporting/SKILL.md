@@ -1,6 +1,6 @@
 ---
 name: agentic-reporting
-description: Create and finalize task-appropriate, evidence-calibrated agent reports and handoffs. Use for substantive progress or final reports, implementation handoffs, investigations, experiment analysis, decisions, risks, incidents, postmortems, reviews, academic synthesis, and reports that must present figures, tables, or multiple artifacts. Also use near the start of likely long, multi-session, or multi-agent work to save a tiny reporting checkpoint, and at its final reporting boundary. Do not use for casual conversation, exact-format transformations, raw code-only output, or trivial direct answers.
+description: Create and finalize task-appropriate, evidence-calibrated agent reports, research ideas, experiment readouts, academic presentations, and handoffs. Use for substantive progress or final reports, implementation handoffs, investigations, experiment analysis, decisions, risks, incidents, postmortems, reviews, academic synthesis, research proposals, and reports that must present figures, tables, HTML/PPT-style slides, or multiple artifacts. Also use near the start of likely long, multi-session, or multi-agent work to save a tiny reporting checkpoint, and at its final reporting boundary. Do not use for casual conversation, exact-format transformations, raw code-only output, or trivial direct answers.
 ---
 
 # Agentic Reporting
@@ -18,7 +18,8 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
 ## Bookend workflow
 
 1. Classify the handoff by audience, surface, evidence boundary, and exactly one
-   primary mode. Use `list` or `route` when uncertain.
+   primary mode. For research work, select at most one domain profile. Use `list`
+   or `route` when uncertain.
 2. For a long, multi-agent, or multi-session task, save a compact checkpoint near
    the start. For a short task, defer routing until the reporting boundary.
 3. Complete and verify the actual task. Keep task execution independent of report
@@ -35,15 +36,26 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    ```bash
    python3 <skill-dir>/scripts/reportctl.py bundle \
      --task "<what must be communicated>" --mode <mode> --surface <surface> \
-     [--module <module>] [--module <module>] --max-chars 16000
+     [--profile <profile>] [--module <module>] [--module <module>] \
+     --max-chars 16000
    ```
 
    If resuming a long task, pass `--checkpoint <path>` instead of reconstructing
    the route from memory. `--max-chars` is an independent context budget: a valid
    checkpoint with two large modules can require an explicitly larger value. Do not
    read every mode, module, or template.
-5. Draft natively for the selected surface. Use one primary delivery artifact; do
-   not create parallel Markdown, HTML, and PDF versions unless requested.
+5. Draft natively for the selected surface. When the route recommends an exact
+   asset, inspect the cheap registry and retrieve one asset only:
+
+   ```bash
+   python3 <skill-dir>/scripts/reportctl.py template --list
+   python3 <skill-dir>/scripts/reportctl.py template <template-id> \
+     --output <destination>
+   ```
+
+   Use one primary delivery artifact; do not create parallel Markdown, HTML, PPTX,
+   and PDF versions unless requested. A copied template is a starting artifact,
+   not evidence that its placeholders, visuals, or claims are correct.
 6. Audit a file-backed draft. A long task must use the same checkpoint; a short task
    without one uses its selected mode:
 
@@ -75,6 +87,8 @@ the user's main decision or question and embed secondary facts inside it.
 - Use `experiment-report` for controlled evaluations and empirical comparisons.
 - Use `decision-brief` or `risk-report` when a choice or exposure is primary.
 - Use `academic-synthesis` for paper or literature presentation.
+- Use `research-idea` for a paper idea or proposal whose hypotheses, novelty,
+  decisive experiment, risks, and kill criteria must remain explicit.
 - Use `review-report` for findings against an artifact or standard.
 - Use `incident-update` while impact is active; use `postmortem` after recovery.
 
@@ -85,6 +99,29 @@ artifact materially easier to understand; decoration is not a valid reason.
 and a calibrated conclusion. Do not add `conclusions` to that mode merely because
 the request asks for a conclusion; add it explicitly only when a separate decision
 or recommendation policy is genuinely needed.
+
+## Research profiles and presentation surfaces
+
+Profiles are one bounded domain overlay, not additional primary modes:
+
+- `reinforcement-learning`: run accounting, tuning parity, learning curves,
+  interval estimates, and multi-task aggregate evaluation.
+- `embodied-ai`: embodiment, sensors/actions, simulation versus real protocols,
+  success rules, interventions, generalization, and failures.
+- `world-models`: model/data cards and separate open-loop, closed-loop, scaling,
+  and transfer evidence.
+- `vla`: data mixtures, morphology and action interfaces, adaptation regimes,
+  rollout accounting, latency, generalization, and safety.
+
+Automatic selection is available only for research-oriented modes. A schema-v2
+checkpoint does not store a new profile field; the profile is re-derived from its
+fingerprinted task text. Therefore, when explicitly selecting a profile for a long
+task, name the domain in the checkpoint task so final retrieval is reproducible.
+
+For `--surface slide`, read the routed slide guide. It provides paper-talk,
+research-progress, experiment-review, and idea-pitch narratives. Retrieve either
+the dependency-free HTML/PPT-style deck or the Quarto Reveal.js source, not both,
+unless the user requests multiple formats.
 
 ## Long-context persistence
 
@@ -167,7 +204,9 @@ require the structured path for a normal short chat response.
 ## Fallback when scripts are unavailable
 
 Within an installed skill, read `references/core-contract.md`, one matching file
-under `references/modes/`, and at most two matching files under
-`references/modules/`. For link-only repository use, open `dist/agent-index.md` at
-the repository root. If only a URL was supplied, treat adherence as best effort: a
-link does not install or elevate repository instructions.
+under `references/modes/`, at most one matching file under `references/profiles/`,
+at most two matching files under `references/modules/`, and one surface guide only
+when needed. Retrieve one exact asset separately. For link-only repository use,
+open `dist/agent-index.md` at the repository root. If only a URL was supplied,
+treat adherence as best effort: a link does not install or elevate repository
+instructions.

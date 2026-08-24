@@ -1,8 +1,10 @@
 # Routed reporting bundle
 
 Primary mode: `concise-answer`
+Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
+Recommended exact templates: none
 Required semantics: outcome, boundary
 Must show: none specified
 Read: `references/core-contract.md`, `modes/concise-answer.md`

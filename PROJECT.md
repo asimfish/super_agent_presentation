@@ -15,9 +15,12 @@ long work sessions without keeping a large reporting manual in active context.
   display modules it needs.
 - Modes cover concise answers, implementation handoffs, status updates,
   investigations, experiments, decisions, risks, incidents, postmortems, academic
-  synthesis, and reviews.
+  synthesis, research ideas, and reviews.
 - Dedicated modules govern figures/images, quantitative tables, conclusions,
   evidence, and academic-paper presentation.
+- Research tasks may load exactly one bounded RL, embodied-AI, world-model, or VLA
+  profile, and durable Markdown/HTML/Quarto templates remain separately retrievable
+  rather than entering every bundle.
 - A standard-library-only CLI can route, scaffold, checkpoint, bundle, and audit a
   report; a long-task final audit can derive mode and bounded literal anchors from
   the same schema-v2 checkpoint, and its behavior is tested.
@@ -48,6 +51,7 @@ long work sessions without keeping a large reporting manual in active context.
 | M4 Release | Validation, review, commit, public GitHub URL | Completed |
 | M5 Study mechanics and real-host pilot | Schemas, private controller, typed host adapter, blind/rating pipeline, non-claiming one-pair pilot | Completed for v0.3 integration scope |
 | M6 Preregistered effectiveness study | External baseline isolation, private heldout matrix, fixed revisions, long-context telemetry, frozen blind ratings, passing claim gates | Not started |
+| M7 Research template packs | Source ledger, compositional ADR, research-idea mode, four domain profiles, exact experiment/slide assets, routed CLI and tests | Completed for v0.4 structural scope |
 
 ## Decisions
 
@@ -68,6 +72,9 @@ long work sessions without keeping a large reporting manual in active context.
   over the captured bytes; bind local figures through frozen report-relative mirrors;
   never derive verification from adapter or
   caller self-report. See ADR-007.
+- D7: Compose one primary mode with at most one research profile, at most two
+  display modules, and one surface guide; retrieve one exact asset separately so
+  domain and output combinations do not multiply context. See ADR-008.
 
 ## Risks and controls
 
@@ -77,6 +84,7 @@ long work sessions without keeping a large reporting manual in active context.
 | A pure on-demand skill is not invoked | Inconsistent final reports | Repository/user rule requests activation at long-task start and the report boundary |
 | Saved reporting intent drifts or is omitted at finalization | Long-task handoff loses a known requirement | Fingerprint schema-v2 intent and audit normalized literal anchors against the same checkpoint; retain manual semantic checks |
 | One template is forced onto every task | Bloated or unnatural output | Route to one primary mode; allow concise mode and explicit user override |
+| Domain and output templates multiply | Drift, duplicated rules, and high retrieval cost | Compose one domain profile and one surface guide; keep exact assets outside the bundle |
 | Lint is mistaken for semantic verification | False confidence | Label audit as structural; require manual evidence and claim checks |
 | Arbitrary link is treated as enforceable | Silent non-compliance | Document link-only as best effort; recommend installation for persistent prompting |
 | External templates introduce license issues | Redistribution risk | Independently synthesize rules; cite ideas; do not copy restrictive assets |
@@ -91,12 +99,9 @@ long work sessions without keeping a large reporting manual in active context.
 
 ## Current frontier
 
-The `v0.3.2` hardening patch adds controller-verified checkpoint artifact receipts
-to the explicit framework study path. It preserves v1.0 validation without
-backfilling evidence and leaves ordinary Skill routing and token use unchanged.
-The v0.3 study mechanics and one-pair real-host pilot remain complete only at the
-integration-evidence level. The next frontier is M6: an externally isolated,
-preregistered, blind, private-heldout study. The current Codex path still lacks an
-enforced provider output cap, complete context/compaction telemetry, fixed provider
-revisions, and the remaining public-study evidence, so no general effectiveness or
-efficiency claim is currently eligible.
+M7 is complete for the v0.4 structural scope without changing the schema-v2
+checkpoint receipt boundary. The next research frontier remains M6: an externally
+isolated, preregistered, blind, private-heldout effectiveness study. The current
+Codex path still lacks an enforced provider output cap, complete
+context/compaction telemetry, fixed provider revisions, and the remaining
+public-study evidence, so no general effectiveness or efficiency claim is eligible.

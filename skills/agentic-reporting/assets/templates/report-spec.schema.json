@@ -27,7 +27,7 @@
       "enum": [
         "concise-answer", "implementation-handoff", "status-update",
         "investigation-report", "experiment-report", "decision-brief",
-        "academic-synthesis", "review-report", "incident-update",
+        "academic-synthesis", "research-idea", "review-report", "incident-update",
         "postmortem", "risk-report"
       ]
     },
@@ -59,7 +59,7 @@
           "report_type": {
             "enum": [
               "implementation-handoff", "status-update", "investigation-report",
-              "experiment-report", "decision-brief", "academic-synthesis",
+              "experiment-report", "decision-brief", "academic-synthesis", "research-idea",
               "review-report", "incident-update", "postmortem", "risk-report"
             ]
           }
@@ -226,6 +226,28 @@
         "anyOf": [
           {"properties": {"limitations": {"minItems": 1}}},
           {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "limitations"}}}}}}}
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {"report_type": {"const": "research-idea"}},
+        "required": ["report_type"]
+      },
+      "then": {
+        "properties": {"claims": {"allOf": [
+          {"contains": {"properties": {"roles": {"contains": {"const": "question"}}}}},
+          {"contains": {"properties": {"roles": {"contains": {"const": "method"}}}}}
+        ]}},
+        "allOf": [
+          {"anyOf": [
+            {"properties": {"limitations": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "boundary"}}}}}}}
+          ]},
+          {"anyOf": [
+            {"properties": {"actions": {"minItems": 1}}},
+            {"properties": {"claims": {"contains": {"properties": {"roles": {"contains": {"const": "next_action"}}}}}}}
+          ]}
         ]
       }
     },

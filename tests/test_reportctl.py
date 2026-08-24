@@ -50,8 +50,10 @@ class ReportCtlTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         payload = json.loads(result.stdout)
         self.assertEqual(payload["schema_version"], 1)
-        self.assertEqual(len(payload["modes"]), 11)
+        self.assertEqual(len(payload["modes"]), 12)
         self.assertEqual(len(payload["modules"]), 5)
+        self.assertEqual(len(payload["profiles"]), 4)
+        self.assertEqual(len(payload["templates"]), 8)
 
     def test_every_mode_has_a_scaffold(self) -> None:
         listed = json.loads(run_cli("list", "--json").stdout)
@@ -65,6 +67,121 @@ class ReportCtlTests(unittest.TestCase):
         result = run_cli("route", "--task", "实现修改后汇报文件、测试结果和剩余风险", "--json")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["mode"], "implementation-handoff")
+
+    def test_research_idea_and_domain_profiles_route_independently(self) -> None:
+        cases = {
+            "提出一个强化学习论文 idea，给出可证伪的关键实验": (
+                "research-idea", "reinforcement-learning"
+            ),
+            "汇报具身智能真实机器人操作实验": (
+                "experiment-report", "embodied-ai"
+            ),
+            "分析世界模型的开放环预测与闭环控制实验": (
+                "experiment-report", "world-models"
+            ),
+            "汇报 VLA robot manipulation 的泛化和延迟实验": (
+                "experiment-report", "vla"
+            ),
+        }
+        for task, (mode, profile) in cases.items():
+            with self.subTest(task=task):
+                result = run_cli("route", "--task", task, "--json")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertEqual(payload["mode"], mode)
+                self.assertEqual(payload["profile"], profile)
+
+    def test_nonresearch_mode_does_not_auto_load_domain_profile(self) -> None:
+        result = run_cli(
+            "route",
+            "--task",
+            "Implement the reinforcement learning environment wrapper and report tests.",
+            "--mode",
+            "implementation-handoff",
+            "--json",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIsNone(json.loads(result.stdout)["profile"])
+
+    def test_domain_profile_bundle_is_bounded_and_exclusive(self) -> None:
+        result = run_cli(
+            "bundle",
+            "--task",
+            "汇报强化学习多随机种子实验和学习曲线",
+            "--mode",
+            "experiment-report",
+            "--profile",
+            "reinforcement-learning",
+            "--module",
+            "tables",
+            "--max-chars",
+            "16000",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertLessEqual(len(result.stdout), 16000)
+        self.assertIn("Research profile: reinforcement-learning", result.stdout)
+        self.assertNotIn("Research profile: embodied-ai", result.stdout)
+        self.assertNotIn("Research profile: world-models", result.stdout)
+        self.assertNotIn("Research profile: vla", result.stdout)
+
+    def test_slide_route_recommends_assets_without_inlining_them(self) -> None:
+        routed = run_cli(
+            "route",
+            "--task",
+            "把这篇论文做成 HTML 学术幻灯片",
+            "--mode",
+            "academic-synthesis",
+            "--surface",
+            "slide",
+            "--json",
+        )
+        self.assertEqual(routed.returncode, 0, routed.stdout + routed.stderr)
+        payload = json.loads(routed.stdout)
+        self.assertEqual(payload["recommended_templates"], [
+            "academic-talk-html", "academic-talk-revealjs"
+        ])
+        bundled = run_cli(
+            "bundle",
+            "--task",
+            "把这篇论文做成 HTML 学术幻灯片",
+            "--mode",
+            "academic-synthesis",
+            "--surface",
+            "slide",
+            "--max-chars",
+            "16000",
+        )
+        self.assertEqual(bundled.returncode, 0, bundled.stdout + bundled.stderr)
+        self.assertIn("Surface guide: slide", bundled.stdout)
+        self.assertNotIn("<!doctype html>", bundled.stdout.casefold())
+
+    def test_exact_template_registry_lists_prints_and_copies_assets(self) -> None:
+        listed = run_cli("template", "--list", "--json")
+        self.assertEqual(listed.returncode, 0, listed.stdout + listed.stderr)
+        payload = json.loads(listed.stdout)
+        self.assertEqual(len(payload["templates"]), 8)
+        self.assertEqual(payload["templates"][0]["id"], "experiment-report-detailed")
+
+        printed = run_cli("template", "rl-experiment-report")
+        self.assertEqual(printed.returncode, 0, printed.stdout + printed.stderr)
+        self.assertIn("# Reinforcement-learning experiment report", printed.stdout)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "talk.html"
+            copied = run_cli(
+                "template", "academic-talk-html", "--output", str(output)
+            )
+            self.assertEqual(copied.returncode, 0, copied.stdout + copied.stderr)
+            expected = (
+                ROOT / "skills" / "agentic-reporting" / "assets" /
+                "presentations" / "academic-talk.html"
+            ).read_bytes()
+            self.assertEqual(output.read_bytes(), expected)
+            refused = run_cli(
+                "template", "academic-talk-html", "--output", str(output)
+            )
+            self.assertEqual(refused.returncode, 2)
+            self.assertIn("Output exists", refused.stderr)
 
     def test_explicit_intent_outranks_cross_domain_vocabulary(self) -> None:
         cases = {
@@ -213,6 +330,47 @@ class ReportCtlTests(unittest.TestCase):
             rejected = run_cli("route", "--checkpoint", str(path))
             self.assertEqual(rejected.returncode, 2)
             self.assertIn("fingerprint", rejected.stderr)
+
+    def test_checkpoint_rederives_profile_from_fingerprinted_task(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "report.json"
+            created = run_cli(
+                "checkpoint",
+                "--task",
+                "汇报强化学习实验的多随机种子结果",
+                "--mode",
+                "experiment-report",
+                "--profile",
+                "reinforcement-learning",
+                "--output",
+                str(path),
+            )
+            self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            checkpoint = json.loads(path.read_text(encoding="utf-8"))
+            self.assertNotIn("profile", checkpoint)
+            routed = run_cli("route", "--checkpoint", str(path), "--json")
+            self.assertEqual(routed.returncode, 0, routed.stdout + routed.stderr)
+            self.assertEqual(
+                json.loads(routed.stdout)["profile"], "reinforcement-learning"
+            )
+
+    def test_checkpoint_rejects_nonreproducible_explicit_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "report.json"
+            result = run_cli(
+                "checkpoint",
+                "--task",
+                "汇报实验结果",
+                "--mode",
+                "experiment-report",
+                "--profile",
+                "vla",
+                "--output",
+                str(path),
+            )
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("frozen task text", result.stderr)
+            self.assertFalse(path.exists())
 
     def test_checkpoint_v2_fingerprints_full_intent_and_v1_still_loads(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -3448,10 +3606,18 @@ class ReportCtlTests(unittest.TestCase):
             output = Path(temporary) / "dist"
             result = run_cli("build-dist", "--output", str(output))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertEqual(len(list((output / "routes").glob("*.md"))), 11)
+            self.assertEqual(len(list((output / "routes").glob("*.md"))), 12)
             self.assertEqual(len(list((output / "modules").glob("*.md"))), 5)
+            self.assertEqual(len(list((output / "profiles").glob("*.md"))), 4)
+            self.assertEqual(len(list((output / "surfaces").glob("*.md"))), 1)
             self.assertTrue((output / "agent-index.md").is_file())
             self.assertTrue((output / ".agentic-reporting-dist.json").is_file())
+            index = (output / "agent-index.md").read_text(encoding="utf-8")
+            self.assertIn("## Exact assets", index)
+            self.assertIn(
+                "../skills/agentic-reporting/assets/presentations/academic-talk.html",
+                index,
+            )
 
     def test_build_dist_preflights_existing_outputs_without_partial_writes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -3583,8 +3749,10 @@ class ReportCtlTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertTrue((output / "agent-index.md").is_file())
             self.assertTrue((output / ".agentic-reporting-dist.json").is_file())
-            self.assertEqual(len(list((output / "routes").glob("*.md"))), 11)
+            self.assertEqual(len(list((output / "routes").glob("*.md"))), 12)
             self.assertEqual(len(list((output / "modules").glob("*.md"))), 5)
+            self.assertEqual(len(list((output / "profiles").glob("*.md"))), 4)
+            self.assertEqual(len(list((output / "surfaces").glob("*.md"))), 1)
 
     def test_build_dist_nested_commit_failure_removes_new_parents_and_staging(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

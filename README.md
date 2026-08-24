@@ -4,10 +4,12 @@
 表格、论文、故障、决策和代码交付提供可复用的语义骨架，同时避免所有回答
 都被塞进同一个大模板；实际遵循程度仍取决于宿主和模型。
 
-当前版本为 `v0.3.2`。该补丁为显式研究宿主增加控制器验证的 checkpoint
-artifact receipt，同时保留 v0.3.1 的有界 Skill 收据遍历和 immutable-SHA
-Node 24 actions。除 14 份正负
-fixture、7 个场景和 5 个 post-activation 路由代理外，v0.3 系列新增了
+当前版本为 `v0.4.0`。本版本在 v0.3.2 的控制器验证 checkpoint 基础上，
+新增论文 idea 主模式、RL/具身智能/世界模型/VLA 四个研究 profile、一个
+学术幻灯片载体协议，以及八个可单独复制的 Markdown/HTML/Quarto 模板资产。
+模板来源和采用边界见 [docs/TEMPLATE-SOURCES.md](docs/TEMPLATE-SOURCES.md)。
+
+v0.3 系列新增了
 预注册、生成记录、真实宿主计划、
 显式执行、盲化、独立评分冻结和成对汇总流水线。一次最小 Codex pilot
 观察到 treatment 读取了 Skill，baseline/framework 分别通过 9/10 与 10/10
@@ -38,15 +40,18 @@ flowchart LR
     D --> E
     E --> F[到达汇报边界]
     F --> G[重载 checkpoint 或选择一个主协议]
-    G --> H[优先一个展示模块\n最多两个非重叠模块]
-    H --> I[用同一 checkpoint 结构审计并核验事实]
+    G --> H[研究任务可选一个领域 profile]
+    H --> K[优先一个展示模块\n最多两个非重叠模块]
+    K --> L[需要时加载载体指南\n模板资产仍不进入 bundle]
+    L --> I[用同一 checkpoint 结构审计并核验事实]
     I --> J[最终汇报]
 ```
 
 - 常驻层只负责“何时调用”，不加载完整手册。
-- Skill 通过渐进式披露一次只取一个主协议，优先一个展示模块，最多加入
-  两个不重叠模块。实验模式已内含结论纪律，不会因用户写了“结论”而重复
-  加载通用结论模块。
+- Skill 通过渐进式披露一次只取一个主协议、最多一个研究 profile，优先
+  一个展示模块并最多加入两个不重叠模块。实验模式已内含结论纪律，不会
+  因用户写了“结论”而重复加载通用结论模块。HTML/QMD 等大资产只有在
+  `template` 命令明确选择后才读取。
 - 长任务把少量汇报意图保存为 checkpoint，最终阶段从磁盘重新加载并以
   同一 checkpoint 审计，降低仅依赖早期对话记忆而遗忘的风险。
 - 审计器检查可机械判断的结构错误；事实、科学结论和证据仍需人工或领域
@@ -112,10 +117,20 @@ Skill 位于 `skills/agentic-reporting/`。Agent 应把 `<skill-dir>` 解析为�
 ```bash
 python3 <skill-dir>/scripts/reportctl.py list
 python3 <skill-dir>/scripts/reportctl.py bundle \
-  --task "汇报五次独立运行的实验结果" \
-  --mode experiment-report --module tables
+  --task "汇报强化学习多随机种子实验结果" \
+  --mode experiment-report --profile reinforcement-learning --module tables
 python3 <skill-dir>/scripts/reportctl.py audit \
   --file report.md --mode experiment-report
+```
+
+查看并复制一个精确模板，而不把全部模板放进上下文：
+
+```bash
+python3 <skill-dir>/scripts/reportctl.py template --list
+python3 <skill-dir>/scripts/reportctl.py template rl-experiment-report \
+  --output report.md
+python3 <skill-dir>/scripts/reportctl.py template academic-talk-html \
+  --output talk.html
 ```
 
 预计为长任务时，应在开始阶段只保存一个小 checkpoint，任务期间释放详细
@@ -161,6 +176,7 @@ text，且不能使用 Markdown delimiter 形式。它不是语义或事实验�
 - 项目状态更新
 - 调研与故障诊断
 - 实验与消融分析
+- 论文 idea、研究假设与关键实验设计
 - 决策与风险
 - 论文或文献综合
 - 审查与审计
@@ -169,6 +185,23 @@ text，且不能使用 Markdown delimiter 形式。它不是语义或事实验�
 
 图片、图表、表格、结论、证据和学术展示作为正交模块按需加入，不是每份
 汇报的固定装饰。
+
+## 研究与展示模板
+
+| 类型 | 当前资产或 profile | 重点约束 |
+|---|---|---|
+| 通用实验 | `experiment-report-detailed` | RQ/claim map、协议、指标方向、运行次数、不确定性、复现指针 |
+| 论文 idea | `research-idea` mode/template | 当前限制、假设机制、最近工作、关键实验、证伪和 kill criterion |
+| 强化学习 | `reinforcement-learning` / `rl-experiment-report` | 环境步数、run/seed、调参公平、学习曲线、区间估计和失败任务 |
+| 具身智能 | `embodied-ai` / `embodied-experiment-report` | 仿真/真实、机器人与传感器、成功规则、reset/intervention、泛化与失败类型 |
+| 世界模型 | `world-models` / `world-model-experiment-report` | 模型/数据卡、开放环预测、闭环控制、扩展规律与模型利用边界 |
+| VLA | `vla` / `vla-experiment-report` | 数据混合、形态与动作接口、rollout、泛化、延迟和安全 |
+| HTML/PPT-style 学术汇报 | `academic-talk-html` | 零依赖、响应式、可打印、键盘导航、assertion-evidence 页面 |
+| Quarto HTML 幻灯片 | `academic-talk-revealjs` | Reveal.js、引用、speaker notes、自包含 HTML、appendix |
+
+领域 profile 是通用汇报协议的增量，不会把某个 benchmark 的 seed 数、指标
+或成功定义硬编码为所有研究的默认值。Agent 应先路由，再只复制一个最匹配
+的资产。
 
 ## 正式报告的 strict path
 

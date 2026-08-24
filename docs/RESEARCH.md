@@ -128,9 +128,10 @@ they are not vendor guarantees:
    images. It cannot prove citations, scientific claims, metric comparability, or
    the appropriateness of an interpretation.
 9. **Use a lexical checkpoint gate, not a semantic claim.** A schema-v2 checksum can
-   detect accidental route drift, and normalized literal anchors can catch bounded
-   omissions. Neither authenticates the file nor proves meaning, authorship, truth,
-   audience fit, or module appropriateness.
+   detect accidental drift in stored route fields, and normalized literal anchors
+   can catch bounded omissions. A research profile is re-derived and is not an
+   independently locked field. Neither mechanism authenticates the file nor proves
+   meaning, authorship, truth, audience fit, or module appropriateness.
 
 ## Recommended deployment
 

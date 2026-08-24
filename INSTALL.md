@@ -223,10 +223,17 @@ not write the report.
 Then run a small end-to-end check with known facts. Confirm that the result:
 
 1. honors an explicit user format override;
-2. selects one primary mode and no more than two display modules;
+2. selects one primary mode, no more than one research profile, no more than two
+   display modules, and at most one surface guide;
 3. separates evidence from interpretation and limitations;
 4. does not invent tests, metrics, citations, or completion;
 5. reports whether the structural audit actually ran.
+
+For a research smoke test, ask for a VLA paper-idea presentation and inspect the
+route. It should select `research-idea`, derive the `vla` profile, recommend the
+slide assets without inlining them, and copy only the exact asset chosen through
+`reportctl.py template <template-id> --output <path>`. A copied HTML/QMD file is a
+starting artifact, not evidence that it was rendered or visually inspected.
 
 Also exercise the long-task opening boundary in the disposable repository:
 

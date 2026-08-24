@@ -35,10 +35,11 @@
 
 | Source | Transformation | Sink / asset | Enforcement |
 |---|---|---|---|
-| Task/route text | route scoring, checkpoint serialization | checkpoint file and route/bundle stdout | 20,000-character task bound, schema-v2 full-intent checksum, bounded visible anchors, explicit output, symlink-chain rejection, existing-file refusal, terminal-safe output |
+| Task/route text | route scoring, checkpoint serialization | checkpoint file and route/bundle stdout | 20,000-character task bound, schema-v2 checksum over stored route fields, profile re-derived rather than separately locked, bounded visible anchors, explicit output, symlink-chain rejection, existing-file refusal, terminal-safe output |
 | Checkpoint JSON | bounded parse, intent validation, mode derivation, literal-anchor selection | final audit result | 2 MiB UTF-8/regular-file bound, 128-character pre-conversion numeric-token bound, count-only unknown-field rejection, input symlink-chain rejection, v2 requirement, explicit-route conflict rejection, conservative plain-prose matching, ordinal-only missing-anchor diagnostics |
 | Markdown report | UTF-8 parse and structural checks | audit result | 1 MiB checkpoint-backed or 4 MiB mode-only bound plus 100,000-line bound; bounded single-pass image scan, portable title whitespace, control-bearing target rejection, 1,000-image and 500-finding fail-closed limits; terminal-safe human output; no evaluation, shell, HTML rendering, or network fetch |
 | JSON report spec | typed semantic validation and escaping | generated Markdown | 2 MiB, 100-level, and 100,000-value bounds; Unicode-scalar key/value validation; allowlisted status/kinds, evidence cross-references, printable HTTP(S)/local locator policy, Markdown/HTML and terminal-control escaping |
+| Template ID and output path | allowlisted catalog lookup and byte copy | one Markdown, HTML, or QMD artifact | unknown/incompatible IDs reject; registered path must remain below the packaged Skill; output symlink chains reject; existing file requires explicit `--force`; copying never renders, executes, installs, or fetches content |
 | Distribution output path | fixed generated filenames | local route pack | broad-root and symlink rejection, full-set staging, backup rollback, manifest-bounded stale deletion, explicit `--force` |
 | Install target and host | static scope map and copied Skill | another project/user config | explicit target/scope, project `.git` check, active Codex override selection, unsupported scope denial, target/source/destination symlink rejection, preflight, digest-verified identical-Skill reuse only, best-effort rollback |
 | Existing instruction file | marker check and optional append | host instruction integrity | 2 MiB UTF-8 bound, preserve by default, explicit append, timestamped backup, mode-preserving atomic replacement |
@@ -233,7 +234,9 @@
   anchors or their checksums; unknown checkpoint keys are reported only as a count.
 - Boundary: the checksum is not authentication, and lexical presence does not prove
   meaning, authorship, truth, audience/surface fit, or required module use. Those
-  remain manual checks.
+  remain manual checks. A v0.4 research profile is derived from fingerprinted task
+  text and mode but is not a checkpoint field, so its exact choice is stable only
+  under the same routing implementation/Skill manifest.
 - Regression: field tampering and mode conflicts return status 2; a missing anchor
   returns status 1; hidden-source forms do not satisfy it; diagnostics do not echo a
   sensitive missing anchor. Adversarial combining runs, Tibetan decomposable marks,
@@ -340,6 +343,30 @@
   agent audit/storage/blinding, captured-memory re-audit,
   manual/baseline denial, v1.0 compatibility without backfill, receipt-lock
   tampering, and private-surface exclusion must remain denied-path tests.
+
+### SR-15 — Presentation assets could become an execution or supply-chain path
+
+- Severity: medium if template selection accepted arbitrary paths or if retrieval
+  implicitly rendered downloaded code; fixed at the packaged-copy boundary.
+- Source → sink: user or task-selected template ID/output path → catalog resolution
+  and file copy → durable Markdown, HTML, or Quarto source.
+- Control: `reportctl template` resolves only a fixed catalog ID, requires the
+  registered source to remain under the Skill directory, rejects output symlink
+  chains, and refuses replacement without exact `--force`. The command copies or
+  prints bytes only. It does not open a browser, invoke Quarto, install a package,
+  execute JavaScript, or fetch a linked resource. The shipped dependency-free HTML
+  contains no remote dependencies; the QMD requests embedded resources at render
+  time but still depends on a separately installed and authorized renderer.
+- Provenance/license: all shipped v0.4 assets are independently authored under this
+  repository's MIT license. External presentation Skills and public guidelines were
+  used only as high-level workflow evidence; their code, prose, CSS, and visual
+  assets were not copied. `UPSTREAM.md` and `docs/TEMPLATE-SOURCES.md` record that
+  boundary.
+- Regression and residual: registry uniqueness, containment, exact byte copying,
+  overwrite refusal, HTML slide IDs/accessibility labels/no-remote-dependency, and
+  QMD self-contained settings are tested. Static tests do not establish visual
+  quality, browser compatibility, accessibility conformance, or safety of a future
+  renderer; those require render-time review in the selected environment.
 
 ## Supply-chain controls
 

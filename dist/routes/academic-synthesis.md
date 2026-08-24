@@ -1,8 +1,10 @@
 # Routed reporting bundle
 
 Primary mode: `academic-synthesis`
+Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
+Recommended exact templates: none
 Required semantics: paper_identity, method, evidence, limitations
 Must show: none specified
 Read: `references/core-contract.md`, `modes/academic-synthesis.md`

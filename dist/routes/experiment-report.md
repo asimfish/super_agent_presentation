@@ -1,8 +1,10 @@
 # Routed reporting bundle
 
 Primary mode: `experiment-report`
+Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
+Recommended exact templates: experiment-report-detailed
 Required semantics: question, method, metrics, uncertainty, boundary
 Must show: none specified
 Read: `references/core-contract.md`, `modes/experiment-report.md`

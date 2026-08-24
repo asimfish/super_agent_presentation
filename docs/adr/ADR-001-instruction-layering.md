@@ -35,9 +35,11 @@ Use three layers:
 
 Long tasks externalize a small report manifest near the start and reload it at the
 final boundary. The manifest is not a process log and must not duplicate task
-context. Its unkeyed full-intent checksum detects accidental drift but is not an
-authentication mechanism. Schema-v1 manifests remain route/bundle-compatible but
-cannot drive the final checkpoint gate.
+context. Its unkeyed checksum over stored intent fields detects accidental drift but
+is not an authentication mechanism. Later research profiles are re-derived from the
+stored task and mode rather than added to schema v2, so exact profile identity also
+depends on the Skill/router version. Schema-v1 manifests remain
+route/bundle-compatible but cannot drive the final checkpoint gate.
 
 ## Consequences
 

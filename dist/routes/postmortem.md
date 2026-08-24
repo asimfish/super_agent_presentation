@@ -1,8 +1,10 @@
 # Routed reporting bundle
 
 Primary mode: `postmortem`
+Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
+Recommended exact templates: none
 Required semantics: impact, timeline, cause, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/postmortem.md`

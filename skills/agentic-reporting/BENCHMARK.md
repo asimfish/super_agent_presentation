@@ -20,14 +20,16 @@ provisional gates.
 
 Current defensible claims are limited to:
 
-- the package exposes eleven primary modes and five display modules;
-- the router bounds a bundle to one mode and at most two modules;
+- the package exposes twelve primary modes, four research profiles, five display
+  modules, one slide surface guide, and eight exact template assets;
+- the router bounds a bundle to one mode, at most one research profile, at most two
+  modules, and at most one surface guide; exact assets are never inlined;
 - automatic routing skips a module whose capability the selected mode explicitly
   embeds; the experiment mode therefore defaults to `tables` without duplicating
   generic conclusion guidance;
 - the local CLI implements structural checks and deterministic Markdown rendering;
 - checked-in activation cases encode explicit/natural positives, adjacent negatives,
-  an explicit exclusion, five governance rubrics, and five positive-route proxies.
+  an explicit exclusion, five governance rubrics, and six positive-route proxies.
 
 Do not convert those structural facts into a measured readability, correctness,
 token-efficiency, or long-context-retention claim.

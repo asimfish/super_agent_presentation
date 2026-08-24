@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.4.0 — 2026-08-24
+
+- Added a source-backed `research-idea` mode that separates verified motivation
+  from hypothesis, novelty delta, decisive evaluation, falsifiers, risks, and
+  mid-point/final evidence gates.
+- Added bounded reinforcement-learning, embodied-AI, world-model, and VLA research
+  profiles. Profiles add domain protocol cards, comparable result displays,
+  run/trial accounting, generalization axes, and failure boundaries without
+  duplicating every primary mode.
+- Added eight exact assets: detailed general and domain experiment reports, a paper
+  idea brief, a dependency-free accessible HTML/PPT-style academic deck, and a
+  Quarto Reveal.js source. Assets remain outside normal bundles and are retrieved
+  one at a time with the new `reportctl template` registry.
+- Added a slide-surface guide for paper talks, research progress, experiment
+  reviews, and idea pitches using assertion-evidence structure and visible protocol
+  metadata.
+- Extended route/list/bundle/build-dist with deterministic profile selection,
+  compatible template recommendations, bounded profile/surface files, and
+  schema-v2 checkpoint compatibility through profile re-derivation from the frozen
+  task.
+- Added ADR-008 and a primary-source template ledger covering NeurIPS/ICLR/CVPR,
+  DARPA, RL evaluation, Habitat, CALVIN, Open X-Embodiment, OpenVLA, DreamerV3,
+  TD-MPC2, Quarto/Reveal.js, and open-source Agent presentation workflows. No
+  third-party template asset was copied.
+
 ## 0.3.2 — 2026-08-24
 
 - Added controller-verified checkpoint artifact receipts for qualifying framework

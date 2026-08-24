@@ -9,6 +9,7 @@
     "routes/experiment-report.md",
     "routes/decision-brief.md",
     "routes/academic-synthesis.md",
+    "routes/research-idea.md",
     "routes/review-report.md",
     "routes/incident-update.md",
     "routes/postmortem.md",
@@ -18,6 +19,11 @@
     "modules/conclusions.md",
     "modules/evidence.md",
     "modules/academic-display.md",
+    "profiles/reinforcement-learning.md",
+    "profiles/embodied-ai.md",
+    "profiles/world-models.md",
+    "profiles/vla.md",
+    "surfaces/slide.md",
     "agent-index.md"
   ]
 }

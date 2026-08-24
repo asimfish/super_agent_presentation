@@ -59,13 +59,16 @@
           "enum": [
             "concise-answer", "implementation-handoff", "status-update",
             "investigation-report", "experiment-report", "decision-brief",
-            "academic-synthesis", "review-report", "incident-update",
+            "academic-synthesis", "research-idea", "review-report", "incident-update",
             "postmortem", "risk-report"
           ]
         },
         "modules": {
           "type": "array", "maxItems": 2, "uniqueItems": true,
           "items": {"enum": ["visuals", "tables", "conclusions", "evidence", "academic-display"]}
+        },
+        "profile": {
+          "enum": ["reinforcement-learning", "embodied-ai", "world-models", "vla"]
         }
       }
     },

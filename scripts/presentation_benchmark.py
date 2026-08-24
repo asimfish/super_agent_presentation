@@ -27,10 +27,11 @@ FIXTURE_ROOT = REPO_ROOT / "evals" / "fixtures" / "responses"
 REPORTCTL_PATH = REPO_ROOT / "skills" / "agentic-reporting" / "scripts" / "reportctl.py"
 MODE_IDS = {
     "concise-answer", "implementation-handoff", "status-update", "investigation-report",
-    "experiment-report", "decision-brief", "academic-synthesis", "review-report",
+    "experiment-report", "decision-brief", "academic-synthesis", "research-idea", "review-report",
     "incident-update", "postmortem", "risk-report",
 }
 MODULE_IDS = {"visuals", "tables", "conclusions", "evidence", "academic-display"}
+PROFILE_IDS = {"reinforcement-learning", "embodied-ai", "world-models", "vla"}
 ACTIVATION_CATEGORIES = {
     "explicit_positive", "natural_positive", "adjacent_negative", "explicit_exclusion",
 }
@@ -359,9 +360,16 @@ def validate_activation(data: dict[str, Any]) -> None:
         if should_activate:
             if not isinstance(route, dict):
                 raise BenchmarkError(f"positive activation case {case_id} requires expected_route")
-            _require_object_shape(route, f"activation case {case_id} route", required=("mode", "modules"))
+            _require_object_shape(
+                route,
+                f"activation case {case_id} route",
+                required=("mode", "modules"),
+                optional=("profile",),
+            )
             if route.get("mode") not in MODE_IDS:
                 raise BenchmarkError(f"activation case {case_id} has an invalid route mode")
+            if "profile" in route and route["profile"] not in PROFILE_IDS:
+                raise BenchmarkError(f"activation case {case_id} has an invalid route profile")
             modules = _require_string_list(route.get("modules"), f"activation case {case_id} route modules")
             if len(modules) > 2 or len(modules) != len(set(modules)) or set(modules) - MODULE_IDS:
                 raise BenchmarkError(f"activation case {case_id} route modules must be at most two unique known modules")
@@ -910,11 +918,14 @@ def _evaluate_expected_route(case_id: str, task: str, expected: dict[str, Any]) 
             "observed": f"reportctl emitted invalid JSON: {exc}",
         }
     actual = {"mode": payload.get("mode"), "modules": payload.get("modules")}
+    if "profile" in expected:
+        actual["profile"] = payload.get("profile")
     passed = (
         actual["mode"] == expected["mode"]
         and isinstance(actual["modules"], list)
         and set(actual["modules"]) == set(expected["modules"])
         and len(actual["modules"]) == len(expected["modules"])
+        and ("profile" not in expected or actual["profile"] == expected["profile"])
     )
     return {
         "case_id": case_id,

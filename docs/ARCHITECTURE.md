@@ -35,8 +35,10 @@ flowchart LR
     D --> E
     E --> F[Reporting boundary]
     F --> G[Reload checkpoint or route\none primary mode]
-    G --> H[Optional display modules\n0 to 2]
-    H --> I[Audit against same checkpoint\nplus manual evidence check]
+    G --> H[Optional research profile\n0 or 1]
+    H --> K[Optional display modules\n0 to 2]
+    K --> L[Surface guide when needed\nasset stays out of bundle]
+    L --> I[Audit against same checkpoint\nplus manual evidence check]
     I --> J[Human-readable handoff]
 ```
 
@@ -67,6 +69,7 @@ exactly one primary mode:
 - `experiment-report`
 - `decision-brief`
 - `academic-synthesis`
+- `research-idea`
 - `review-report`
 - `incident-update`
 - `postmortem`
@@ -80,6 +83,17 @@ Modes may declare an `embedded_modules` capability to prevent automatic duplicat
 for example, `experiment-report` already carries conclusion calibration, so its
 default bundle loads only `tables`. Explicit module selection remains available for
 a genuinely separate decision policy.
+
+For research-oriented modes, the router may add one domain profile:
+`reinforcement-learning`, `embodied-ai`, `world-models`, or `vla`. Profiles own
+domain protocol fields and failure boundaries; they do not replace the primary
+narrative mode. A surface guide is loaded only for a surface with non-generic
+requirements, currently `slide`.
+
+Exact copyable Markdown, HTML, and Quarto assets are registered separately. A
+route recommends compatible template IDs, but a normal bundle never inlines their
+contents. `reportctl template` retrieves one selected asset only. This avoids a
+mode-by-domain-by-surface template matrix. See ADR-008.
 
 ### Layer 3 — finalization gate
 
@@ -123,6 +137,12 @@ remain route/bundle inputs for compatibility, but cannot drive a checkpoint-back
 final audit. V2 anchors are intentionally small: each is at most 120 characters and
 their escaped receipt, including separators, is at most 240 characters.
 
+Research profiles are deterministic derivatives of the fingerprinted task and
+mode, so schema-v2 checkpoint bytes and controller receipts remain unchanged. An
+explicit profile used during checkpoint creation must agree with what the frozen
+task text derives; otherwise creation fails rather than storing an unreplayable
+choice.
+
 ## Interfaces
 
 The stable command surface is:
@@ -134,6 +154,8 @@ reportctl.py route --checkpoint FILE [matching route assertions ...]
 reportctl.py bundle --task TEXT [route fields ...]
 reportctl.py bundle --checkpoint FILE [matching route assertions ...]
 reportctl.py scaffold --mode MODE
+reportctl.py template --list [--json]
+reportctl.py template TEMPLATE_ID [--output FILE] [--force]
 reportctl.py checkpoint --task TEXT --output FILE [route fields ...]
 reportctl.py checkpoint --checkpoint FILE --output FILE [matching route assertions ...]
 reportctl.py audit --file FILE --mode MODE [--json] [--strict]
@@ -144,10 +166,12 @@ reportctl.py build-dist [--output DIR] [--force]
 ```
 
 All runtime commands use Python's standard library. Without a checkpoint, explicit
-route fields select values. With a checkpoint, concrete explicit task/mode/surface/
+route fields select values. A caller may select one `--profile`; `auto` derives it
+and `none` suppresses it. With a checkpoint, concrete explicit task/mode/surface/
 audience/module/must-show fields are equality assertions: equal values are accepted,
 `--mode auto` makes no assertion, and a conflict fails with status 2 instead of
-silently changing the saved intent. Machine output, including `list --json`, carries
+silently changing the saved intent. A profile assertion must also equal the profile
+re-derived from checkpoint task text. Machine output, including `list --json`, carries
 `schema_version`. Human bundle output is bounded by the independent `--max-chars`
 budget. A valid checkpoint with two large modules can require the caller to raise
 that budget explicitly. Checkpoint-backed audit caps the report at 1 MiB for the
@@ -182,8 +206,10 @@ Every primary mode composes the same small reporting primitives:
 - boundary: uncertainty, limitations, exceptions, or blockers;
 - action: the useful next decision or step, if one exists.
 
-Modes decide which primitives are required and their order. Display modules decide
-how to render evidence; they never change the underlying claim.
+Modes decide which primitives are required and their order. Research profiles add
+domain protocol fields and comparison boundaries. Display modules decide how to
+render evidence; surface guides adapt the artifact to the delivery medium. None of
+these layers changes the underlying claim.
 
 ## Shared Markdown scanning boundary
 

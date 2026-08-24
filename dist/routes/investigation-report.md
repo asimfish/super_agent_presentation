@@ -1,8 +1,10 @@
 # Routed reporting bundle
 
 Primary mode: `investigation-report`
+Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
+Recommended exact templates: none
 Required semantics: findings, evidence, cause, boundary, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/investigation-report.md`

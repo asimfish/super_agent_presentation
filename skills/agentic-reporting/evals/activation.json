@@ -57,6 +57,20 @@
       "tags": ["natural", "experiment"]
     },
     {
+      "id": "activate-natural-vla-research-idea",
+      "category": "natural_positive",
+      "prompt": "Present this VLA paper idea with the current research gap, hypothesis, closest alternative, decisive experiment, falsifier, and feasibility risks.",
+      "expected_activation": true,
+      "expected_route": {"mode": "research-idea", "profile": "vla", "modules": ["evidence"]},
+      "reason": "A domain research proposal needs a hypothesis-versus-evidence boundary and a decision-ready evaluation plan.",
+      "expected_behavior": [
+        "Select the research-idea spine and the VLA research profile.",
+        "Do not present proposed contributions or expected gains as verified results."
+      ],
+      "rubric_categories": ["discoverability", "correctness", "effectiveness", "efficiency"],
+      "tags": ["natural", "research-idea", "vla"]
+    },
+    {
       "id": "activate-natural-long-task-start",
       "category": "natural_positive",
       "prompt": "This will be a long multi-agent implementation. At the end, give me an implementation handoff with changed files, verification evidence, remaining risks, and next action. Preserve that reporting intent from the start.",

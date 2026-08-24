@@ -12,6 +12,13 @@ defense, while JSON uses valid escapes that preserve parsed values.
 Structured report validation rejects lone UTF-16 surrogates in every JSON key and
 string scalar before rendering.
 
+Research profiles, surface guides, and exact presentation/report assets are inert
+packaged inputs. `reportctl.py template` accepts only cataloged IDs and can print or
+copy one asset; it never renders HTML/QMD, executes JavaScript, installs a renderer,
+or fetches remote content. Registered source paths are confined to the Skill tree,
+output symlink chains are rejected, and replacement requires explicit `--force`.
+Opening or rendering the copied artifact is a separate user-authorized boundary.
+
 `scripts/install.py` is preview-first. It requires an explicit target, refuses the
 filesystem root, refuses to replace a different installed Skill, rejects target and
 instruction-file symlinks, and preserves existing host instructions unless the
@@ -158,11 +165,14 @@ gate; use a maintained sanitizing renderer for adversarial content.
 ## Checkpoint boundary
 
 A checkpoint is a local convenience file, not a credential store or authenticated
-instruction channel. Schema v2 fingerprints the complete reporting intent—task,
-mode, surface, audience, modules, and must-show anchors—with an unkeyed checksum.
-This detects accidental drift only; anyone able to rewrite the file can recompute
-it. Schema-v1 files may route or bundle for compatibility but fail closed when used
-for checkpoint-backed final audit.
+instruction channel. Schema v2 fingerprints its stored routing intent—task, mode,
+surface, audience, modules, and must-show anchors—with an unkeyed checksum. This
+detects accidental drift in those fields only; anyone able to rewrite the file can
+recompute it. A research profile is re-derived from the frozen task and mode and is
+not protected as a separate checkpoint field. Its selection can therefore change
+after a Skill/router upgrade; resume with the same reviewed Skill manifest when an
+exact overlay matters. Schema-v1 files may route or bundle for compatibility but
+fail closed when used for checkpoint-backed final audit.
 
 Checkpoint JSON reads are bounded to 2 MiB, require a regular UTF-8 file, reject
 unknown fields and user-controlled symlink components, and validate route fields.

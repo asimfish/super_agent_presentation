@@ -1,8 +1,10 @@
 # Routed reporting bundle
 
 Primary mode: `incident-update`
+Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
+Recommended exact templates: none
 Required semantics: impact, current_status, evidence, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/incident-update.md`

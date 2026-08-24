@@ -1,0 +1,86 @@
+---
+title: "{{TALK_TITLE}}"
+subtitle: "{{ONE_SENTENCE_THESIS}}"
+author: "{{AUTHORS_OR_TEAM}}"
+institute: "{{AFFILIATION}}"
+date: "{{DATE}}"
+format:
+  revealjs:
+    theme: simple
+    slide-number: c/t
+    progress: true
+    controls: true
+    center: false
+    transition: none
+    embed-resources: true
+    citations-hover: true
+    fig-cap-location: bottom
+bibliography: references.bib
+---
+
+## {{ASSERTION_ABOUT_CURRENT_LIMIT}}
+
+::: {.columns}
+::: {.column width="42%"}
+{{WHY_THE_LIMIT_MATTERS_AND_TO_WHOM}}
+:::
+::: {.column width="58%"}
+<!-- Insert one source-grounded figure with alt text and a self-contained caption. -->
+:::
+:::
+
+Source: {{SOURCE_LOCATOR}}
+
+Notes:
+State the problem in the audience's language. Do not preview unsupported results.
+
+## {{ASSERTION_ABOUT_THE_MECHANISM}}
+
+::: {.columns}
+::: {.column width="42%"}
+Mechanism: {{MECHANISM_EXPLANATION}}
+
+Hypothesis: {{UNTESTED_PART}}
+:::
+::: {.column width="58%"}
+<!-- Insert a directly labeled method or causal diagram. -->
+:::
+:::
+
+## {{ASSERTION_THAT_ESTABLISHES_COMPARABILITY}}
+
+| Method | Data/split | Selection | Runs/trials | Compute |
+|---|---|---|---:|---|
+| {{METHOD}} | {{DATA}} | {{SELECTION}} | {{RUNS}} | {{COMPUTE}} |
+
+: {{SELF_CONTAINED_PROTOCOL_CAPTION}}
+
+## {{ASSERTION_SUPPORTED_BY_THE_MAIN_RESULT}}
+
+<!-- Insert the main chart. Include units, direction, n, and uncertainty in the visible slide. -->
+
+Result locator: {{TABLE_OR_FIGURE_LOCATOR}}
+
+## {{ASSERTION_ABOUT_WHERE_THE_RESULT_DOES_NOT_HOLD}}
+
+Observed exceptions: {{EXCEPTIONS_NULL_RESULTS_OR_FAILURES}}
+
+Allowed conclusion: {{BOUNDED_INTERPRETATION}}
+
+Not established: {{UNSUPPORTED_GENERALIZATION_OR_CAUSE}}
+
+## {{FINAL_BOUNDED_TAKEAWAY}}
+
+Next evidence-producing action: {{NEXT_EXPERIMENT_OR_DECISION}}
+
+Artifact/contact: {{CONTACT_OR_ARTIFACT_LINK}}
+
+# Appendix
+
+## Protocol details
+
+<!-- Put dense settings, secondary metrics, and reproducibility pointers here. -->
+
+## Additional ablations and failure cases
+
+<!-- Preserve null results and counterevidence. -->

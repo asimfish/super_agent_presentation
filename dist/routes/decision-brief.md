@@ -1,8 +1,10 @@
 # Routed reporting bundle
 
 Primary mode: `decision-brief`
+Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
+Recommended exact templates: none
 Required semantics: decision, evidence, options, boundary, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/decision-brief.md`

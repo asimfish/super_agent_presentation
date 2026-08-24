@@ -329,6 +329,45 @@
         "next_action"
       ],
       "template": "assets/templates/risk-report.md"
+    },
+    "research-idea": {
+      "summary": "A testable research proposal that separates verified motivation from hypothesis, novelty, decisive evaluation, and kill criteria.",
+      "intent_signals": [
+        "research idea",
+        "paper idea",
+        "research proposal",
+        "propose a study",
+        "论文 idea",
+        "论文想法",
+        "研究想法",
+        "研究提案"
+      ],
+      "file": "modes/research-idea.md",
+      "signals": [
+        "hypothesis",
+        "novelty",
+        "research gap",
+        "decisive experiment",
+        "falsify",
+        "kill criterion",
+        "研究假设",
+        "创新点",
+        "研究空白",
+        "关键实验",
+        "证伪",
+        "终止条件"
+      ],
+      "default_modules": [
+        "evidence"
+      ],
+      "required_semantics": [
+        "question",
+        "method",
+        "evidence",
+        "boundary",
+        "next_action"
+      ],
+      "template": "assets/templates/research-idea.md"
     }
   },
   "modules": {
@@ -427,6 +466,145 @@
         "主张证据映射",
         "文献比较"
       ]
+    }
+  },
+  "profiles": {
+    "reinforcement-learning": {
+      "summary": "RL protocol, run accounting, tuning parity, interval estimates, learning curves, and aggregate evaluation.",
+      "file": "profiles/reinforcement-learning.md",
+      "signals": [
+        "reinforcement learning",
+        "deep rl",
+        "offline rl",
+        "online rl",
+        "policy learning",
+        "mean return",
+        "episode return",
+        "environment steps",
+        "强化学习",
+        "离线强化学习",
+        "在线强化学习",
+        "策略学习",
+        "回报",
+        "环境步数"
+      ]
+    },
+    "embodied-ai": {
+      "summary": "Embodiment, sensors/actions, sim-versus-real protocols, success definitions, interventions, generalization, and failure taxonomy.",
+      "file": "profiles/embodied-ai.md",
+      "signals": [
+        "embodied ai",
+        "robot manipulation",
+        "robot navigation",
+        "mobile manipulation",
+        "real robot",
+        "sim2real",
+        "habitat",
+        "calvin",
+        "具身智能",
+        "机器人操作",
+        "机器人导航",
+        "真实机器人",
+        "仿真到真实"
+      ]
+    },
+    "world-models": {
+      "summary": "World-model roles, data/model cards, open-loop prediction, closed-loop control, scaling, transfer, and exploitation boundaries.",
+      "file": "profiles/world-models.md",
+      "signals": [
+        "world model",
+        "learned dynamics",
+        "latent dynamics",
+        "model-based reinforcement learning",
+        "imagination rollout",
+        "dreamerv3",
+        "td-mpc2",
+        "世界模型",
+        "潜在动力学",
+        "基于模型的强化学习",
+        "想象轨迹"
+      ]
+    },
+    "vla": {
+      "summary": "VLA data mixtures, morphology and action interfaces, adaptation regimes, rollout accounting, generalization, latency, and safety.",
+      "file": "profiles/vla.md",
+      "signals": [
+        "vision-language-action",
+        "vision language action",
+        "vla",
+        "openvla",
+        "rt-x",
+        "rt-2",
+        "open x-embodiment",
+        "action tokenizer",
+        "视觉语言动作",
+        "动作分词",
+        "跨具身"
+      ]
+    }
+  },
+  "surface_guides": {
+    "slide": {
+      "summary": "Assertion-evidence academic talks for paper, progress, experiment, and idea presentations.",
+      "file": "surfaces/slide.md"
+    }
+  },
+  "templates": {
+    "experiment-report-detailed": {
+      "summary": "Detailed general experiment report with claim map, protocol, metrics, uncertainty, results, and reproducibility pointers.",
+      "path": "assets/templates/experiment-report-detailed.md",
+      "modes": ["experiment-report"],
+      "profiles": [],
+      "surfaces": ["chat", "markdown", "document"]
+    },
+    "research-idea": {
+      "summary": "Paper/research idea brief with closest-work comparison, decisive experiment, falsifier, risks, and evaluation gates.",
+      "path": "assets/templates/research-idea.md",
+      "modes": ["research-idea"],
+      "profiles": [],
+      "surfaces": ["chat", "markdown", "document"]
+    },
+    "rl-experiment-report": {
+      "summary": "RL experiment report with environment protocol card, run/tuning accounting, aggregate statistics, and failure tasks.",
+      "path": "assets/templates/rl-experiment-report.md",
+      "modes": ["experiment-report"],
+      "profiles": ["reinforcement-learning"],
+      "surfaces": ["chat", "markdown", "document"]
+    },
+    "embodied-experiment-report": {
+      "summary": "Embodied experiment report for sim/real protocols, success rules, generalization axes, interventions, and failure taxonomy.",
+      "path": "assets/templates/embodied-experiment-report.md",
+      "modes": ["experiment-report"],
+      "profiles": ["embodied-ai"],
+      "surfaces": ["chat", "markdown", "document"]
+    },
+    "world-model-experiment-report": {
+      "summary": "World-model report separating prediction, control, scaling, transfer, and failure evidence.",
+      "path": "assets/templates/world-model-experiment-report.md",
+      "modes": ["experiment-report"],
+      "profiles": ["world-models"],
+      "surfaces": ["chat", "markdown", "document"]
+    },
+    "vla-experiment-report": {
+      "summary": "VLA report covering dataset mixtures, action interfaces, rollout protocols, generalization, deployment, and safety.",
+      "path": "assets/templates/vla-experiment-report.md",
+      "modes": ["experiment-report"],
+      "profiles": ["vla"],
+      "surfaces": ["chat", "markdown", "document"]
+    },
+    "academic-talk-html": {
+      "summary": "Dependency-free, responsive, printable HTML/PPT-style academic talk with accessible assertion-evidence layouts.",
+      "path": "assets/presentations/academic-talk.html",
+      "modes": ["academic-synthesis", "experiment-report", "research-idea", "status-update"],
+      "profiles": [],
+      "surfaces": ["slide"]
+    },
+    "academic-talk-revealjs": {
+      "summary": "Quarto Reveal.js academic-talk source with citations, notes, self-contained HTML output, and appendix structure.",
+      "path": "assets/presentations/academic-talk-revealjs.qmd",
+      "modes": ["academic-synthesis", "experiment-report", "research-idea", "status-update"],
+      "profiles": [],
+      "surfaces": ["slide"]
     }
   },
   "surfaces": [

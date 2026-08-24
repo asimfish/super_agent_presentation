@@ -315,6 +315,11 @@ raise SystemExit(1)
         )
         self.assertIn("task-start", long_start["tags"])
         self.assertTrue(any("checkpoint" in item for item in long_start["expected_behavior"]))
+        vla_idea = next(
+            case for case in data["cases"]
+            if case["id"] == "activate-natural-vla-research-idea"
+        )
+        self.assertEqual(vla_idea["expected_route"]["profile"], "vla")
 
     def test_list_exposes_all_seven_scenarios_without_checks(self) -> None:
         completed = self.run_cli("list", "--suite", "harness-smoke", "--json")
@@ -379,9 +384,9 @@ raise SystemExit(1)
         self.assertEqual(report["fixture_evaluations"], 14)
         self.assertEqual(report["expectations_met"], 14)
         self.assertTrue(report["activation_contract_valid"])
-        self.assertEqual(report["activation_case_count"], 8)
-        self.assertEqual(report["positive_route_proxy_expectations"], 5)
-        self.assertEqual(report["positive_route_proxy_expectations_met"], 5)
+        self.assertEqual(report["activation_case_count"], 9)
+        self.assertEqual(report["positive_route_proxy_expectations"], 6)
+        self.assertEqual(report["positive_route_proxy_expectations_met"], 6)
         self.assertFalse(report["host_activation_observed"])
         self.assertFalse(report["activation_effectiveness_claim"])
         self.assertFalse(report["effectiveness_claim"])

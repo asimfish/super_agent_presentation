@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TALK_TITLE}}</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #596579;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --accent: #9b3d2f;
+      --accent-soft: #f3e6e2;
+      --line: #d8dce3;
+      --good: #176b50;
+      --warn: #8a5b00;
+      --shadow: 0 1rem 3rem rgba(23, 32, 51, 0.12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #e9e7e2;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-snap-type: y mandatory; }
+    body { margin: 0; }
+    a { color: var(--accent); }
+    .deck { outline: none; }
+    .slide {
+      min-height: 100vh;
+      scroll-snap-align: start;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: clamp(1rem, 2.4vw, 2rem);
+      padding: clamp(2rem, 5vw, 5rem);
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+    .slide__eyebrow {
+      margin: 0 0 0.75rem;
+      color: var(--accent);
+      font-size: clamp(0.82rem, 1.2vw, 1rem);
+      font-weight: 750;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    h1, h2 { max-width: 22ch; margin: 0; line-height: 1.04; overflow-wrap: anywhere; text-wrap: balance; }
+    h1 { font-size: clamp(3rem, 7vw, 6.8rem); }
+    h2 { font-size: clamp(2.1rem, 4.4vw, 4.5rem); }
+    h3 { font-size: clamp(1.1rem, 1.8vw, 1.55rem); }
+    p, li, th, td { font-size: clamp(1rem, 1.55vw, 1.35rem); line-height: 1.45; }
+    .lede { max-width: 58ch; color: var(--muted); font-size: clamp(1.25rem, 2vw, 1.8rem); }
+    .assertion { max-width: 56ch; font-size: clamp(1.35rem, 2.2vw, 2rem); }
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: clamp(1.25rem, 3vw, 3rem); align-items: center; }
+    .grid-2 > * { min-width: 0; }
+    figure { margin: 0; }
+    .evidence {
+      min-height: 48vh;
+      display: grid;
+      place-items: center;
+      padding: clamp(1.2rem, 2.5vw, 2.5rem);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+    }
+    .evidence img, .evidence svg { max-width: 100%; max-height: 58vh; }
+    .evidence-placeholder { max-width: 38ch; color: var(--muted); text-align: center; }
+    .metric-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    .metric { padding: 1.25rem; background: var(--panel); border: 1px solid var(--line); border-radius: 0.8rem; }
+    .metric strong { display: block; font-size: clamp(1.8rem, 4vw, 3.8rem); font-variant-numeric: tabular-nums; }
+    .metric span { color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; background: var(--panel); }
+    caption { margin-bottom: 0.6rem; color: var(--muted); text-align: left; }
+    th, td { padding: 0.75rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { font-weight: 750; }
+    .boundary { padding: 1rem 1.25rem; background: var(--accent-soft); border-radius: 0.75rem; }
+    .slide__footer { display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: 0.9rem; }
+    .source { max-width: 75ch; }
+    .progress { position: fixed; inset: auto 0 0 0; height: 0.3rem; background: var(--line); z-index: 3; }
+    .progress > span { display: block; width: 0; height: 100%; background: var(--accent); transition: width 150ms ease; }
+    .counter { position: fixed; right: 1rem; top: 1rem; z-index: 3; padding: 0.45rem 0.65rem; color: var(--muted); background: rgba(251, 250, 247, 0.9); border-radius: 0.45rem; font-size: 0.85rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 760px) {
+      html { scroll-snap-type: none; }
+      .grid-2, .metric-row { grid-template-columns: 1fr; }
+      .slide { min-height: auto; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .progress > span { transition: none; }
+    }
+
+    @media print {
+      @page { size: 16in 9in; margin: 0; }
+      :root { background: white; }
+      .slide { min-height: 9in; height: 9in; width: 16in; break-after: page; overflow: hidden; }
+      .slide:last-child { break-after: auto; }
+      .grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+      .slide--results .grid-2 { grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr); }
+      .slide--results .metric-row { grid-template-columns: 1fr; }
+      .slide--results h2 { max-width: 30ch; font-size: 3.2rem; }
+      .slide--results .metric { padding: 0.8rem 1rem; }
+      .progress, .counter { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="counter" aria-hidden="true"><span id="current">1</span>/<span id="total">7</span></div>
+  <main class="deck" id="deck" tabindex="0" aria-label="Academic presentation">
+    <section class="slide" id="slide-1" aria-labelledby="title-1">
+      <header>
+        <p class="slide__eyebrow">{{VENUE_OR_MEETING}} · {{DATE}}</p>
+        <h1 id="title-1">{{TALK_TITLE}}</h1>
+        <p class="lede">{{ONE_SENTENCE_THESIS}}</p>
+      </header>
+      <div></div>
+      <footer class="slide__footer"><span>{{AUTHORS_OR_TEAM}}</span><span>{{AFFILIATION}}</span></footer>
+    </section>
+
+    <section class="slide" id="slide-2" aria-labelledby="title-2">
+      <header>
+        <p class="slide__eyebrow">Problem</p>
+        <h2 id="title-2">{{CURRENT_LIMIT_ASSERTION}}</h2>
+      </header>
+      <div class="grid-2">
+        <p class="assertion">{{WHY_THE_LIMIT_MATTERS_AND_TO_WHOM}}</p>
+        <figure class="evidence">
+          <div class="evidence-placeholder" role="img" aria-label="{{ALT_TEXT_FOR_PROBLEM_EVIDENCE}}">Replace with one source-grounded figure, diagram, or compact table.</div>
+        </figure>
+      </div>
+      <footer class="slide__footer"><span class="source">Source: {{SOURCE_LOCATOR}}</span><span>2</span></footer>
+    </section>
+
+    <section class="slide" id="slide-3" aria-labelledby="title-3">
+      <header>
+        <p class="slide__eyebrow">Idea</p>
+        <h2 id="title-3">{{MECHANISM_ASSERTION}}</h2>
+      </header>
+      <div class="grid-2">
+        <div><h3>Mechanism</h3><p>{{MECHANISM_EXPLANATION}}</p><p class="boundary">Hypothesis: {{UNTESTED_PART}}</p></div>
+        <figure class="evidence"><div class="evidence-placeholder" role="img" aria-label="{{ALT_TEXT_FOR_METHOD_DIAGRAM}}">Replace with a method or causal diagram with directly labeled stages.</div></figure>
+      </div>
+      <footer class="slide__footer"><span class="source">Evidence premise: {{SOURCE_OR_PRELIMINARY_EVIDENCE}}</span><span>3</span></footer>
+    </section>
+
+    <section class="slide" id="slide-4" aria-labelledby="title-4">
+      <header>
+        <p class="slide__eyebrow">Protocol</p>
+        <h2 id="title-4">{{COMPARABILITY_ASSERTION}}</h2>
+      </header>
+      <div>
+        <table>
+          <caption>{{SELF_CONTAINED_PROTOCOL_CAPTION}}</caption>
+          <thead><tr><th>Method</th><th>Data/split</th><th>Selection</th><th>Runs/trials</th><th>Compute</th></tr></thead>
+          <tbody><tr><td>{{METHOD}}</td><td>{{DATA}}</td><td>{{SELECTION}}</td><td>{{RUNS}}</td><td>{{COMPUTE}}</td></tr></tbody>
+        </table>
+      </div>
+      <footer class="slide__footer"><span class="source">Protocol: {{PROTOCOL_LOCATOR}}</span><span>4</span></footer>
+    </section>
+
+    <section class="slide slide--results" id="slide-5" aria-labelledby="title-5">
+      <header>
+        <p class="slide__eyebrow">Decisive evidence</p>
+        <h2 id="title-5">{{MAIN_RESULT_ASSERTION}}</h2>
+      </header>
+      <div class="grid-2">
+        <figure class="evidence"><div class="evidence-placeholder" role="img" aria-label="{{ALT_TEXT_FOR_MAIN_RESULT}}">Replace with the main chart. Show units, metric direction, sample size, and uncertainty.</div></figure>
+        <div class="metric-row">
+          <div class="metric"><strong>{{VALUE_1}}</strong><span>{{METRIC_1_WITH_UNIT_DIRECTION_AND_INTERVAL}}</span></div>
+          <div class="metric"><strong>{{VALUE_2}}</strong><span>{{METRIC_2_WITH_UNIT_DIRECTION_AND_INTERVAL}}</span></div>
+          <div class="metric"><strong>{{N}}</strong><span>{{INDEPENDENT_RUNS_OR_TRIALS}}</span></div>
+        </div>
+      </div>
+      <footer class="slide__footer"><span class="source">Result: {{TABLE_OR_FIGURE_LOCATOR}}</span><span>5</span></footer>
+    </section>
+
+    <section class="slide" id="slide-6" aria-labelledby="title-6">
+      <header>
+        <p class="slide__eyebrow">Boundary</p>
+        <h2 id="title-6">{{BOUNDARY_ASSERTION}}</h2>
+      </header>
+      <div class="grid-2">
+        <div><h3>Observed exceptions</h3><p>{{EXCEPTIONS_NULL_RESULTS_OR_FAILURES}}</p></div>
+        <div class="boundary"><h3>Allowed conclusion</h3><p>{{BOUNDED_INTERPRETATION}}</p><h3>Not established</h3><p>{{UNSUPPORTED_GENERALIZATION_OR_CAUSE}}</p></div>
+      </div>
+      <footer class="slide__footer"><span class="source">Coverage: {{TESTED_SCOPE}}</span><span>6</span></footer>
+    </section>
+
+    <section class="slide" id="slide-7" aria-labelledby="title-7">
+      <header>
+        <p class="slide__eyebrow">Takeaway</p>
+        <h2 id="title-7">{{FINAL_TAKEAWAY}}</h2>
+      </header>
+      <div><p class="lede">Next evidence-producing action: {{NEXT_EXPERIMENT_OR_DECISION}}</p></div>
+      <footer class="slide__footer"><span>{{CONTACT_OR_ARTIFACT_LINK}}</span><span>7</span></footer>
+    </section>
+  </main>
+  <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+  <p class="sr-only" aria-live="polite" id="announcement"></p>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const current = document.getElementById('current');
+      const total = document.getElementById('total');
+      const bar = document.getElementById('progress-bar');
+      const announcement = document.getElementById('announcement');
+      total.textContent = String(slides.length);
+
+      const activeIndex = () => {
+        const midpoint = window.scrollY + window.innerHeight / 2;
+        let best = 0;
+        slides.forEach((slide, index) => {
+          if (slide.offsetTop <= midpoint) best = index;
+        });
+        return best;
+      };
+
+      const update = () => {
+        const index = activeIndex();
+        current.textContent = String(index + 1);
+        bar.style.width = `${((index + 1) / slides.length) * 100}%`;
+      };
+
+      const go = (index) => {
+        const bounded = Math.max(0, Math.min(slides.length - 1, index));
+        slides[bounded].scrollIntoView({behavior: 'smooth', block: 'start'});
+        announcement.textContent = `Slide ${bounded + 1}: ${slides[bounded].querySelector('h1, h2').textContent}`;
+      };
+
+      window.addEventListener('scroll', update, {passive: true});
+      window.addEventListener('keydown', (event) => {
+        const index = activeIndex();
+        if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); go(index + 1); }
+        if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key)) { event.preventDefault(); go(index - 1); }
+        if (event.key === 'Home') { event.preventDefault(); go(0); }
+        if (event.key === 'End') { event.preventDefault(); go(slides.length - 1); }
+      });
+      update();
+    })();
+  </script>
+</body>
+</html>
