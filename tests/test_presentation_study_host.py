@@ -13,6 +13,7 @@ import tempfile
 import textwrap
 import time
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 from types import ModuleType
 from unittest.mock import patch
@@ -194,6 +195,139 @@ def study_plan(
 
 
 class PresentationStudyHostTests(unittest.TestCase):
+    def test_skill_tree_receipt_preserves_canonical_manifest_semantics(self) -> None:
+        module = load_study_module()
+        with tempfile.TemporaryDirectory() as temporary:
+            skill_root = Path(temporary).resolve() / "agentic-reporting"
+            assets = skill_root / "assets"
+            cache = skill_root / "__pycache__"
+            assets.mkdir(parents=True)
+            cache.mkdir()
+            skill_file = skill_root / "SKILL.md"
+            asset_file = assets / "example.txt"
+            skill_file.write_text("contract\n", encoding="utf-8")
+            asset_file.write_text("example\n", encoding="utf-8")
+            (skill_root / ".DS_Store").write_bytes(b"ignored")
+            (skill_root / "ignored.pyc").write_bytes(b"ignored")
+            (cache / "nested.pyc").write_bytes(b"ignored")
+
+            records = [
+                {
+                    "path": "SKILL.md",
+                    "kind": "file",
+                    "bytes": skill_file.stat().st_size,
+                    "sha256": sha256(skill_file),
+                },
+                {"path": "assets", "kind": "directory"},
+                {
+                    "path": "assets/example.txt",
+                    "kind": "file",
+                    "bytes": asset_file.stat().st_size,
+                    "sha256": sha256(asset_file),
+                },
+            ]
+            canonical = json.dumps(
+                records,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+
+            self.assertEqual(
+                module._skill_tree_receipt(skill_root),
+                {
+                    "path": ".agents/skills/agentic-reporting",
+                    "entry_count": 3,
+                    "total_bytes": skill_file.stat().st_size + asset_file.stat().st_size,
+                    "manifest_sha256": hashlib.sha256(
+                        canonical.encode("utf-8")
+                    ).hexdigest(),
+                },
+            )
+
+    def test_skill_tree_receipt_stops_scanning_at_entry_limit(self) -> None:
+        module = load_study_module()
+        self.assertEqual(module.MAX_SKILL_TREE_ENTRIES, 4096)
+        with tempfile.TemporaryDirectory() as temporary:
+            skill_root = Path(temporary).resolve() / "agentic-reporting"
+            skill_root.mkdir()
+            for index in range(6):
+                (skill_root / f"ignored-{index}.pyc").touch()
+
+            yielded = 0
+            real_scandir = os.scandir
+
+            @contextmanager
+            def tracked_scandir(path: object):
+                nonlocal yielded
+                with real_scandir(path) as entries:
+                    def tracked_entries():
+                        nonlocal yielded
+                        for entry in entries:
+                            yielded += 1
+                            yield entry
+
+                    yield tracked_entries()
+
+            with patch.object(module, "MAX_SKILL_TREE_ENTRIES", 3), patch.object(
+                module.os,
+                "scandir",
+                side_effect=tracked_scandir,
+            ):
+                with self.assertRaisesRegex(module.StudyError, "exceeds 3 entries"):
+                    module._skill_tree_receipt(skill_root)
+
+            self.assertEqual(yielded, 4)
+
+    def test_skill_tree_receipt_prunes_pycache_subtrees(self) -> None:
+        module = load_study_module()
+        with tempfile.TemporaryDirectory() as temporary:
+            skill_root = Path(temporary).resolve() / "agentic-reporting"
+            cache = skill_root / "__pycache__"
+            cache.mkdir(parents=True)
+            (skill_root / "SKILL.md").write_text("contract\n", encoding="utf-8")
+            for index in range(6):
+                (cache / f"nested-{index}.pyc").touch()
+
+            with patch.object(module, "MAX_SKILL_TREE_ENTRIES", 2):
+                receipt = module._skill_tree_receipt(skill_root)
+
+            self.assertEqual(receipt["entry_count"], 1)
+
+    def test_skill_tree_receipt_rejects_ignored_symlinks_and_nonregulars(self) -> None:
+        module = load_study_module()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            for kind in ("symlink", "fifo"):
+                with self.subTest(kind=kind):
+                    skill_root = root / kind
+                    skill_root.mkdir()
+                    ignored = skill_root / "ignored.pyc"
+                    if kind == "symlink":
+                        target = skill_root / "target.txt"
+                        target.write_text("target\n", encoding="utf-8")
+                        ignored.symlink_to(target)
+                        expected = "may not contain symlinks"
+                    else:
+                        os.mkfifo(ignored)
+                        expected = "unsupported entry"
+                    with self.assertRaisesRegex(module.StudyError, expected):
+                        module._skill_tree_receipt(skill_root)
+
+    def test_skill_tree_receipt_rejects_oversize_file_before_hashing(self) -> None:
+        module = load_study_module()
+        with tempfile.TemporaryDirectory() as temporary:
+            skill_root = Path(temporary).resolve() / "agentic-reporting"
+            skill_root.mkdir()
+            (skill_root / "large.txt").write_bytes(b"1234")
+            with patch.object(module, "MAX_SKILL_TREE_BYTES", 3), patch.object(
+                module,
+                "_sha256",
+            ) as digest:
+                with self.assertRaisesRegex(module.StudyError, "exceeds 3 bytes"):
+                    module._skill_tree_receipt(skill_root)
+            digest.assert_not_called()
+
     def test_host_timeout_starts_even_when_child_never_reads_large_stdin(self) -> None:
         module = load_study_module()
         with tempfile.TemporaryDirectory() as temporary:

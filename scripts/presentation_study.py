@@ -1358,37 +1358,60 @@ def _skill_tree_receipt(root: Path) -> dict[str, Any]:
         raise StudyError(f"Installed Skill must be a regular directory: {root}")
     records: list[dict[str, Any]] = []
     total_bytes = 0
+    scanned_entries = 0
+    pending_directories = [root]
     try:
-        paths = sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix())
-        for path in paths:
-            relative = path.relative_to(root)
-            if "__pycache__" in relative.parts or path.suffix == ".pyc" or path.name == ".DS_Store":
-                continue
-            if len(records) >= MAX_SKILL_TREE_ENTRIES:
-                raise StudyError(f"Installed Skill exceeds {MAX_SKILL_TREE_ENTRIES} entries")
-            if path.is_symlink():
-                raise StudyError(f"Installed Skill may not contain symlinks: {path}")
-            if path.is_dir():
-                records.append({"path": relative.as_posix(), "kind": "directory"})
-                continue
-            if not path.is_file():
-                raise StudyError(f"Installed Skill contains an unsupported entry: {path}")
-            size = path.stat().st_size
-            total_bytes += size
-            if total_bytes > MAX_SKILL_TREE_BYTES:
-                raise StudyError(f"Installed Skill exceeds {MAX_SKILL_TREE_BYTES} bytes")
-            records.append(
-                {
-                    "path": relative.as_posix(),
-                    "kind": "file",
-                    "bytes": size,
-                    "sha256": _sha256(path),
-                }
-            )
+        while pending_directories:
+            directory = pending_directories.pop()
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    # Count ignored entries too, so cache-like names cannot evade
+                    # the traversal resource bound.
+                    scanned_entries += 1
+                    if scanned_entries > MAX_SKILL_TREE_ENTRIES:
+                        raise StudyError(
+                            f"Installed Skill exceeds {MAX_SKILL_TREE_ENTRIES} entries"
+                        )
+                    path = Path(entry.path)
+                    relative = path.relative_to(root)
+                    metadata = entry.stat(follow_symlinks=False)
+                    if stat.S_ISLNK(metadata.st_mode):
+                        raise StudyError(f"Installed Skill may not contain symlinks: {path}")
+                    is_directory = stat.S_ISDIR(metadata.st_mode)
+                    is_file = stat.S_ISREG(metadata.st_mode)
+                    if not is_directory and not is_file:
+                        raise StudyError(f"Installed Skill contains an unsupported entry: {path}")
+                    inside_pycache = "__pycache__" in relative.parts
+                    if is_directory and not inside_pycache:
+                        pending_directories.append(path)
+                    if (
+                        inside_pycache
+                        or relative.suffix == ".pyc"
+                        or relative.name == ".DS_Store"
+                    ):
+                        continue
+                    if is_directory:
+                        records.append({"path": relative.as_posix(), "kind": "directory"})
+                        continue
+                    size = metadata.st_size
+                    total_bytes += size
+                    if total_bytes > MAX_SKILL_TREE_BYTES:
+                        raise StudyError(
+                            f"Installed Skill exceeds {MAX_SKILL_TREE_BYTES} bytes"
+                        )
+                    records.append(
+                        {
+                            "path": relative.as_posix(),
+                            "kind": "file",
+                            "bytes": size,
+                            "sha256": _sha256(path),
+                        }
+                    )
     except StudyError:
         raise
-    except OSError as exc:
+    except (OSError, RuntimeError) as exc:
         raise StudyError(f"Cannot inspect installed Skill {root}: {exc}") from exc
+    records.sort(key=lambda record: record["path"])
     canonical = json.dumps(records, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
     return {
         "path": ".agents/skills/agentic-reporting",

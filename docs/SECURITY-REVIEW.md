@@ -277,7 +277,7 @@
   depth/numbers, unhashable enum/list inputs without tracebacks, caller/stored
   generation-schema separation, Cartesian-matrix rejection, exact release
   thresholds, visual-denominator fail-closed behavior, unique public workspaces,
-  and pilot
+  bounded installed-Skill traversal with ignored-entry accounting, and pilot
   `insufficient_evidence` output. A denied-path test rejects manual records that
   impersonate host telemetry; post-import manual-record drift and host-binding drift
   both invalidate the generation matrix.
@@ -293,7 +293,8 @@ tests cannot silently skip; it is not copied into the Skill. The portable schema
 a structural and conditional preflight, while `validate-spec` remains authoritative
 for complete Unicode printability, identifier uniqueness, cross-record references,
 and catalog-derived semantics that JSON Schema cannot fully express. CI actions are
-pinned to exact Git commit identities rather than movable tags. Real-host evaluation
+pinned to exact Git commit identities rather than movable tags; the current
+`checkout` v7.0.1 and `setup-python` v7.0.0 pins both use Node 24. Real-host evaluation
 additionally depends on a separately installed, reviewed, SHA-pinned Codex binary
 and its remote service; that pin does not establish an immutable model revision or
 credential boundary. The Skill has an

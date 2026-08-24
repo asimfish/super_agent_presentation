@@ -1,5 +1,36 @@
 # Performance evidence
 
+## Perf: installed-Skill receipt traversal — 2026-08-24
+
+**Bottleneck.** The v0.3.0 receipt first materialized and globally sorted every
+`Path.rglob` result. Its 4,096-entry check counted only manifest records, so 20,000
+ignored top-level `.pyc` files were all allocated and sorted before the tree was
+accepted as a one-record manifest.
+
+**Change.** The receipt now walks iteratively with `os.scandir`, counts every
+inspected entry toward the 4,096-entry resource cap, prunes `__pycache__` subtrees,
+and sorts only the bounded accepted manifest. Type checks precede ignore rules, so
+ignored-looking symlinks or nonregular entries still fail closed. The 48-entry
+actual Skill tree retained the v0.3.0 manifest digest
+`abaa134681e6180ef59cc70ecf35332a5fa9cd50dc0dfcea7d0a7860e4d45749`.
+
+**Workload.** One `SKILL.md` plus 20,000 ignored top-level `.pyc` files; file
+creation was outside the measurement. Five timed runs followed one warm-up on
+Python 3.9.6 and an Apple M2 Max. Peak values are one additional `tracemalloc` run,
+not process RSS; module import and workload-tree creation completed before tracing
+started.
+
+| Implementation | Result | Median ± SD | Peak traced memory |
+|---|---|---:|---:|
+| v0.3.0 full `rglob` + sort | accepted after scanning all 20,001 entries | 0.245996 ± 0.003955 s | 14,370,898 B |
+| bounded `scandir` | rejected after entry 4,097 | 0.047288 ± 0.000225 s | 592,474 B |
+
+This comparison demonstrates the intended rejection bound, not a universal
+throughput speedup: the hardened version deliberately changes the oversized-tree
+outcome from acceptance to rejection. Focused tests additionally assert exact
+`limit + 1` consumption, canonical digest compatibility, cache pruning, type
+rejection before ignore, and byte-limit rejection before hashing.
+
 ## Perf: malformed Markdown image scan — 2026-08-24
 
 **Bottleneck.** The original inline-image regular expression restarted from every

@@ -31,6 +31,11 @@ provider output-token or monetary cap.
 The frozen host plan includes the complete argv, transcript format, and adapter
 source SHA-256. `host-run` rejects any rebuild drift before execution, and record
 validation checks the completed receipt against those frozen identities.
+Installed-Skill receipts traverse with iterative `os.scandir`: every inspected
+entry, including ignored top-level cache files, consumes the 4,096-entry budget;
+`__pycache__` subtrees are pruned; symlinks and nonregular entries are rejected
+before ignore rules; and only the bounded accepted manifest is sorted. Regular-file
+content remains capped at 32 MiB before the receipt can be accepted.
 
 Only `host-run` can create the controller-owned binding from a frozen host plan and
 completed execution receipt to the full stored record. Ordinary `import-output`

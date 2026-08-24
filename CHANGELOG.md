@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1 — 2026-08-24
+
+- Replaced full-tree `Path.rglob` materialization in installed-Skill receipts with
+  iterative `os.scandir` traversal. The 4,096-entry resource cap now includes
+  ignored top-level entries, `__pycache__` subtrees are pruned, and ignored names
+  cannot bypass symlink or nonregular-file rejection; accepted manifests retain
+  their canonical path ordering and digest.
+- Updated the immutable GitHub Actions pins to official Node 24 releases:
+  `actions/checkout` v7.0.1 and `actions/setup-python` v7.0.0, while preserving the
+  Python 3.9/3.12/3.14 matrix.
+
 ## 0.3.0 — 2026-08-24
 
 - Added a standard-library-only, preregistered study controller with immutable plan,

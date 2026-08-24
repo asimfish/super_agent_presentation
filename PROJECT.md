@@ -79,13 +79,16 @@ long work sessions without keeping a large reporting manual in active context.
 | Caller labels an unpinned provider model as a revision | Apparent reproducibility without immutable model identity | Require verifiable multiple revisions for public eligibility and disclose unpinned pilot aliases |
 | Transcript text is mistaken for checkpoint proof | Echoes or commands could overstate long-context compliance | Credit only successful exact commands; require a separate controller-side receipt for public compaction evidence |
 | Repeats reuse one mutable worktree | Cross-run state contaminates nominally independent samples | Require a unique controller-locked workspace per public generation unit plus an external fresh-state receipt |
+| An installed Skill tree contains excessive ignored entries | Receipt planning materializes or scans attacker-influenced filesystem state without a useful bound | Count every inspected entry, prune `__pycache__`, accept at most 4,096, reject when entry 4,097 is observed, and sort only the bounded canonical manifest |
 
 ## Current frontier
 
-The `v0.3.0` study mechanics and one-pair real-host pilot are complete at the
-integration-evidence level. The pilot exposed a redundant experiment conclusion
-module, now removed from automatic routing with a bundle-size regression. The next
-frontier is M6: an externally isolated, preregistered, blind, private-heldout study.
+The `v0.3.1` hardening patch bounds installed-Skill receipt traversal and moves the
+immutable CI action pins to Node 24. The v0.3 study mechanics and one-pair real-host
+pilot remain complete at the integration-evidence level. The pilot exposed a
+redundant experiment conclusion module, now removed from automatic routing with a
+bundle-size regression. The next frontier is M6: an externally isolated,
+preregistered, blind, private-heldout study.
 The current Codex path still lacks both an enforced output cap and a verified
 checkpoint-artifact receipt, so no general effectiveness or efficiency claim is
 currently eligible.
