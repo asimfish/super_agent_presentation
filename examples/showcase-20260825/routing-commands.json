@@ -1,0 +1,370 @@
+[
+  {
+    "id": "concise-answer",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 concise-answer 汇报一个 synthetic 本地缓存开关是否可启用的直接答案与最小边界\" --mode concise-answer --profile none --surface markdown --audience 研究负责人 --module conclusions --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "concise-answer",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 concise-answer 汇报一个 synthetic 本地缓存开关是否可启用的直接答案与最小边界\" --mode concise-answer --profile none --surface markdown --audience 研究负责人 --module conclusions --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/concise-answer.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/concise-answer.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "concise-answer",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/concise-answer.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 10633
+  },
+  {
+    "id": "implementation-handoff",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 implementation-handoff 汇报一个 synthetic CSV 导出改动的局部交付、验证和剩余项\" --mode implementation-handoff --profile none --surface markdown --audience 研究负责人 --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "implementation-handoff",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 implementation-handoff 汇报一个 synthetic CSV 导出改动的局部交付、验证和剩余项\" --mode implementation-handoff --profile none --surface markdown --audience 研究负责人 --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/implementation-handoff.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/implementation-handoff.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "implementation-handoff",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/implementation-handoff.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 10933
+  },
+  {
+    "id": "status-update",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 status-update 汇报一个 synthetic 数据迁移项目的里程碑、阻塞和下一前沿\" --mode status-update --profile none --surface markdown --audience 研究负责人 --module tables --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "status-update",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 status-update 汇报一个 synthetic 数据迁移项目的里程碑、阻塞和下一前沿\" --mode status-update --profile none --surface markdown --audience 研究负责人 --module tables --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/status-update.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/status-update.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "status-update",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/status-update.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 10550
+  },
+  {
+    "id": "investigation-report",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 investigation-report 汇报一个 synthetic 推理延迟问题的症状、事实、假设、根因和未决事项\" --mode investigation-report --profile none --surface markdown --audience 研究负责人 --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "investigation-report",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 investigation-report 汇报一个 synthetic 推理延迟问题的症状、事实、假设、根因和未决事项\" --mode investigation-report --profile none --surface markdown --audience 研究负责人 --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/investigation-report.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/investigation-report.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "investigation-report",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/investigation-report.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 10899
+  },
+  {
+    "id": "experiment-report",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 experiment-report 汇报一个 synthetic 压缩实验的协议、指标、独立运行、不确定性和允许解释\" --mode experiment-report --profile none --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "experiment-report",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 experiment-report 汇报一个 synthetic 压缩实验的协议、指标、独立运行、不确定性和允许解释\" --mode experiment-report --profile none --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/experiment-report.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/experiment-report.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "experiment-report",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/experiment-report.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 14694
+  },
+  {
+    "id": "decision-brief",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 decision-brief 比较 synthetic 批处理方案的选项、标准、权衡、推荐和复审触发器\" --mode decision-brief --profile none --surface markdown --audience 研究负责人 --module tables --module conclusions --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "decision-brief",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 decision-brief 比较 synthetic 批处理方案的选项、标准、权衡、推荐和复审触发器\" --mode decision-brief --profile none --surface markdown --audience 研究负责人 --module tables --module conclusions --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/decision-brief.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/decision-brief.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "decision-brief",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/decision-brief.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 14299
+  },
+  {
+    "id": "academic-synthesis",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 academic-synthesis 综合仅存在于 synthetic 证据包的 S1 与 S2，明确没有核验真实论文\" --mode academic-synthesis --profile none --surface markdown --audience 研究负责人 --module academic-display --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "academic-synthesis",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 academic-synthesis 综合仅存在于 synthetic 证据包的 S1 与 S2，明确没有核验真实论文\" --mode academic-synthesis --profile none --surface markdown --audience 研究负责人 --module academic-display --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/academic-synthesis.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/academic-synthesis.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "academic-synthesis",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/academic-synthesis.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 15172
+  },
+  {
+    "id": "research-idea",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 research-idea 提出一个 synthetic 不确定性感知控制构想，含可证伪预测、最小实验和失败边界\" --mode research-idea --profile none --surface markdown --audience 研究负责人 --module academic-display --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "research-idea",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 research-idea 提出一个 synthetic 不确定性感知控制构想，含可证伪预测、最小实验和失败边界\" --mode research-idea --profile none --surface markdown --audience 研究负责人 --module academic-display --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/research-idea.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/research-idea.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "research-idea",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/research-idea.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 11738
+  },
+  {
+    "id": "review-report",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 review-report 对 synthetic API 变更说明做 finding-first 审查，给出严重级别、定位、影响和建议\" --mode review-report --profile none --surface markdown --audience 研究负责人 --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "review-report",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 review-report 对 synthetic API 变更说明做 finding-first 审查，给出严重级别、定位、影响和建议\" --mode review-report --profile none --surface markdown --audience 研究负责人 --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/review-report.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/review-report.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "review-report",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/review-report.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 11290
+  },
+  {
+    "id": "incident-update",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 incident-update 汇报一个 synthetic 在线延迟事故的当前状态、影响、缓解、回滚和下一步\" --mode incident-update --profile none --surface markdown --audience 研究负责人 --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "incident-update",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 incident-update 汇报一个 synthetic 在线延迟事故的当前状态、影响、缓解、回滚和下一步\" --mode incident-update --profile none --surface markdown --audience 研究负责人 --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/incident-update.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/incident-update.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "incident-update",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/incident-update.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 10727
+  },
+  {
+    "id": "postmortem",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 postmortem 复盘一个 synthetic 已恢复的批处理事故，含影响、时间线、原因层次和预防责任\" --mode postmortem --profile none --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "postmortem",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 postmortem 复盘一个 synthetic 已恢复的批处理事故，含影响、时间线、原因层次和预防责任\" --mode postmortem --profile none --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/postmortem.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/postmortem.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "postmortem",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/postmortem.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 14022
+  },
+  {
+    "id": "risk-report",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 risk-report 汇报一个 synthetic 模型上线的风险、概率、影响、控制、残余风险和触发器\" --mode risk-report --profile none --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "risk-report",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 risk-report 汇报一个 synthetic 模型上线的风险、概率、影响、控制、残余风险和触发器\" --mode risk-report --profile none --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/risk-report.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/risk-report.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "risk-report",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/risk-report.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 13998
+  },
+  {
+    "id": "reinforcement-learning",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 experiment-report 和 reinforcement-learning profile 汇报 synthetic 强化学习多 seed 实验，含选择规则和显著性边界\" --mode experiment-report --profile reinforcement-learning --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "reinforcement-learning",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 experiment-report 和 reinforcement-learning profile 汇报 synthetic 强化学习多 seed 实验，含选择规则和显著性边界\" --mode experiment-report --profile reinforcement-learning --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/reinforcement-learning.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/reinforcement-learning.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "reinforcement-learning",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/reinforcement-learning.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 16852
+  },
+  {
+    "id": "embodied-ai",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 experiment-report 和 embodied-ai profile 汇报 synthetic 具身智能实体部署协议，含控制频率、时延、安全停机和 sim-to-real 边界\" --mode experiment-report --profile embodied-ai --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "embodied-ai",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 experiment-report 和 embodied-ai profile 汇报 synthetic 具身智能实体部署协议，含控制频率、时延、安全停机和 sim-to-real 边界\" --mode experiment-report --profile embodied-ai --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/embodied-ai.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/embodied-ai.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "embodied-ai",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/embodied-ai.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 16826
+  },
+  {
+    "id": "world-models",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 research-idea 和 world-models profile 汇报 synthetic 世界模型构想，含 rollout horizon、误差累积预测和失败模式\" --mode research-idea --profile world-models --surface markdown --audience 研究负责人 --module academic-display --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "world-models",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 research-idea 和 world-models profile 汇报 synthetic 世界模型构想，含 rollout horizon、误差累积预测和失败模式\" --mode research-idea --profile world-models --surface markdown --audience 研究负责人 --module academic-display --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/world-models.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/world-models.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "world-models",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/world-models.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 16669
+  },
+  {
+    "id": "vla",
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"用 experiment-report 和 vla profile 汇报 synthetic VLA 评估与部署风险，含 action chunking、延迟、OOD、遥操作数据和人工接管\" --mode experiment-report --profile vla --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "vla",
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"用 experiment-report 和 vla profile 汇报 synthetic VLA 评估与部署风险，含 action chunking、延迟、OOD、遥操作数据和人工接管\" --mode experiment-report --profile vla --surface markdown --audience 研究负责人 --module tables --module evidence --must-show 本报告仅使用合成展示数据，不代表真实研究或生产结果。 --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/vla.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/vla.json\n",
+    "stderr": ""
+  },
+  {
+    "id": "vla",
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/vla.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 16816
+  }
+]

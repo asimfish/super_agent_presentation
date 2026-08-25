@@ -1,319 +1,238 @@
 # Super Agent Presentation
 
-一套给 Agent 使用的、场景自适应的汇报框架。它为长任务、实验、图片、
-表格、论文、故障、决策和代码交付提供可复用的语义骨架，同时避免所有回答
-都被塞进同一个大模板；实际遵循程度仍取决于宿主和模型。
+**An agent-native reporting framework: scenario-adaptive report protocols, bounded
+context routing, checkpointed long-task memory, and mechanical structural audits —
+so the same task handed to an agent stops producing a different, unreadable report
+every time.**
 
-当前版本为 `v0.4.0`。本版本在 v0.3.2 的控制器验证 checkpoint 基础上，
-新增论文 idea 主模式、RL/具身智能/世界模型/VLA 四个研究 profile、一个
-学术幻灯片载体协议，以及八个可单独复制的 Markdown/HTML/Quarto 模板资产。
-模板来源和采用边界见 [docs/TEMPLATE-SOURCES.md](docs/TEMPLATE-SOURCES.md)。
+[![CI](https://github.com/asimfish/super_agent_presentation/actions/workflows/ci.yml/badge.svg)](https://github.com/asimfish/super_agent_presentation/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/asimfish/super_agent_presentation?color=blue)](https://github.com/asimfish/super_agent_presentation/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B%20%C2%B7%20stdlib%20only-blue.svg)](.github/workflows/ci.yml)
+[![中文文档](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-README__CN.md-red.svg)](README_CN.md)
 
-v0.3 系列新增了
-预注册、生成记录、真实宿主计划、
-显式执行、盲化、独立评分冻结和成对汇总流水线。一次最小 Codex pilot
-观察到 treatment 读取了 Skill，baseline/framework 分别通过 9/10 与 10/10
-机器检查；但它只有一个公开 case、一个未固定 revision 的模型和一次重复，
-且 framework 输出从 358 增至 980 tokens。因此该 pilot 永久标记为
-`insufficient_evidence`，本仓库不宣称已经测得质量、可读性或效率提升。
+*Works with Claude Code, Codex, Cursor, and GitHub Copilot via
+[host adapters](adapters/), or with any agent that can read one Markdown index
+([link-only mode](AGENT_START.md)).*
 
-## 它解决什么
+<p align="center">
+  <a href="examples/showcase-20260825/render/academic-talk.pdf">
+    <img src="examples/showcase-20260825/render/contact-sheet.png" alt="7-page assertion-evidence academic deck rendered from the academic-talk-html template, shown as a contact sheet" width="100%">
+  </a>
+</p>
+<p align="center"><em>A real output: 7-page academic deck built from the <code>academic-talk-html</code> template and printed through real Chrome — one of <a href="examples/README.md">16 finished examples with full audit receipts</a>.</em></p>
 
-同一任务多次交给 Agent，文字可以不同，但读者至少应稳定找到：
+## Why
 
-> 答案或状态 → 证据 → 解释 → 边界或不确定性 → 有用的下一步
+Give an agent the same substantive task twice and you get two differently shaped
+reports; some are unreadable for humans. Style guides alone do not survive long
+tasks: after hours of work and context compaction, the agent has forgotten the
+reporting contract, and a giant "always follow this template" prompt taxes every
+turn and flattens short answers and deep experiment reports into the same shape.
 
-框架不会强制每一项都变成标题。短答可以只有一句话；实验汇报则会要求
-协议、指标、运行次数、不确定性、表格和结论边界。用户明确指定的 JSON、
-三句话、论文格式或其他表面始终优先。
+This framework treats reporting as a routed, checkpointed, auditable protocol
+instead of a style preference. Whatever the wording, a reader should reliably
+find:
 
-## 如何降低长任务后的遗忘风险
+> answer or status → evidence → explanation → boundaries or uncertainty → useful next step
 
-```mermaid
-flowchart LR
-    accTitle: Agentic Reporting 的三层执行机制
-    accDescr: 极短常驻契约在预计长任务开始时只保存小检查点并释放详细协议，任务完成后再按需加载一个主协议、最多两个模块并审计。
-    A[常驻微契约] --> B{预计长任务?}
-    B -- 是 --> C[短暂路由并保存小 checkpoint]
-    C --> D[释放详细协议]
-    B -- 否 --> E[执行原任务]
-    D --> E
-    E --> F[到达汇报边界]
-    F --> G[重载 checkpoint 或选择一个主协议]
-    G --> H[研究任务可选一个领域 profile]
-    H --> K[优先一个展示模块\n最多两个非重叠模块]
-    K --> L[需要时加载载体指南\n模板资产仍不进入 bundle]
-    L --> I[用同一 checkpoint 结构审计并核验事实]
-    I --> J[最终汇报]
-```
+Short answers may stay one sentence. Experiment reports must carry protocol,
+metrics, run counts, uncertainty, tables, and conclusion boundaries. An explicit
+user-requested format (JSON, three sentences, a paper section) always wins.
 
-- 常驻层只负责“何时调用”，不加载完整手册。
-- Skill 通过渐进式披露一次只取一个主协议、最多一个研究 profile，优先
-  一个展示模块并最多加入两个不重叠模块。实验模式已内含结论纪律，不会
-  因用户写了“结论”而重复加载通用结论模块。HTML/QMD 等大资产只有在
-  `template` 命令明确选择后才读取。
-- 长任务把少量汇报意图保存为 checkpoint，最终阶段从磁盘重新加载并以
-  同一 checkpoint 审计，降低仅依赖早期对话记忆而遗忘的风险。
-- 审计器检查可机械判断的结构错误；事实、科学结论和证据仍需人工或领域
-  工具核验。
+## What you get
 
-这些 prompt 层只能降低遗忘风险。要机械阻断不合格交付，需由外部 wrapper 或 CI
-强制“创建 checkpoint 成功，且最终 `audit --checkpoint` 返回 0”；本仓库不宣称 prompt
-本身能做到强制。
+- **12 primary report modes** — concise answer, implementation handoff, status
+  update, investigation, experiment report, research idea, decision brief, risk
+  report, incident update, postmortem, academic synthesis, review report.
+- **5 display modules** — visuals, tables, conclusions, evidence, academic-paper
+  presentation — loaded only when the report needs them.
+- **4 bounded research profiles** — reinforcement learning, embodied AI, world
+  models, VLA — domain protocol cards without hardcoding any benchmark's habits.
+- **8 exact template assets** — detailed experiment reports per domain, paper-idea
+  brief, dependency-free HTML/PPT-style academic deck, Quarto Reveal.js source —
+  retrieved one at a time, never bundled into context.
+- **A stdlib-only CLI** (`reportctl`) that routes, bundles bounded context,
+  checkpoints long tasks, scaffolds, audits structure mechanically, and renders a
+  strict JSON report IR.
+- **Anti-forgetting for long tasks** — a tiny persistent micro-contract, a small
+  on-disk checkpoint saved at task start, and a final audit driven by the same
+  checkpoint file, so the reporting contract survives context compaction.
+- **Evidence-first culture** — audits check structure mechanically; the repository
+  never claims your facts are correct, and it does not claim measured quality
+  gains it has not measured (see [Evidence status](#evidence-status)).
 
-私有研究控制器可以在真实宿主运行中额外生成 controller-verified checkpoint
-artifact receipt。该机制位于显式 `host-run --execute` 的控制平面，不会给日常
-Agent 增加提示、模型调用或输出 token；它也不改变普通 checkpoint、bundle 或
-audit 工作流。
+## Quick start
 
-## 部署与约束层级
+### Fastest trial (no install)
 
-| 使用方式 | 适用场景 | 约束强度 |
-|---|---|---|
-| 只把仓库 URL 发给 Agent | 临时试用 | 尽力遵循；URL 不会自动安装或提升指令优先级 |
-| 显式调用 `$agentic-reporting` | 已安装 Skill 的单次任务 | 中等 |
-| 安装 Skill + 宿主微契约 | 日常跨任务使用 | 推荐；宿主会持续提醒最终化流程 |
-| 同一 checkpoint 审计 + 外部 wrapper/CI | 长任务、批量交付 | 可按退出码机械阻断；仍不验证事实 |
-| JSON IR + validator/renderer | API、持久化正式报告 | 提供更强结构约束；不代替证据核验 |
-
-## 最快试用
-
-如果暂时不安装，把仓库链接和下面这句话一起交给 Agent：
+Paste this together with the repository link into your agent:
 
 ```text
 请先读取该仓库的 AGENT_START.md，并用其中的最小路由完成本次最终汇报；
 不要读取全部协议。仓库：https://github.com/asimfish/super_agent_presentation
 ```
 
-这只是 link-only 模式。想让宿主在长任务开始和交付时持续提供提醒，推荐安装。
+Or use the English bootstrap prompt in [AGENT_START.md](AGENT_START.md). Link-only
+mode is best-effort; installation is the persistent path.
 
-## 安装到项目
-
-先克隆本仓库，然后只读预览安装动作：
+### Install into a project
 
 ```bash
 git clone https://github.com/asimfish/super_agent_presentation.git
 cd super_agent_presentation
-python3 scripts/install.py plan \
-  --target /absolute/path/to/your/project --host codex
+python3 scripts/install.py plan  --target /path/to/your/project --host codex   # preview
+python3 scripts/install.py apply --target /path/to/your/project --host codex   # apply
 ```
 
-确认后执行：
+`--host claude`, `--host cursor`, and `--host copilot` are also supported. The
+installer never overwrites existing Skills or instruction files; see
+[INSTALL.md](INSTALL.md).
+
+### The agent workflow
 
 ```bash
-python3 scripts/install.py apply \
-  --target /absolute/path/to/your/project --host codex
-```
-
-可重复传入 `--host claude`、`--host cursor` 或 `--host copilot`。安装器不会
-替换已有 Skill；已有指令文件默认保持字节不变并提示手动合并。只有显式增加
-`--append-adapter` 才会先备份、再追加带标记的微契约。完整说明见
-[INSTALL.md](INSTALL.md)。
-
-## Agent 的标准工作流
-
-Skill 位于 `skills/agentic-reporting/`。Agent 应把 `<skill-dir>` 解析为该目录：
-
-```bash
-python3 <skill-dir>/scripts/reportctl.py list
-python3 <skill-dir>/scripts/reportctl.py bundle \
-  --task "汇报强化学习多随机种子实验结果" \
+python3 skills/agentic-reporting/scripts/reportctl.py list
+python3 skills/agentic-reporting/scripts/reportctl.py bundle \
+  --task "Report a five-seed RL ablation" \
   --mode experiment-report --profile reinforcement-learning --module tables
-python3 <skill-dir>/scripts/reportctl.py audit \
-  --file report.md --mode experiment-report
+python3 skills/agentic-reporting/scripts/reportctl.py audit \
+  --file report.md --mode experiment-report --strict
 ```
 
-查看并复制一个精确模板，而不把全部模板放进上下文：
+For a long task, save a checkpoint near the start, work freely, then let the final
+audit read the same checkpoint:
 
 ```bash
-python3 <skill-dir>/scripts/reportctl.py template --list
-python3 <skill-dir>/scripts/reportctl.py template rl-experiment-report \
-  --output report.md
-python3 <skill-dir>/scripts/reportctl.py template academic-talk-html \
-  --output talk.html
-```
-
-预计为长任务时，应在开始阶段只保存一个小 checkpoint，任务期间释放详细
-bundle，交付前再加载，并让最终审计使用同一文件：
-
-```bash
-python3 <skill-dir>/scripts/reportctl.py checkpoint \
-  --task "汇报实现结果、验证和剩余风险" \
+python3 skills/agentic-reporting/scripts/reportctl.py checkpoint \
+  --task "Report implementation results, verification, remaining risk" \
   --mode implementation-handoff --surface chat \
   --must-show "Verification evidence" \
   --output <private-scratch>/agent-report.json
 
-python3 <skill-dir>/scripts/reportctl.py bundle \
-  --checkpoint <private-scratch>/agent-report.json
-python3 <skill-dir>/scripts/reportctl.py audit \
+python3 skills/agentic-reporting/scripts/reportctl.py audit \
   --file report.md --checkpoint <private-scratch>/agent-report.json --strict
 ```
 
-v2 的 `must-show` 只在空行分隔、column-zero 的纯顶层 Markdown 正文段落中
-计分；含 heading、quote、list、table、link/reference、image、code 或 raw HTML
-的段落不计分。为避免伪装解析跨段 DOM/CSS 状态，首个未屏蔽的 raw HTML tag
-之后停止所有锚点计分，而 raw HTML 本身也是结构审计错误。每个锚点必须各自
-在同一个安全段落内命中；段内软换行会折叠为空格，但不能跨空行拼接。报告代理会先按
-共享 scanner 支持的、以分号结尾的 CommonMark entity 子集解码一轮，但只解码
-`&` 前面不是奇数个反斜线的 entity；然后再做 NFC、大小写折叠和空白折叠。解码后出现 control
-或 Unicode 非显示字符会使门禁失败。v2 锚点必须是 exact rendered plain
-text，且不能使用 Markdown delimiter 形式。它不是语义或事实验证。建议把每个短锚点
-放入 raw HTML 之前的一条独立普通结论句；单项最多 120 字符，转义后连同分隔符的总预算最多
-240 字符。checkpoint 会原样保存任务、
-受众和锚点；应放在版本控制之外的私有临时目录，且注意 `route`/`bundle`
-可能把这些文本输出到日志。v1 文件仍可供 `route`/`bundle` 读取，但不能
-驱动最终审计。bundle 的 `--max-chars=16000` 是独立的上下文预算；某些合法
-的双模块组合需要调用者显式提高它。`audit --checkpoint` 的报告输入上限
-是 1 MiB；其中任一可计分普通正文段落最多 4096 字符，连续 Unicode mark
-最多 64 个，超限段落会产生错误且不会进入 NFC 或锚点匹配。仅用 `--mode`
-的旧路径仍为 4 MiB。所有受限 JSON 输入还会在数值转换前拒绝超过 128
-字符的 integer/float token。
+## Real examples
 
-## 覆盖的主场景
+[`examples/showcase-20260825/`](examples/README.md) holds one finished sample for
+every mode and profile — generated through the real CLI workflow with every
+receipt preserved, final verdict **ALL PASS** (16/16 strict audit, 16/16 semantic
+oracle, 7/7 manual page review).
 
-- 简短直接回答
-- 实现或代码交付
-- 项目状态更新
-- 调研与故障诊断
-- 实验与消融分析
-- 论文 idea、研究假设与关键实验设计
-- 决策与风险
-- 论文或文献综合
-- 审查与审计
-- 进行中的 incident
-- 事后复盘
+| See | Where |
+|---|---|
+| 12 core-mode reports (Chinese samples) | [`examples/showcase-20260825/modes/`](examples/showcase-20260825/modes/) |
+| 4 research-profile reports (RL / embodied / world models / VLA) | [`examples/showcase-20260825/profiles/`](examples/showcase-20260825/profiles/) |
+| 7-page academic HTML deck + Chrome-printed PDF | [`html/deck.html`](examples/showcase-20260825/html/deck.html) · [`render/academic-talk.pdf`](examples/showcase-20260825/render/academic-talk.pdf) |
+| Every first-attempt failure and its fix, kept honestly | [`first-failures.md`](examples/showcase-20260825/first-failures.md) |
+| Machine-readable manifest binding reports to receipts | [`manifest.json`](examples/showcase-20260825/manifest.json) |
 
-图片、图表、表格、结论、证据和学术展示作为正交模块按需加入，不是每份
-汇报的固定装饰。
+All example facts are synthetic fixtures; rendering was verified on macOS Chrome
+151 only. Details and boundaries in [examples/README.md](examples/README.md).
 
-## 研究与展示模板
+## How it survives long tasks
 
-| 类型 | 当前资产或 profile | 重点约束 |
+```mermaid
+flowchart LR
+    accTitle: Three-layer execution mechanism of agentic reporting
+    accDescr: A tiny resident contract saves a small checkpoint at long-task start and releases the detailed protocol; at delivery it reloads one primary protocol, at most two modules, and audits with the same checkpoint.
+    A[Resident micro-contract] --> B{Likely long task?}
+    B -- yes --> C[Route briefly, save tiny checkpoint]
+    C --> D[Release detailed protocol]
+    B -- no --> E[Do the task]
+    D --> E
+    E --> F[Reporting boundary]
+    F --> G[Reload checkpoint or pick one primary protocol]
+    G --> H[Research task: at most one domain profile]
+    H --> K[Prefer one display module, max two]
+    K --> L[Surface guide only when needed; template assets stay out of bundles]
+    L --> I[Audit with the same checkpoint, verify facts]
+    I --> J[Final report]
+```
+
+- The resident layer only decides *when* to activate; it never keeps the manual in
+  context.
+- Progressive disclosure loads one primary protocol, at most one research profile,
+  and bounded modules — measured context budgets in
+  [docs/CONTEXT-BUDGET.md](docs/CONTEXT-BUDGET.md).
+- Prompt layers reduce forgetting; they cannot mechanically block a bad delivery.
+  For that, wrap `checkpoint` + final `audit --checkpoint` exit codes in CI or a
+  wrapper.
+
+## Catalog
+
+12 modes · 5 display modules · 4 research profiles · 5 surfaces · 8 exact
+templates — the full inventory with per-item summaries, bounded route files, and
+finished-example links lives in [docs/CATALOG.md](docs/CATALOG.md).
+
+| Research/display need | Asset or profile | Enforced emphasis |
 |---|---|---|
-| 通用实验 | `experiment-report-detailed` | RQ/claim map、协议、指标方向、运行次数、不确定性、复现指针 |
-| 论文 idea | `research-idea` mode/template | 当前限制、假设机制、最近工作、关键实验、证伪和 kill criterion |
-| 强化学习 | `reinforcement-learning` / `rl-experiment-report` | 环境步数、run/seed、调参公平、学习曲线、区间估计和失败任务 |
-| 具身智能 | `embodied-ai` / `embodied-experiment-report` | 仿真/真实、机器人与传感器、成功规则、reset/intervention、泛化与失败类型 |
-| 世界模型 | `world-models` / `world-model-experiment-report` | 模型/数据卡、开放环预测、闭环控制、扩展规律与模型利用边界 |
-| VLA | `vla` / `vla-experiment-report` | 数据混合、形态与动作接口、rollout、泛化、延迟和安全 |
-| HTML/PPT-style 学术汇报 | `academic-talk-html` | 零依赖、响应式、可打印、键盘导航、assertion-evidence 页面 |
-| Quarto HTML 幻灯片 | `academic-talk-revealjs` | Reveal.js、引用、speaker notes、自包含 HTML、appendix |
+| General experiment | `experiment-report-detailed` | claim map, protocol, metric direction, run counts, uncertainty, reproducibility |
+| Paper idea | `research-idea` mode + template | limitation, hypothesized mechanism, recent work, decisive experiment, falsifiers, kill criterion |
+| Reinforcement learning | `reinforcement-learning` / `rl-experiment-report` | env steps, runs/seeds, tuning parity, learning curves, interval estimates, failed tasks |
+| Embodied AI | `embodied-ai` / `embodied-experiment-report` | sim vs real, robot and sensors, success rule, resets/interventions, generalization axes, failure types |
+| World models | `world-models` / `world-model-experiment-report` | model/data cards, open-loop prediction, closed-loop control, scaling, exploitation boundary |
+| VLA | `vla` / `vla-experiment-report` | data mixture, embodiment and action interface, rollouts, generalization, latency, safety |
+| HTML/PPT academic talk | `academic-talk-html` | dependency-free, responsive, printable, keyboard nav, assertion-evidence pages |
+| Quarto slides | `academic-talk-revealjs` | Reveal.js, citations, speaker notes, self-contained HTML, appendix |
 
-领域 profile 是通用汇报协议的增量，不会把某个 benchmark 的 seed 数、指标
-或成功定义硬编码为所有研究的默认值。Agent 应先路由，再只复制一个最匹配
-的资产。
+## Deployment and constraint ladder
 
-## 正式报告的 strict path
+| Usage | Fits | Constraint strength |
+|---|---|---|
+| Send the repo URL to the agent | quick trial | best-effort; a URL is not an install and does not raise instruction priority |
+| Explicit `$agentic-reporting` invocation | one-off task with the Skill installed | medium |
+| Installed Skill + host micro-contract | daily cross-task use | recommended; the host keeps reminding the finalization flow |
+| Same-checkpoint audit + external wrapper/CI | long tasks, batch delivery | mechanically blockable by exit code; still does not verify facts |
+| JSON IR + validator/renderer | APIs, durable formal reports | strongest structural constraint; does not replace evidence checking |
 
-批量 Agent 或正式实验报告可从
-`skills/agentic-reporting/assets/templates/report-spec.json` 开始。JSON 中显式
-区分 `verified`、`inference` 和 `recommendation`，使用 `roles` 标记 claim
-覆盖的语义位，并让已验证结论引用 evidence ID。validator 会从当前
-协议目录读取每个 mode 的必备语义；例如 postmortem 缺少 impact、timeline
-或 cause 会直接失败。随后：
+For formal reports, start from
+`skills/agentic-reporting/assets/templates/report-spec.json`, then
+`validate-spec → render → audit --strict`. The JSON IR separates `verified` /
+`inference` / `recommendation` claims and requires verified conclusions to cite
+evidence IDs. Details in [README_CN.md](README_CN.md#正式报告的-strict-path) and
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-```bash
-python3 skills/agentic-reporting/scripts/reportctl.py validate-spec \
-  --file report.json
-python3 skills/agentic-reporting/scripts/reportctl.py render \
-  --file report.json --output report.md
-python3 skills/agentic-reporting/scripts/reportctl.py audit \
-  --file report.md --mode implementation-handoff --strict
-```
+## Evidence status
 
-若该正式报告来自长任务，则把最后一条命令的 `--mode` 换成启动时保存的
-`--checkpoint`，使 mode 和字面锚点进入同一最终门禁。
+This repository practices what it preaches: **it does not claim measured
+effectiveness it does not have.** A minimal one-case Codex pilot observed the
+treatment agent reading the Skill and passing machine checks (baseline 9/10,
+framework 10/10), but with one public case, one unpinned model revision, and one
+repetition it is permanently marked `insufficient_evidence` — no quality,
+readability, or efficiency gain is claimed. The preregistered study pipeline,
+blinding, and claim gates that a real effectiveness claim would require are
+implemented and documented in [BENCHMARK.md](BENCHMARK.md) and
+[evals/](evals/README.md).
 
-JSON 是展示层的单一真源；原始日志、论文、测试或数据仍是事实真源。
-随附 JSON Schema 只用于可移植的结构与条件预检；正式渲染前必须以
-`validate-spec` 为准，因为 evidence ID 唯一性、跨记录引用和当前协议语义
-无法全部由独立 JSON Schema 表达。
+What *is* verified: deterministic routing, bounded bundles, checkpoint/audit
+mechanics, template rendering (291 unit tests + harness smoke + real-render
+regression on macOS Chrome 151), and the end-to-end showcase run with receipts in
+[examples/](examples/README.md).
 
-## v0.3 评测流水线
-
-确定性研究控制器不会隐式调用模型。先在 Git worktree 之外创建权限受限的
-私有目录，复制模板，并把三个全零 `framework` 收据替换为本次实际 commit、
-安装后 Skill manifest 和 active adapter SHA-256，再冻结输入：
-
-```bash
-cp evals/templates/pilot-study-plan.json <private-dir>/plan.json
-python3 scripts/presentation_study.py init \
-  --plan <private-dir>/plan.json \
-  --cases-file evals/presentation-cases.json \
-  --output <private-dir>/run
-```
-
-离线或外部系统生成的结果走
-`import-output → validate → blind → rating-template → freeze-ratings → aggregate`。
-真实 Codex 宿主则先冻结固定 argv、可执行文件与工作区收据；只有第二条命令
-带有字面 `--execute` 时才会产生模型调用、网络/认证使用和费用：
-
-```bash
-python3 scripts/presentation_study.py host-plan \
-  --run-dir <private-dir>/run --unit-id <unit-id> \
-  --executable <absolute-codex-binary> --workspace <isolated-workspace>
-python3 scripts/presentation_study.py host-run \
-  --run-dir <private-dir>/run --unit-id <unit-id> --execute
-```
-
-删除 `--execute` 会故意失败关闭。`host-plan` 与其他确定性命令不调用模型。
-Codex 适配器强制 timeout、响应/转录/stderr 字节上限和无 shell 启动；计划还会
-冻结完整 argv、transcript format、宿主适配器源码和 checkpoint auditor
-依赖闭包的 SHA-256，运行前重新构建后必须逐项相等，完成收据也会再次绑定这些身份。当前仍
-不能强制 provider 级 output-token 或费用上限；计划中的 token 值属于预注册
-约束和提示，不是宿主保证。只有 `host-run` 能把冻结计划、完成的执行收据和
-完整记录绑定为 `host_adapter` 证据；普通 `import-output` 不能自报该来源或
-强制 token cap。pilot 可使用 `pilot-summary`，其 schema 固定拒绝
-效果声明；只有私有 heldout、外部隔离收据、共享且已审计的全局指令、多个
-可验证 revision/重复/上下文条件和冻结盲评全部满足后，`aggregate` 才会评估
-公开声明门禁。调用方生成记录与控制器存档记录使用不同 schema；调用方不能
-注入机器评测或自行把 checkpoint receipt 标为已验证。
-
-对于 framework 的 v1.1 宿主执行，转录适配器只产出按顺序成功匹配的
-create → reload → strict-audit 候选。控制器在这些事件到达时分别从冻结工作区
-抓取受限快照。为避免 Agent 猜测安全路径，study 控制器会预创建 owner-only、
-目录内自带忽略规则的 `.agentic-reporting/`，并只在该次 framework host prompt 后附加一段已哈希的
-study-only 契约，指定唯一 checkpoint/draft 路径与 `0600` 文件模式；控制器会把冻结的
-本地图片按原 workspace-relative 路径复制到 draft 目录下，并要求 Markdown 使用同一
-无 `../` 的路径，使 Agent 审计、控制器复审、存储记录和盲评包都能解析同一目标；实际交付 prompt
-的摘要也进入 v1.1 计划和执行收据。它不进入普通 Agent 的 Skill 上下文。
-控制器要求三阶段 checkpoint 字节完全相同、audit 阶段的 report 与
-最终 response 字节完全相同，并从这些内存字节新建同目录的私有复审文件，以计划中固定的仓库 `reportctl` 再执行一次
-strict audit；只有全部成立时才派生 `checkpoint_receipt_verified: true`。
-v1.0 宿主计划和执行收据仍可读取验证，但不能回填这项证据。checkpoint、快照
-和收据均保留在 owner-only 私有运行目录，不进入盲评包、聚合结果或发布制品。
-这项窄保证说明控制器在三个事件边界观察到一致字节并完成最终复审；它不证明
-命令执行瞬间不存在同 UID 竞态，也不证明模型语义上记住了 checkpoint。
-
-公开 profile 还要求每个生成单元使用不同的控制器锁定工作区、外部收据
-覆盖新鲜的逐单元隔离、required/forbidden visual 均有覆盖、图片/表格必需检查
-100% 通过，且每千 output token 的人评语义位不劣于 baseline。详见 [BENCHMARK.md](BENCHMARK.md) 与
-[evals/README.md](evals/README.md)。
-
-## 仓库结构
+## Repository structure
 
 ```text
-AGENT_START.md                 # 给 link-only Agent 的最小入口
-AGENTS.md                      # 本仓库常驻微契约
-adapters/                      # Claude、Cursor、Copilot 等宿主适配
+AGENT_START.md                 # smallest bootstrap for link-only agents
+AGENTS.md                      # resident micro-contract for this repo
+adapters/                      # Claude, Codex, Cursor, Copilot host adapters
 skills/agentic-reporting/
-  SKILL.md                     # 路由与最终化工作流
-  references/                  # 核心、主模式与展示模块
-  assets/templates/            # Markdown 与 JSON 结构守卫
-  scripts/reportctl.py         # route/bundle/checkpoint/audit/render
-  scripts/markdown_image_scanner.py # audit 与 benchmark 共用的有界扫描器
-dist/                          # 无 CLI 时的一文件路由包
-evals/
-  schema/                      # study、生成、盲化、评分与汇总 JSON Schema
-  templates/                   # 可编辑的 pilot 计划模板，不是运行收据
-  runs/pilot/                  # 仅可发布脱敏聚合，不含原始私有运行数据
-scripts/presentation_benchmark.py # 确定性 fixture harness
-scripts/presentation_study.py     # 私有研究状态机与声明门禁
-scripts/presentation_hosts.py     # 纯 typed argv/JSONL 宿主适配层
-docs/adr/                      # 架构决策记录
+  SKILL.md                     # routing and finalization workflow
+  references/                  # core, primary modes, display modules
+  assets/templates/            # exact Markdown/JSON structure guards
+  assets/presentations/        # HTML/Quarto academic deck templates
+  scripts/reportctl.py         # route/bundle/checkpoint/audit/render CLI
+dist/                          # prebuilt link-only route bundles
+examples/showcase-20260825/    # 16 finished reports + deck + audit receipts
+evals/                         # study schemas, templates, sanitized run records
+scripts/                       # installer, benchmark harness, study controller
+docs/                          # architecture, research, catalog, ADRs
+tests/                         # 291 unit tests
 ```
 
-## 验证
+## Verification
 
 ```bash
 python3 -m pip install -r requirements-dev.txt
@@ -321,21 +240,23 @@ python3 -m unittest discover -s tests -v
 python3 scripts/presentation_benchmark.py smoke
 ```
 
-`smoke` 验证已知好/坏 fixture、场景路由和正例进入 Skill 后的路由代理。
-它明确输出 `host_activation_observed: false`：未调用真实宿主或模型。开发期
-fresh-agent 记录见 [evals/runs/forward/README.md](evals/runs/forward/README.md)。
-最小真实宿主记录见
-[evals/runs/pilot/codex-20260824/README.md](evals/runs/pilot/codex-20260824/README.md)，
-它只证明一次流水线/激活观测，不能证明效果。真实效果声明所需的外部隔离
-基线、heldout、长上下文压力、盲评与统计门槛见 [BENCHMARK.md](BENCHMARK.md)。
+`smoke` validates known-good/bad fixtures and routing and prints
+`host_activation_observed: false` — it calls no real host or model.
 
-## 设计与来源
+## Design docs
 
-架构取舍见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，官方资料与独立综合
-边界见 [docs/RESEARCH.md](docs/RESEARCH.md)，畸形 Markdown 的性能回归证据见
-[docs/PERFORMANCE.md](docs/PERFORMANCE.md)。本仓库没有复制限制性第三方模板或
-视觉资产。
+[Architecture](docs/ARCHITECTURE.md) · [Catalog](docs/CATALOG.md) ·
+[Research sources](docs/RESEARCH.md) · [Template provenance](docs/TEMPLATE-SOURCES.md) ·
+[Context budgets](docs/CONTEXT-BUDGET.md) · [Performance](docs/PERFORMANCE.md) ·
+[Security review](docs/SECURITY-REVIEW.md) · [Benchmark protocol](BENCHMARK.md) ·
+[Security policy](SECURITY.md) · [ADRs](docs/adr/)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: run the full test
+suite, keep `dist/` reproducible, and never add an effectiveness claim without
+the evidence gates in [BENCHMARK.md](BENCHMARK.md).
 
 ## License
 
-MIT，见 [LICENSE](LICENSE)。
+MIT — see [LICENSE](LICENSE).

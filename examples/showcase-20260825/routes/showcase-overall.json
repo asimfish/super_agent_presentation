@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "mode": "implementation-handoff",
+  "mode_inferred": false,
+  "profile": null,
+  "profile_inferred": false,
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "tables",
+    "evidence"
+  ],
+  "task": "交付 isolated agentic-reporting showcase：12 个模式、4 个研究 profile、7 页 HTML/PDF/PNG 与完整审计证据",
+  "must_show": [
+    "ALL PASS：16 份 Markdown、HTML、PDF 与 7 张 PNG 全部通过。"
+  ],
+  "route_scores": {
+    "concise-answer": 0,
+    "implementation-handoff": 0,
+    "status-update": 0,
+    "investigation-report": 0,
+    "experiment-report": 0,
+    "decision-brief": 0,
+    "academic-synthesis": 0,
+    "research-idea": 0,
+    "review-report": 4,
+    "incident-update": 0,
+    "postmortem": 0,
+    "risk-report": 0
+  },
+  "profile_scores": {
+    "reinforcement-learning": 0,
+    "embodied-ai": 0,
+    "world-models": 0,
+    "vla": 0
+  },
+  "mode_reference": "modes/implementation-handoff.md",
+  "profile_reference": null,
+  "surface_reference": null,
+  "module_references": [
+    "modules/tables.md",
+    "modules/evidence.md"
+  ],
+  "recommended_templates": []
+}

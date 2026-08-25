@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/implementation-handoff.md",
+  "mode": "implementation-handoff",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 1112,
+      "sha256": "152c5a1d60596fd15496eb217bb46d91d078dd3987154c0be07a2f5c40ed1880"
+    },
+    "checkpoint": {
+      "intent_sha256": "e1bbeb1adafe13525a7bbe2e1c6ae55fd10f727e2d74aaa552cb96d01a4f10f4"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/implementation-handoff.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

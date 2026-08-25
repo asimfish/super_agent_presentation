@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:10:48.137630+00:00",
+  "task": "用 experiment-report 和 vla profile 汇报 synthetic VLA 评估与部署风险，含 action chunking、延迟、OOD、遥操作数据和人工接管",
+  "task_sha256": "61964d486461f4715283b7ade1bff2553db26a980875458e30fd3fcfb1124192",
+  "mode": "experiment-report",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "tables",
+    "evidence"
+  ],
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "intent_sha256": "bcfaf3c47a4ca627568c7d6d972c06031ad996a3a2bec4509abd67f0a81f5e76"
+}

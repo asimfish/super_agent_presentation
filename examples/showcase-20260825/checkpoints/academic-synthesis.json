@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:10:46.224222+00:00",
+  "task": "用 academic-synthesis 综合仅存在于 synthetic 证据包的 S1 与 S2，明确没有核验真实论文",
+  "task_sha256": "bc0276a4ad6c03c80726a467d71dc5a3b2555794bdedee42cdc7f16225cfad93",
+  "mode": "academic-synthesis",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "academic-display",
+    "evidence"
+  ],
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "intent_sha256": "36f29ebbd2f64ba3a91621a64cf458137e8e6fb78850a99fce2ef90a2fcbd2eb"
+}

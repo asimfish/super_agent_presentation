@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "mode": "experiment-report",
+  "mode_inferred": false,
+  "profile": "vla",
+  "profile_inferred": false,
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "tables",
+    "evidence"
+  ],
+  "task": "用 experiment-report 和 vla profile 汇报 synthetic VLA 评估与部署风险，含 action chunking、延迟、OOD、遥操作数据和人工接管",
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "route_scores": {
+    "concise-answer": 0,
+    "implementation-handoff": 0,
+    "status-update": 0,
+    "investigation-report": 0,
+    "experiment-report": 12,
+    "decision-brief": 0,
+    "academic-synthesis": 0,
+    "research-idea": 0,
+    "review-report": 0,
+    "incident-update": 0,
+    "postmortem": 0,
+    "risk-report": 0
+  },
+  "profile_scores": {
+    "reinforcement-learning": 0,
+    "embodied-ai": 0,
+    "world-models": 0,
+    "vla": 1001
+  },
+  "mode_reference": "modes/experiment-report.md",
+  "profile_reference": "profiles/vla.md",
+  "surface_reference": null,
+  "module_references": [
+    "modules/tables.md",
+    "modules/evidence.md"
+  ],
+  "recommended_templates": [
+    "vla-experiment-report"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "mode": "experiment-report",
+  "mode_inferred": false,
+  "profile": "vla",
+  "profile_inferred": false,
+  "surface": "slide",
+  "audience": "研究负责人",
+  "modules": [
+    "visuals",
+    "tables"
+  ],
+  "task": "用 experiment-report、vla profile 和 academic-talk slide surface 展示 synthetic VLA action chunking 实验，保留不确定性与泛化边界",
+  "must_show": [],
+  "route_scores": {
+    "concise-answer": 0,
+    "implementation-handoff": 0,
+    "status-update": 0,
+    "investigation-report": 0,
+    "experiment-report": 16,
+    "decision-brief": 0,
+    "academic-synthesis": 0,
+    "research-idea": 0,
+    "review-report": 0,
+    "incident-update": 0,
+    "postmortem": 0,
+    "risk-report": 0
+  },
+  "profile_scores": {
+    "reinforcement-learning": 0,
+    "embodied-ai": 0,
+    "world-models": 0,
+    "vla": 1001
+  },
+  "mode_reference": "modes/experiment-report.md",
+  "profile_reference": "profiles/vla.md",
+  "surface_reference": "surfaces/slide.md",
+  "module_references": [
+    "modules/visuals.md",
+    "modules/tables.md"
+  ],
+  "recommended_templates": [
+    "academic-talk-html",
+    "academic-talk-revealjs"
+  ]
+}

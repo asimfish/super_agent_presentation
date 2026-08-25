@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:10:46.669593+00:00",
+  "task": "用 review-report 对 synthetic API 变更说明做 finding-first 审查，给出严重级别、定位、影响和建议",
+  "task_sha256": "52c115530dcbedf1c7402dc710785c7c615df48a5f2fcecb56da64c447bf0c37",
+  "mode": "review-report",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "evidence"
+  ],
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "intent_sha256": "7211650c121de6519c9020d4d41119115a436f97b230be1b2ecb3996014a765c"
+}

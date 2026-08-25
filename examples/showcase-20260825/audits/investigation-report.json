@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/investigation-report.md",
+  "mode": "investigation-report",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 1589,
+      "sha256": "7530406076aa11ef15bc001d46fdba9da8fa56d550e8de20e46ba86522b76c15"
+    },
+    "checkpoint": {
+      "intent_sha256": "fa0557c504d310e11b50829f1ead2beffa13c0579f384af9160e6e544ed4563e"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/investigation-report.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

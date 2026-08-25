@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/concise-answer.md",
+  "mode": "concise-answer",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 296,
+      "sha256": "8702135ccf4330b2cfd26a8d9169a6f34b8858ffcac6d286934d9d4d79c8f95f"
+    },
+    "checkpoint": {
+      "intent_sha256": "ebd887ed9627b68d391a7f4a7038e09f3d96872b315c4720cd7b8e10aeedc4e6"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/concise-answer.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

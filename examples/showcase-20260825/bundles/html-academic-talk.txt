@@ -1,0 +1,448 @@
+# Routed reporting bundle
+
+Primary mode: `experiment-report`
+Research profile: `vla`
+Surface: `slide`; audience: 研究负责人
+Display modules: visuals, tables
+Recommended exact templates: academic-talk-html, academic-talk-revealjs
+Required semantics: question, method, metrics, uncertainty, boundary
+Must show: none specified
+Read: `references/core-contract.md`, `modes/experiment-report.md`
+Read: `profiles/vla.md`
+Read: `surfaces/slide.md`
+Read: `modules/visuals.md`
+Read: `modules/tables.md`
+
+
+## Universal contract
+
+# Core reporting contract
+
+Apply this contract with exactly one primary mode and no more than two display
+modules. Treat headings in a mode or template as semantic roles, not mandatory
+English labels. Write in the user's language and follow an explicit user-supplied
+format when it conflicts with the framework.
+
+## Reporting primitives
+
+Build the report from the smallest useful subset of these primitives:
+
+- **Outcome:** what changed, was learned, is currently true, or remains unresolved.
+- **Evidence:** observations, measurements, sources, artifacts, or checks supporting
+  the outcome.
+- **Interpretation:** what the evidence permits the agent to infer.
+- **Boundary:** uncertainty, limitations, exceptions, failed checks, and blockers.
+- **Action:** the next decision, owner, verification step, or useful follow-up.
+
+Do not force all five into visible sections. Preserve their meaning even when a
+short answer needs only one sentence.
+
+## Reader contract
+
+1. Lead with the answer, status, finding, or decision. Do not make the reader
+   reconstruct it from a chronology of work.
+2. Give each visible section one job. Use specific headings when a heading is
+   useful; omit ceremony for bounded answers.
+3. Pair each consequential claim with nearby evidence or an unambiguous evidence
+   reference. Put detailed logs and large supporting data outside the main reading
+   path.
+4. State the comparison basis, scope, and time boundary before relying on them.
+5. End with an action only when action is useful. Do not add generic offers or
+   recommendations unsupported by the work.
+
+## Truth and status boundaries
+
+- Distinguish `verified`, `observed`, `inferred`, `suspected`, `recommended`, and
+  `unknown` when the distinction changes interpretation.
+- Use `complete` only when the requested outcome and its material verification are
+  complete. A successful rollback, partial build, passing unit suite, or drafted
+  file does not erase a later failure or unmet acceptance criterion.
+- Use `blocked` when progress requires a missing authority, dependency, credential,
+  external state change, or user decision. Name the blocker and the smallest
+  unblock action.
+- Use `partial` or `incomplete` when useful work exists but required work remains.
+- Treat `zero`, `missing`, `not measured`, `not run`, and `not applicable` as
+  different values.
+- Never invent a source, citation, number, test result, file, comparison, cause,
+  owner, deadline, or completion claim.
+
+## Quantitative claims
+
+When material, provide the metric definition, direction, unit, denominator or
+population, time window, comparison baseline, number of independent observations,
+and uncertainty definition. Do not imply statistical, causal, practical, or
+state-of-the-art superiority from a larger displayed number alone.
+
+## Surface and proportionality
+
+- Use chat for direct and compact handoffs; use a durable artifact when the user
+  requests one or the report must stand alone.
+- Prefer a single-column reading path for reports. Use a dashboard grid only for a
+  monitoring task that benefits from parallel scanning.
+- Use tables for exact lookup and audit detail, visuals for shape or relationships,
+  and prose for a small number of facts.
+- Put commands, raw logs, full data, and extended methods in a linked artifact or a
+  clearly labeled collapsed section when the surface supports it.
+- Do not add a figure, table, diagram, alert, or executive-summary section merely
+  to make a short answer look formal.
+
+## Accessibility and safe presentation
+
+- Give meaningful images concise alternative text; give complex visuals an
+  adjacent textual account of the essential data, relationships, or trend.
+- Emit auditable Markdown images at column zero as independent, single-line,
+  top-level paragraphs bounded by blank lines or document boundaries; use
+  percent-encoded targets when a path contains spaces or parentheses.
+- Put auditable report images before raw triple-backtick/triple-tilde examples or
+  paragraph-sensitive raw HTML tags. The conservative required-credit subset stops
+  at the first such marker; link later logs/snippets instead. URI autolinks do not
+  count as HTML tag markers.
+- In literal examples, escape a Markdown image's leading bang (`\![...]`) and
+  entity-encode a raw image tag (`&lt;img ...>`); the structural gate treats raw
+  markers conservatively regardless of code or comment context.
+- Do not use color, emoji, position, or typography as the only carrier of status or
+  meaning.
+- Keep table headers explicit and visual labels, units, legends, and scales
+  readable in the delivered surface.
+- Link to inspectable artifacts when safe. Do not expose secrets, personal data,
+  private logs, or sensitive exploit details in a reader-facing report.
+
+## Final boundary check
+
+For long work, final-audit its v2 checkpoint, not `--mode`. Put each rendered-text
+anchor in one blank-line-bounded, column-zero prose paragraph. Soft breaks join;
+blank lines and Markdown do not. Raw HTML errors and ends later credit. Entities
+decode unless `&` has odd backslash parity. Literal presence is not truth.
+
+Before handoff, manually verify current state, claims, evidence, exceptions, links,
+and format. The audit checks form, not truth, citations, causality, or visual fitness.
+
+
+## Primary mode protocol
+
+# Experiment report
+
+Use this mode for benchmarks, ablations, controlled evaluations, model comparisons,
+or empirical studies. Organize the report around research questions rather than the
+order in which experiments were run.
+
+## Semantic order
+
+1. **Main result:** state the supported result and its most important trade-off or
+   qualification.
+2. **Research question:** define the proposition each experiment tests.
+3. **Protocol:** identify methods, baselines, data, splits, selection procedure,
+   metrics, compute, and material controls.
+4. **Results:** present exact evidence with the tables or visuals required to read
+   it.
+5. **Analysis:** explain patterns, exceptions, practical magnitude, and competing
+   interpretations.
+6. **Boundary:** report uncertainty, null results, failed runs, limitations, and the
+   domain in which the evidence applies.
+7. **Conclusion and next experiment:** state only what the protocol supports.
+
+## Metric and uncertainty contract
+
+For every decision-relevant metric, state:
+
+- definition, unit, and higher-is-better or lower-is-better direction;
+- evaluation population, denominator, and aggregation level;
+- number of independent runs, seeds, trials, samples, or tasks;
+- variability source and whether the interval is SD, SEM, CI, quantiles, or another
+  statistic;
+- interval computation and assumptions when they affect interpretation.
+
+Do not call a difference statistically significant without a defined analysis that
+supports that statement. Do not equate statistical significance with practical
+importance.
+
+## Comparability and selection
+
+- Rank or highlight methods only inside a shared evaluation protocol.
+- Expose material differences in data, supervision, pretraining, compute, hardware,
+  tuning budget, test-time resources, and access to privileged information.
+- State how hyperparameters, checkpoints, prompts, seeds, and reported runs were
+  selected. Do not compare a selected best run with a baseline mean without making
+  the mismatch explicit.
+- Keep zero, missing, not reported, failed, and not applicable distinct.
+
+## Analysis discipline
+
+- Report verified values before explaining them.
+- Discuss results that contradict the main narrative, not only the best row.
+- Treat nearly equal observed means with overlapping or untested uncertainty as a
+  trade-off or unresolved comparison, not a universal winner.
+- With opposing metrics, report the Pareto trade-off. Do not collapse it into an
+  overall balance ranking unless the decision supplies a utility function, budget,
+  constraint, or minimum acceptable threshold.
+- Separate descriptive, diagnostic, predictive, causal, and deployment claims.
+- State compute and resource requirements when they affect reproducibility or the
+  comparison.
+
+## Avoid
+
+- A global leaderboard built from different tasks or protocols.
+- Boldface as a substitute for analysis.
+- `state of the art` without a named benchmark, metric, comparison set, and verified
+  result.
+- A conclusion broader than the tested datasets, seeds, environments, or deployment
+  conditions.
+
+
+## Research profile: vla
+
+# Vision-language-action research profile
+
+Load this profile for VLA pretraining, fine-tuning, action tokenization/chunking,
+cross-embodiment transfer, and VLA deployment studies.
+
+## System and data card
+
+Report the vision/language backbone and version; trainable/frozen components;
+pretraining and fine-tuning dataset mixture; dataset units and filtering; robot
+morphologies; camera views and proprioception; language source; action space,
+normalization, tokenizer or continuous head; action chunk/horizon; control
+frequency; inference latency; and deployment hardware.
+
+State whether data overlap exists across robots, tasks, objects, scenes, or language
+templates. Separate zero-shot, in-context, fine-tuned, and jointly trained results.
+
+## Evaluation card
+
+For simulation and real robot separately, report benchmark/version, embodiment,
+task suite, seen/unseen axes, rollouts per task, seeds or independent training runs,
+initial-state distribution, success definition, reset/retry rule, interventions,
+safety stops, and checkpoint selection. Do not hide morphology-specific adaptation
+inside a “generalist” label.
+
+## Result displays
+
+- Data/training table: mixtures, episodes/trajectories, embodiments, task coverage,
+  updates, compute, and selection.
+- Evaluation table: protocol group, task count, trials, success with uncertainty,
+  and failure count; never rank incompatible robots or success definitions.
+- Generalization matrix: new task, object, scene, instruction, camera, embodiment,
+  and perturbation.
+- Deployment table: latency, control rate, action horizon, hardware, recovery, and
+  safety interventions.
+- Failure taxonomy: language grounding, visual ambiguity, action discretization,
+  contact/grasp, temporal drift, planning, latency, and unsafe/invalid output where
+  observed.
+
+Provenance IDs: VLA-1 Open X-Embodiment/RT-X data standardization; VLA-2 OpenVLA
+reproduction and rollout accounting; EMB-2 CALVIN closed-loop protocol. See the
+portable `UPSTREAM.md`; the source repository's detailed adoption ledger is
+`docs/TEMPLATE-SOURCES.md`.
+
+
+## Surface guide: slide
+
+# Academic slide surface
+
+Use the slide surface for a live or self-navigated research presentation. Select a
+narrative preset from the actual audience and purpose; do not convert every report
+heading into one slide.
+
+## Narrative presets
+
+- **Paper talk:** problem and gap -> thesis -> mechanism -> decisive evidence ->
+  exceptions/limitations -> takeaway.
+- **Research progress:** objective -> last decision -> new evidence -> what changed
+  -> blocker or uncertainty -> next experiment/help needed.
+- **Experiment review:** research question -> protocol comparability -> main result
+  -> variability/exceptions -> decision and next test.
+- **Idea pitch:** current limit -> hypothesis -> mechanism -> closest alternative ->
+  decisive experiment -> risks and evaluation gates.
+
+## Slide contract
+
+- Give each evidence slide a sentence assertion as its title and visual or tabular
+  evidence that supports that assertion.
+- Keep one primary message per slide. Move derivations, dense tables, and backup
+  ablations to appendix slides.
+- Put metric direction, units, protocol, sample size, and uncertainty on the slide
+  where a quantitative claim is made.
+- Use direct labels and accessible contrast; do not rely on color or animation
+  alone. Preserve alt text or an adjacent text account for material visuals.
+- Put a short source locator on evidence slides and full references in the ending or
+  notes. Speaker notes may hold delivery cues but not evidence absent from the slide
+  or linked artifact.
+- Rehearse against the actual time budget; slide count is an output of the story and
+  evidence density, not a universal quota.
+
+## Asset selection
+
+Use `template academic-talk-html` for a dependency-free HTML/PPT-style deck or
+`template academic-talk-revealjs` when Quarto/reveal.js is available. Retrieve one,
+not both, unless the user explicitly requests multiple formats.
+
+Provenance: Assertion-Evidence presentation guidance, Reveal.js, and Quarto
+presentation documentation. See the portable `UPSTREAM.md`; the source repository's
+detailed adoption ledger is `docs/TEMPLATE-SOURCES.md`.
+
+
+## Display module: visuals
+
+# Visuals module
+
+Load this module only when a figure, chart, image, screenshot, diagram, or qualitative
+set makes an important relationship easier to understand than prose or a table.
+Every visual must support a named report claim or observation.
+
+## Visual contract
+
+Before rendering, define:
+
+- the analytical or communicative question;
+- the one-sentence takeaway the evidence supports;
+- data or image source, scope, grain, filters, time window, and comparison basis;
+- selected visual family and why it fits the relationship;
+- units, denominator, uncertainty, scale, ordering, and reference lines when relevant;
+- caption, alternative text, and textual fallback;
+- delivery surface and fallback if the visual cannot render.
+
+Keep this contract in working notes unless methodology changes interpretation.
+
+## Selection defaults
+
+| Relationship | Prefer | Do not default to |
+|---|---|---|
+| Category comparison | Sorted bar or dot plot | Pie or decorative cards |
+| Continuous change over time | Line plot with sufficient observations | A line through a few unrelated periods |
+| A few discrete periods | Grouped bar, slope, or exact table | Underpowered trend line |
+| Distribution | Histogram, box plot, or interval plot | Mean-only bar |
+| Two numeric variables | Scatter at one consistent grain | Bubble plot with an irrelevant third encoding |
+| Part-to-whole | Stacked or 100% stacked bar | Many-slice pie |
+| Additive change | Waterfall | Non-additive waterfall |
+| Process or dependency | Small flow, sequence, or tree diagram | Diagram for a one-step fact |
+| Exact lookup | Table | Chart that obscures values |
+
+Treat observation-count heuristics as defaults, not scientific laws. If evidence is
+too sparse for the selected form, collect a more appropriate grain once or switch to
+a more honest display.
+
+## Charts
+
+- Match title, axes, legend, marks, and caption to the supported claim.
+- Standard magnitude bars start at zero. If a delta-focused display uses a narrowed
+  scale, make the scale break or focused range unmistakable and show exact values.
+- Keep comparable charts on consistent scales unless a difference is disclosed.
+- Define uncertainty bands or error bars, including statistic, sample count, source
+  of variability, and computation.
+- Put the reader-facing interpretation immediately before or after the figure.
+- Do not use color alone; add direct labels, line styles, markers, ordering, texture,
+  or another redundant cue.
+
+## Images and screenshots
+
+- Give every image a stable figure ID, purpose, caption, concise alternative text,
+  and source or artifact link.
+- For machine-verifiable Markdown, place the image at column zero on one independent
+  top-level line, with a blank line or document boundary on both sides. Keep its alt
+  text and target on that line. Use a nonempty local path or an absolute HTTP(S)
+  URL; pure fragments, query-only targets, and data URIs are outside the auditable
+  subset. Percent-encode spaces and parentheses in targets instead of relying on
+  backslash escapes. Do not place a report image inside a list, block quote, HTML
+  block, or code span/fence. Place report images before any raw contiguous
+  triple-backtick/triple-tilde run or paragraph-sensitive raw HTML tag marker. To
+  avoid divergence from a full CommonMark parser, the audit grants no required-image
+  credit after the first such marker, even when a renderer might show a later image;
+  link later fenced logs/snippets instead. CommonMark block tags and completed raw
+  blocks remain block-scanned, and URI autolinks do not count as type-7 tag markers.
+  The strict renderer emits none of the pre-image ambiguous forms. The audit's
+  fail-closed broad gate treats every unescaped `![` and every raw HTML opening tag
+  as a potential visual source even inside literals; this also rejects harmless raw
+  tags because inline CSS and custom elements can render images. Write examples as
+  `\![...]` or entity-encode the opening `<` when no visual is intended.
+- State cropping, resizing, annotation, stitching, enhancement, thresholding, or
+  other material processing. Preserve access to the unmodified original when safe.
+- Use consistent crop, scale, and ordering for side-by-side comparisons.
+- Bind annotations to the exact region they explain without hiding evidence.
+- For qualitative results, state the selection rule and show important failures or
+  exceptions as well as representative successes. Do not cherry-pick silently.
+- A screenshot proves only visible state at the captured time; name behavior or
+  accessibility properties that still require runtime testing.
+
+## Accessibility and fallback
+
+Alternative text identifies the visual and its purpose. A complex graph or diagram
+also needs adjacent prose or a structured data table covering the essential values,
+relationships, and trend. For Mermaid, include `accTitle` and `accDescr` when the
+renderer supports them. Ensure text and graphical objects remain readable at the
+delivered size and in grayscale or equivalent non-color encoding.
+
+## Avoid
+
+- Decorative visuals, redundant legends, gradients, 3D effects, and chartjunk.
+- A figure with no adjacent interpretation.
+- Inferring a hidden cause from a visual pattern alone.
+- Flattening an interactive report into an image as the only deliverable.
+- Claiming a visual rendered without inspecting the delivered surface.
+
+
+## Display module: tables
+
+# Tables module
+
+Load this module for exact lookup, compact comparison, experimental settings, audit
+detail, action tracking, or risk registers. Use prose for a few facts and a chart
+when shape or relationship is the primary message.
+
+## Table contract
+
+Before drafting, define the table's question, row population, column meanings,
+comparison scope, units, time window, missing-value semantics, sort order, and source.
+Every column must help answer the question or audit the result.
+
+## Structure
+
+- Give the table a short title or nearby sentence that defines scope.
+- Use explicit row and column headers. Keep header hierarchy simple; split a complex
+  table when merged or multi-level headers would make relationships ambiguous.
+- Put units and metric direction in headers when compact and unambiguous.
+- Align numeric values consistently and use consistent precision within a metric.
+- Define abbreviations, symbols, bolding, arrows, uncertainty, and footnotes.
+- Keep a self-contained caption or note for a table that may be read out of context.
+- Provide a nearby takeaway; the table does not write its own conclusion.
+
+## Quantitative comparisons
+
+- Compare or rank rows only when task, data, protocol, metric, and resource conditions
+  are materially comparable.
+- Separate incompatible protocols into different tables or clearly separated groups.
+- Report the number of runs or observations and define `±`, intervals, or quantiles.
+- Use bold or rank markers only for a stated comparison set. Do not imply significance
+  or practical dominance from boldface.
+- Preserve relevant baselines, targets, previous-period values, or denominators.
+- Use appropriate significant digits; false precision reduces trust.
+
+## Missing and special values
+
+Define separate representations for:
+
+- a measured zero;
+- missing or unavailable data;
+- not reported by a source;
+- not run or failed;
+- not applicable.
+
+Never sort or calculate with a missing value as though it were zero. If a dash is
+used, define it beside the table.
+
+## Density and accessibility
+
+- Keep narrative tables small enough to scan. Move long-tail rows, raw data, or
+  audit detail to an appendix or linked artifact.
+- Avoid prose-heavy cells and code blocks inside tables.
+- Do not use color, icons, or font weight as the only status signal.
+- On narrow surfaces, prefer fewer columns, split tables, or a vertical record list.
+- Use one clear header association for each cell; complex relationships need explicit
+  textual explanation or a more suitable format.
+
+## Avoid
+
+- A wide summary table used in place of an actual explanation.
+- Mixed units or denominators in one unlabeled numeric column.
+- Global rankings across different tasks, datasets, or evaluation conditions.
+- Repeating the same numbers in a table, visual, metric cards, and prose without a
+  distinct purpose.

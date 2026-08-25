@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/status-update.md",
+  "mode": "status-update",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 1058,
+      "sha256": "d83cea467f4dc3cac6bec8b3a53a712af7bd284427711a2e32cbf16df342c302"
+    },
+    "checkpoint": {
+      "intent_sha256": "7839d86cc200b7c416c3cd1056654fff324cdce7c5055eb0bb9d1e829e633fd8"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/status-update.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

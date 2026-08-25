@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/risk-report.md",
+  "mode": "risk-report",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 1807,
+      "sha256": "ff9c1378599c3c2f36983cc73d30e7fcf3dae7c4f802866e15e5adc9d2ee09e4"
+    },
+    "checkpoint": {
+      "intent_sha256": "f41a5e0f407d7590951b103f6ee10779a028d2d244bdf49eaa6f569dbde8ab0f"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/risk-report.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

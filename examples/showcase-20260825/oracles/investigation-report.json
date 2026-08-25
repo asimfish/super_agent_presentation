@@ -1,0 +1,73 @@
+{
+  "id": "investigation-report",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/investigation-report.md",
+  "sha256": "7530406076aa11ef15bc001d46fdba9da8fa56d550e8de20e46ba86522b76c15",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "症状与解释分开",
+    "根因由重现和单变量反事实支持",
+    "竞争假设与未决范围可见"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "480 ms",
+      "present": true
+    },
+    {
+      "text": "920 ms",
+      "present": true
+    },
+    {
+      "text": "250 ms",
+      "present": true
+    },
+    {
+      "text": "25 ms",
+      "present": true
+    },
+    {
+      "text": "反事实",
+      "present": true
+    },
+    {
+      "text": "第二主机",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "生产修复已完成",
+      "absent": true
+    },
+    {
+      "pattern": "适用于所有主机",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

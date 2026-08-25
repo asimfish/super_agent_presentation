@@ -1,0 +1,22 @@
+[
+  {
+    "phase": "route",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py route --task \"交付 isolated agentic-reporting showcase：12 个模式、4 个研究 profile、7 页 HTML/PDF/PNG 与完整审计证据\" --mode implementation-handoff --profile none --surface markdown --audience 研究负责人 --module tables --module evidence --must-show \"ALL PASS：16 份 Markdown、HTML、PDF 与 7 张 PNG 全部通过。\" --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "phase": "checkpoint",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py checkpoint --task \"交付 isolated agentic-reporting showcase：12 个模式、4 个研究 profile、7 页 HTML/PDF/PNG 与完整审计证据\" --mode implementation-handoff --profile none --surface markdown --audience 研究负责人 --module tables --module evidence --must-show \"ALL PASS：16 份 Markdown、HTML、PDF 与 7 张 PNG 全部通过。\" --output /private/tmp/agent-report-showcase-20260825-agent/checkpoints/showcase-overall.json --force",
+    "exit_code": 0,
+    "stdout": "Saved reporting checkpoint: /private/tmp/agent-report-showcase-20260825-agent/checkpoints/showcase-overall.json\n",
+    "stderr": ""
+  },
+  {
+    "phase": "bundle",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py bundle --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/showcase-overall.json --max-chars 24000",
+    "exit_code": 0,
+    "stderr": "",
+    "bytes": 13836
+  }
+]

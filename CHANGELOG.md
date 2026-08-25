@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.0 — 2026-08-25
+
+- Fixed the `academic-talk-html` template clipping the leading glyph of long CJK
+  headings when Chrome printed at 16:9 (print-only `padding-inline-start` on
+  `h1`/`h2`), and locked the behavior with filled-deck real-render regression
+  tests covering long CJK and mixed-script title fixtures.
+- Added `examples/showcase-20260825/`: one finished, receipt-backed sample for
+  each of the 12 core modes and 4 research profiles, plus a 7-page academic HTML
+  deck with Chrome-printed PDF, per-page renders, strict-audit and semantic-oracle
+  receipts, and an honest first-failure log. All facts are synthetic fixtures;
+  rendering was verified on macOS Chrome 151 only.
+- Split the README into an English `README.md` and a Chinese `README_CN.md`,
+  both with visual previews of the rendered showcase deck.
+- Added `docs/CATALOG.md`, a generated inventory of modes, modules, profiles,
+  surfaces, and template assets cross-linked to bounded routes and finished
+  examples, and `examples/README.md` documenting provenance and boundaries.
+- Added `CONTRIBUTING.md` covering the test, dist-reproducibility, regression,
+  and evidence-gate requirements for changes.
+- No protocol, routing, or template-content changes beyond the print fix; bundles
+  and dist output are unchanged from 0.4.0.
+
 ## 0.4.0 — 2026-08-24
 
 - Added a source-backed `research-idea` mode that separates verified motivation

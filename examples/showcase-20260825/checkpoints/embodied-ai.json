@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:10:47.715511+00:00",
+  "task": "用 experiment-report 和 embodied-ai profile 汇报 synthetic 具身智能实体部署协议，含控制频率、时延、安全停机和 sim-to-real 边界",
+  "task_sha256": "30863aa16aeb8e62fa5764f6698feae93377a2a972cd3a458bbf3dcfc71939f1",
+  "mode": "experiment-report",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "tables",
+    "evidence"
+  ],
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "intent_sha256": "81a4b1adcd5c163e201111168b432349bd40462dd3fc13cf41a90b2431e701bb"
+}

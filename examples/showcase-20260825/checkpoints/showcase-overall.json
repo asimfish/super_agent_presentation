@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:29:36.257244+00:00",
+  "task": "交付 isolated agentic-reporting showcase：12 个模式、4 个研究 profile、7 页 HTML/PDF/PNG 与完整审计证据",
+  "task_sha256": "138b50f0c8b83946f2ce2bf2a2351e8bf03e4fec8d503fdde732768ec7804d2c",
+  "mode": "implementation-handoff",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "tables",
+    "evidence"
+  ],
+  "must_show": [
+    "ALL PASS：16 份 Markdown、HTML、PDF 与 7 张 PNG 全部通过。"
+  ],
+  "intent_sha256": "7636fdd7c98f90b01bd48acb169a4b415b3b25e1b31854b9f24beab82a9822b3"
+}

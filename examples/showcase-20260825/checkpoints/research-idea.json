@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:10:46.456018+00:00",
+  "task": "用 research-idea 提出一个 synthetic 不确定性感知控制构想，含可证伪预测、最小实验和失败边界",
+  "task_sha256": "b85b545074b22cb7e06ebd6a2ef54670b1fb1a706eb51fbd73ddf7aeb64d091b",
+  "mode": "research-idea",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "academic-display"
+  ],
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "intent_sha256": "a2d2744e3504fc3a7f6e3914ef4ee6e4b22659e19ad37f5aa21fdac19ec53c75"
+}

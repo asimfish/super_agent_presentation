@@ -1,0 +1,85 @@
+{
+  "id": "embodied-ai",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/profiles/embodied-ai.md",
+  "sha256": "d0f2955c0e7805d60bcc6d0efa85e489b40fae8998d47259f2af8e389dd82c60",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "硬件、传感、动作、成功定义和 reset 完整",
+    "sim/real 频率、trial 与安全停机分开",
+    "零、缺失和小样本边界明确"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "SyntheticArm-A",
+      "present": true
+    },
+    {
+      "text": "20 Hz",
+      "present": true
+    },
+    {
+      "text": "10 Hz",
+      "present": true
+    },
+    {
+      "text": "30/40",
+      "present": true
+    },
+    {
+      "text": "7/10",
+      "present": true
+    },
+    {
+      "text": "2/10",
+      "present": true
+    },
+    {
+      "text": "p95 91 ms",
+      "present": true
+    },
+    {
+      "text": "Sim-to-real",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "真实机器人泛化",
+      "absent": true
+    },
+    {
+      "pattern": "安全认证",
+      "absent": true
+    },
+    {
+      "pattern": "统计等价",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

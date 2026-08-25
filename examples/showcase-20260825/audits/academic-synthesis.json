@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/academic-synthesis.md",
+  "mode": "academic-synthesis",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 1483,
+      "sha256": "6f96cc162224231c7c911213ec3699eebe5094b82e9738dc5c4efceaa7dab81d"
+    },
+    "checkpoint": {
+      "intent_sha256": "36f29ebbd2f64ba3a91621a64cf458137e8e6fb78850a99fce2ef90a2fcbd2eb"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/academic-synthesis.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

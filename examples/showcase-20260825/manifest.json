@@ -1,0 +1,444 @@
+{
+  "schema_version": 1,
+  "showcase": "agent-report-showcase-20260825-agent",
+  "synthetic_only": true,
+  "verdict": "ALL PASS",
+  "counts": {
+    "markdown": 16,
+    "strict_pass": 16,
+    "semantic_oracle_pass": 16,
+    "html": 1,
+    "pdf": 1,
+    "png_pages": 7
+  },
+  "reports": [
+    {
+      "id": "concise-answer",
+      "name": "Concise answer",
+      "group": "modes",
+      "preview": "首句直接回答沙箱开关可启用，同时把生产批准排除在证据之外。",
+      "report": "modes/concise-answer.md",
+      "report_sha256": "8702135ccf4330b2cfd26a8d9169a6f34b8858ffcac6d286934d9d4d79c8f95f",
+      "route": "routes/concise-answer.json",
+      "checkpoint": "checkpoints/concise-answer.json",
+      "bundle": "bundles/concise-answer.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/concise-answer.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/concise-answer.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/concise-answer.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/concise-answer.md",
+        "json": "oracles/concise-answer.json"
+      }
+    },
+    {
+      "id": "implementation-handoff",
+      "name": "Implementation handoff",
+      "group": "modes",
+      "preview": "以“部分完成”呈现 CSV 导出改动、8 项单元验证和三条未验证路径。",
+      "report": "modes/implementation-handoff.md",
+      "report_sha256": "152c5a1d60596fd15496eb217bb46d91d078dd3987154c0be07a2f5c40ed1880",
+      "route": "routes/implementation-handoff.json",
+      "checkpoint": "checkpoints/implementation-handoff.json",
+      "bundle": "bundles/implementation-handoff.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/implementation-handoff.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/implementation-handoff.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/implementation-handoff.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/implementation-handoff.md",
+        "json": "oracles/implementation-handoff.json"
+      }
+    },
+    {
+      "id": "status-update",
+      "name": "Status update",
+      "group": "modes",
+      "preview": "按 Batch 1/2/3 展示已完成、checksum 阻塞和下一迁移前沿。",
+      "report": "modes/status-update.md",
+      "report_sha256": "d83cea467f4dc3cac6bec8b3a53a712af7bd284427711a2e32cbf16df342c302",
+      "route": "routes/status-update.json",
+      "checkpoint": "checkpoints/status-update.json",
+      "bundle": "bundles/status-update.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/status-update.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/status-update.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/status-update.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/status-update.md",
+        "json": "oracles/status-update.json"
+      }
+    },
+    {
+      "id": "investigation-report",
+      "name": "Investigation report",
+      "group": "modes",
+      "preview": "用单变量重现与反事实将 flush timer 识别为合成重放范围内的根因。",
+      "report": "modes/investigation-report.md",
+      "report_sha256": "7530406076aa11ef15bc001d46fdba9da8fa56d550e8de20e46ba86522b76c15",
+      "route": "routes/investigation-report.json",
+      "checkpoint": "checkpoints/investigation-report.json",
+      "bundle": "bundles/investigation-report.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/investigation-report.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/investigation-report.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/investigation-report.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/investigation-report.md",
+        "json": "oracles/investigation-report.json"
+      }
+    },
+    {
+      "id": "experiment-report",
+      "name": "Experiment report",
+      "group": "modes",
+      "preview": "逐 run 与 mean±SD 展示 11 ms 延迟收益和 0.45pp 准确率代价。",
+      "report": "modes/experiment-report.md",
+      "report_sha256": "e53591f429966247fa397bb77b68b249cb6d98db8c429900550289b8ed57b64c",
+      "route": "routes/experiment-report.json",
+      "checkpoint": "checkpoints/experiment-report.json",
+      "bundle": "bundles/experiment-report.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/experiment-report.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/experiment-report.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/experiment-report.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/experiment-report.md",
+        "json": "oracles/experiment-report.json"
+      }
+    },
+    {
+      "id": "decision-brief",
+      "name": "Decision brief",
+      "group": "modes",
+      "preview": "在统一约束下比较三种队列，推荐 B 但保留成本与扩容复审触发器。",
+      "report": "modes/decision-brief.md",
+      "report_sha256": "006b6007f15fdba6d8d10345af5d139f87f28c783ec63a3e3be662fb80ddb34e",
+      "route": "routes/decision-brief.json",
+      "checkpoint": "checkpoints/decision-brief.json",
+      "bundle": "bundles/decision-brief.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/decision-brief.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/decision-brief.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/decision-brief.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/decision-brief.md",
+        "json": "oracles/decision-brief.json"
+      }
+    },
+    {
+      "id": "academic-synthesis",
+      "name": "Academic synthesis",
+      "group": "modes",
+      "preview": "只围绕虚构 [S1]/[S2] 综合预测时域与风险转交，不冒充真实文献。",
+      "report": "modes/academic-synthesis.md",
+      "report_sha256": "6f96cc162224231c7c911213ec3699eebe5094b82e9738dc5c4efceaa7dab81d",
+      "route": "routes/academic-synthesis.json",
+      "checkpoint": "checkpoints/academic-synthesis.json",
+      "bundle": "bundles/academic-synthesis.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/academic-synthesis.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/academic-synthesis.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/academic-synthesis.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/academic-synthesis.md",
+        "json": "oracles/academic-synthesis.json"
+      }
+    },
+    {
+      "id": "research-idea",
+      "name": "Research idea",
+      "group": "modes",
+      "preview": "把 uncertainty gate 设想绑定到 baseline、falsifier、失败模式和停止条件。",
+      "report": "modes/research-idea.md",
+      "report_sha256": "e50278ab4a459c69a66da3abae52571e3dd2e53c8e463b39a4c43fab50779a20",
+      "route": "routes/research-idea.json",
+      "checkpoint": "checkpoints/research-idea.json",
+      "bundle": "bundles/research-idea.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/research-idea.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/research-idea.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/research-idea.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/research-idea.md",
+        "json": "oracles/research-idea.json"
+      }
+    },
+    {
+      "id": "review-report",
+      "name": "Review report",
+      "group": "modes",
+      "preview": "两个 finding 按严重级别置前，并给出精确行号、影响和最小修正。",
+      "report": "modes/review-report.md",
+      "report_sha256": "8b59b1f6b5f195f13fa399031258bfc7b04d3c1a3ce928253fd503726d6a5773",
+      "route": "routes/review-report.json",
+      "checkpoint": "checkpoints/review-report.json",
+      "bundle": "bundles/review-report.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/review-report.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/review-report.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/review-report.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/review-report.md",
+        "json": "oracles/review-report.json"
+      }
+    },
+    {
+      "id": "incident-update",
+      "name": "Incident update",
+      "group": "modes",
+      "preview": "报告已恢复但仍监控；回滚的观测效果不等于 resolved 或根因确认。",
+      "report": "modes/incident-update.md",
+      "report_sha256": "c477dce5ad6db89e497508d7d86acfec4358cabc32c629c18d72c668cfeae503",
+      "route": "routes/incident-update.json",
+      "checkpoint": "checkpoints/incident-update.json",
+      "bundle": "bundles/incident-update.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/incident-update.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/incident-update.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/incident-update.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/incident-update.md",
+        "json": "oracles/incident-update.json"
+      }
+    },
+    {
+      "id": "postmortem",
+      "name": "Postmortem",
+      "group": "modes",
+      "preview": "分开触发、近因和系统性因素，并为三项预防控制指定合成 owner。",
+      "report": "modes/postmortem.md",
+      "report_sha256": "e403fcb554d19d948158187b2b03b192d44ae1124665864e21197ebea50bdb5a",
+      "route": "routes/postmortem.json",
+      "checkpoint": "checkpoints/postmortem.json",
+      "bundle": "bundles/postmortem.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/postmortem.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/postmortem.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/postmortem.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/postmortem.md",
+        "json": "oracles/postmortem.json"
+      }
+    },
+    {
+      "id": "risk-report",
+      "name": "Risk report",
+      "group": "modes",
+      "preview": "用三个稳定 risk ID 展示 ordinal rating、控制、残余风险、owner 与 trigger。",
+      "report": "modes/risk-report.md",
+      "report_sha256": "ff9c1378599c3c2f36983cc73d30e7fcf3dae7c4f802866e15e5adc9d2ee09e4",
+      "route": "routes/risk-report.json",
+      "checkpoint": "checkpoints/risk-report.json",
+      "bundle": "bundles/risk-report.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/risk-report.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/risk-report.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/risk-report.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/risk-report.md",
+        "json": "oracles/risk-report.json"
+      }
+    },
+    {
+      "id": "reinforcement-learning",
+      "name": "Reinforcement learning",
+      "group": "profiles",
+      "preview": "完整列出 5 个 seed、mean±SD、95% t CI、final-checkpoint 规则和显著性边界。",
+      "report": "profiles/reinforcement-learning.md",
+      "report_sha256": "3f3d4570dadc2d31d6e375b9e6ade95c8ff28cb145b3525c6cab5c9a2151406f",
+      "route": "routes/reinforcement-learning.json",
+      "checkpoint": "checkpoints/reinforcement-learning.json",
+      "bundle": "bundles/reinforcement-learning.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/reinforcement-learning.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/reinforcement-learning.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/reinforcement-learning.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/reinforcement-learning.md",
+        "json": "oracles/reinforcement-learning.json"
+      }
+    },
+    {
+      "id": "embodied-ai",
+      "name": "Embodied AI",
+      "group": "profiles",
+      "preview": "把 sim/real 的硬件、控制频率、成功定义、latency 与安全停机严格分组。",
+      "report": "profiles/embodied-ai.md",
+      "report_sha256": "d0f2955c0e7805d60bcc6d0efa85e489b40fae8998d47259f2af8e389dd82c60",
+      "route": "routes/embodied-ai.json",
+      "checkpoint": "checkpoints/embodied-ai.json",
+      "bundle": "bundles/embodied-ai.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/embodied-ai.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/embodied-ai.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/embodied-ai.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/embodied-ai.md",
+        "json": "oracles/embodied-ai.json"
+      }
+    },
+    {
+      "id": "world-models",
+      "name": "World models",
+      "group": "profiles",
+      "preview": "围绕 H={5,10,20,40} 的误差累积假设，分开 open-loop 与 closed-loop falsifier。",
+      "report": "profiles/world-models.md",
+      "report_sha256": "52dc931d0227fb164908a3e19a4b6e59a8e048cb30480dbc8725074110fb761d",
+      "route": "routes/world-models.json",
+      "checkpoint": "checkpoints/world-models.json",
+      "bundle": "bundles/world-models.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/world-models.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/world-models.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/world-models.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/world-models.md",
+        "json": "oracles/world-models.json"
+      }
+    },
+    {
+      "id": "vla",
+      "name": "VLA",
+      "group": "profiles",
+      "preview": "联合呈现 action chunk、控制周期、OOD、遥操作覆盖、人工接管和部署风险。",
+      "report": "profiles/vla.md",
+      "report_sha256": "611e0e9c4c0bd02fe5a7f98caeb3ae6c6a840d23cb78fb4404f62be60fd7c552",
+      "route": "routes/vla.json",
+      "checkpoint": "checkpoints/vla.json",
+      "bundle": "bundles/vla.txt",
+      "strict_audit": {
+        "result": "PASS",
+        "errors": 0,
+        "warnings": 0,
+        "receipt": "audits/vla.json",
+        "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/vla.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/vla.json --strict --json",
+        "exit_code": 0
+      },
+      "semantic_oracle": {
+        "result": "PASS",
+        "receipt": "oracles/vla.md",
+        "json": "oracles/vla.json"
+      }
+    }
+  ],
+  "html_demo": {
+    "html": "html/deck.html",
+    "html_sha256": "79b628cd4e6d1e33cd81bd96c9b62ea1c1dce98c64c71caf8cdec33140925137",
+    "route": "routes/html-academic-talk.json",
+    "checkpoint": "checkpoints/html-academic-talk.json",
+    "bundle": "bundles/html-academic-talk.txt",
+    "static_receipt": "html/static-validation.json",
+    "static_result": "PASS",
+    "pdf": "render/academic-talk.pdf",
+    "pdf_sha256": "5ea7ff28977cb99d1f5b036cebaa94c9830dd790c47142401db78bf880209903",
+    "pngs": [
+      "render/slide-1.png",
+      "render/slide-2.png",
+      "render/slide-3.png",
+      "render/slide-4.png",
+      "render/slide-5.png",
+      "render/slide-6.png",
+      "render/slide-7.png"
+    ],
+    "contact_sheet": "render/contact-sheet.png",
+    "geometry": "render/geometry.json",
+    "render_receipt": "render/validation.json",
+    "manual_visual_receipt": "render/manual-visual-check.md",
+    "chrome": "Google Chrome 151.0.7922.172",
+    "render_result": "PASS"
+  },
+  "command_receipts": {
+    "routing": "routing-commands.json",
+    "markdown_audits": "audit-commands-all.json",
+    "html_routing": "html-routing-commands.json",
+    "overall_routing": "overall-routing-commands.json",
+    "render": "render/chrome-render-receipt.json",
+    "poppler": "render/validation-commands.json",
+    "overall_audit": "overall-audit-command.json"
+  },
+  "failure_history": "first-failures.md",
+  "git_status_start": "git-status-start.txt",
+  "git_status_end": "git-status-end.txt",
+  "environment_boundaries": [
+    "All report facts are synthetic fixtures; no real research or production validity is claimed.",
+    "Rendered only on macOS with Chrome 151.0.7922.172, current system fonts, and local Poppler.",
+    "No Firefox, Safari, Linux, alternative CJK font, Quarto, or Reveal export was verified.",
+    "Production repository tests were not rerun in this showcase-only round."
+  ]
+}

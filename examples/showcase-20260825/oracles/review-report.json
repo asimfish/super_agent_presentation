@@ -1,0 +1,73 @@
+{
+  "id": "review-report",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/review-report.md",
+  "sha256": "8b59b1f6b5f195f13fa399031258bfc7b04d3c1a3ce928253fd503726d6a5773",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "finding-first 且按严重级别排序",
+    "每项有定位、影响和建议",
+    "实现与未审章节边界清楚"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "F1",
+      "present": true
+    },
+    {
+      "text": "高严重级别",
+      "present": true
+    },
+    {
+      "text": "section 2, line 14",
+      "present": true
+    },
+    {
+      "text": "F2",
+      "present": true
+    },
+    {
+      "text": "section 3, line 26",
+      "present": true
+    },
+    {
+      "text": "需要修订",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "API 实际可被重复写入",
+      "absent": true
+    },
+    {
+      "pattern": "不存在其他问题",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

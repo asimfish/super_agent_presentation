@@ -1,0 +1,73 @@
+{
+  "id": "status-update",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/status-update.md",
+  "sha256": "d83cea467f4dc3cac6bec8b3a53a712af7bd284427711a2e32cbf16df342c302",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "里程碑、阻塞与下一前沿完整",
+    "Batch 1/2/3 状态未混写",
+    "观测零与缺失总数已区分"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "T+4 h",
+      "present": true
+    },
+    {
+      "text": "120/120",
+      "present": true
+    },
+    {
+      "text": "60/100",
+      "present": true
+    },
+    {
+      "text": "checksum",
+      "present": true
+    },
+    {
+      "text": "Batch 3",
+      "present": true
+    },
+    {
+      "text": "下一步",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "三批完成",
+      "absent": true
+    },
+    {
+      "pattern": "全部迁移完成",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

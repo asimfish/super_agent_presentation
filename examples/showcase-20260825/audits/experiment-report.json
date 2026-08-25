@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/experiment-report.md",
+  "mode": "experiment-report",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 1986,
+      "sha256": "e53591f429966247fa397bb77b68b249cb6d98db8c429900550289b8ed57b64c"
+    },
+    "checkpoint": {
+      "intent_sha256": "03d573cdb377c1c3a7ca158a93e5f66aaf016d6ddcffa292799b80e61349b85f"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/experiment-report.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

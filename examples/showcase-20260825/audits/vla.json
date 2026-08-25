@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/profiles/vla.md",
+  "mode": "experiment-report",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 2580,
+      "sha256": "611e0e9c4c0bd02fe5a7f98caeb3ae6c6a840d23cb78fb4404f62be60fd7c552"
+    },
+    "checkpoint": {
+      "intent_sha256": "bcfaf3c47a4ca627568c7d6d972c06031ad996a3a2bec4509abd67f0a81f5e76"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/vla.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

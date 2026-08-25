@@ -1,0 +1,5 @@
+{
+  "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/audit-summary.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/showcase-overall.json --strict --json",
+  "exit_code": 0,
+  "stderr": ""
+}

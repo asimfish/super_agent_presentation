@@ -1,0 +1,102 @@
+{
+  "checks": {
+    "pages_7": true,
+    "pdf_1152x648": true,
+    "geometry_7": true,
+    "dom_no_overflow": true,
+    "title_safe_margin_ge_4_css_px": true,
+    "pdf_text_inside_page": true,
+    "png_count_7": true,
+    "png_1760x990": true,
+    "each_page_nonblank": true,
+    "physical_edge_clear": true,
+    "contact_sheet_created": true
+  },
+  "page_count": 7,
+  "page_size_points": [
+    1152.0,
+    648.0
+  ],
+  "title_safe_margins_css_px": [
+    12.888,
+    8.106,
+    8.106,
+    8.106,
+    6.138,
+    8.106,
+    8.106
+  ],
+  "image_checks": [
+    {
+      "slide": 1,
+      "path": "/private/tmp/agent-report-showcase-20260825-agent/render/slide-1.png",
+      "size": [
+        1760,
+        990
+      ],
+      "nonblank": true,
+      "edge_dark_pixels": 0
+    },
+    {
+      "slide": 2,
+      "path": "/private/tmp/agent-report-showcase-20260825-agent/render/slide-2.png",
+      "size": [
+        1760,
+        990
+      ],
+      "nonblank": true,
+      "edge_dark_pixels": 0
+    },
+    {
+      "slide": 3,
+      "path": "/private/tmp/agent-report-showcase-20260825-agent/render/slide-3.png",
+      "size": [
+        1760,
+        990
+      ],
+      "nonblank": true,
+      "edge_dark_pixels": 0
+    },
+    {
+      "slide": 4,
+      "path": "/private/tmp/agent-report-showcase-20260825-agent/render/slide-4.png",
+      "size": [
+        1760,
+        990
+      ],
+      "nonblank": true,
+      "edge_dark_pixels": 0
+    },
+    {
+      "slide": 5,
+      "path": "/private/tmp/agent-report-showcase-20260825-agent/render/slide-5.png",
+      "size": [
+        1760,
+        990
+      ],
+      "nonblank": true,
+      "edge_dark_pixels": 0
+    },
+    {
+      "slide": 6,
+      "path": "/private/tmp/agent-report-showcase-20260825-agent/render/slide-6.png",
+      "size": [
+        1760,
+        990
+      ],
+      "nonblank": true,
+      "edge_dark_pixels": 0
+    },
+    {
+      "slide": 7,
+      "path": "/private/tmp/agent-report-showcase-20260825-agent/render/slide-7.png",
+      "size": [
+        1760,
+        990
+      ],
+      "nonblank": true,
+      "edge_dark_pixels": 0
+    }
+  ],
+  "manual_visual_check": "PASS: 7/7 slides inspected at rendered PNG resolution; no clipped title/body/footer, no overlap, assertion-evidence relationship remains readable"
+}

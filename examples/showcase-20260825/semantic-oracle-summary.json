@@ -1,0 +1,103 @@
+{
+  "total": 16,
+  "passed": 16,
+  "failed": 0,
+  "reports": [
+    {
+      "id": "concise-answer",
+      "result": "PASS",
+      "sha256": "8702135ccf4330b2cfd26a8d9169a6f34b8858ffcac6d286934d9d4d79c8f95f",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/concise-answer.md"
+    },
+    {
+      "id": "implementation-handoff",
+      "result": "PASS",
+      "sha256": "152c5a1d60596fd15496eb217bb46d91d078dd3987154c0be07a2f5c40ed1880",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/implementation-handoff.md"
+    },
+    {
+      "id": "status-update",
+      "result": "PASS",
+      "sha256": "d83cea467f4dc3cac6bec8b3a53a712af7bd284427711a2e32cbf16df342c302",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/status-update.md"
+    },
+    {
+      "id": "investigation-report",
+      "result": "PASS",
+      "sha256": "7530406076aa11ef15bc001d46fdba9da8fa56d550e8de20e46ba86522b76c15",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/investigation-report.md"
+    },
+    {
+      "id": "experiment-report",
+      "result": "PASS",
+      "sha256": "e53591f429966247fa397bb77b68b249cb6d98db8c429900550289b8ed57b64c",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/experiment-report.md"
+    },
+    {
+      "id": "decision-brief",
+      "result": "PASS",
+      "sha256": "006b6007f15fdba6d8d10345af5d139f87f28c783ec63a3e3be662fb80ddb34e",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/decision-brief.md"
+    },
+    {
+      "id": "academic-synthesis",
+      "result": "PASS",
+      "sha256": "6f96cc162224231c7c911213ec3699eebe5094b82e9738dc5c4efceaa7dab81d",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/academic-synthesis.md"
+    },
+    {
+      "id": "research-idea",
+      "result": "PASS",
+      "sha256": "e50278ab4a459c69a66da3abae52571e3dd2e53c8e463b39a4c43fab50779a20",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/research-idea.md"
+    },
+    {
+      "id": "review-report",
+      "result": "PASS",
+      "sha256": "8b59b1f6b5f195f13fa399031258bfc7b04d3c1a3ce928253fd503726d6a5773",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/review-report.md"
+    },
+    {
+      "id": "incident-update",
+      "result": "PASS",
+      "sha256": "c477dce5ad6db89e497508d7d86acfec4358cabc32c629c18d72c668cfeae503",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/incident-update.md"
+    },
+    {
+      "id": "postmortem",
+      "result": "PASS",
+      "sha256": "e403fcb554d19d948158187b2b03b192d44ae1124665864e21197ebea50bdb5a",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/postmortem.md"
+    },
+    {
+      "id": "risk-report",
+      "result": "PASS",
+      "sha256": "ff9c1378599c3c2f36983cc73d30e7fcf3dae7c4f802866e15e5adc9d2ee09e4",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/risk-report.md"
+    },
+    {
+      "id": "reinforcement-learning",
+      "result": "PASS",
+      "sha256": "3f3d4570dadc2d31d6e375b9e6ade95c8ff28cb145b3525c6cab5c9a2151406f",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/reinforcement-learning.md"
+    },
+    {
+      "id": "embodied-ai",
+      "result": "PASS",
+      "sha256": "d0f2955c0e7805d60bcc6d0efa85e489b40fae8998d47259f2af8e389dd82c60",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/embodied-ai.md"
+    },
+    {
+      "id": "world-models",
+      "result": "PASS",
+      "sha256": "52dc931d0227fb164908a3e19a4b6e59a8e048cb30480dbc8725074110fb761d",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/world-models.md"
+    },
+    {
+      "id": "vla",
+      "result": "PASS",
+      "sha256": "611e0e9c4c0bd02fe5a7f98caeb3ae6c6a840d23cb78fb4404f62be60fd7c552",
+      "record": "/private/tmp/agent-report-showcase-20260825-agent/oracles/vla.md"
+    }
+  ]
+}

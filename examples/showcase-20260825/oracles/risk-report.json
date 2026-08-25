@@ -1,0 +1,85 @@
+{
+  "id": "risk-report",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/risk-report.md",
+  "sha256": "ff9c1378599c3c2f36983cc73d30e7fcf3dae7c4f802866e15e5adc9d2ee09e4",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "likelihood/impact/confidence 逻辑分开",
+    "控制、残余风险、owner 和 trigger 齐全",
+    "未把 ordinal rating 冒充概率"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "R1",
+      "present": true
+    },
+    {
+      "text": "R2",
+      "present": true
+    },
+    {
+      "text": "R3",
+      "present": true
+    },
+    {
+      "text": "序数",
+      "present": true
+    },
+    {
+      "text": "现有控制",
+      "present": true
+    },
+    {
+      "text": "残余风险",
+      "present": true
+    },
+    {
+      "text": "owner",
+      "present": true
+    },
+    {
+      "text": "触发器",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "风险已关闭",
+      "absent": true
+    },
+    {
+      "pattern": "风险已消除",
+      "absent": true
+    },
+    {
+      "pattern": "精确概率",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

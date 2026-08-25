@@ -1,0 +1,85 @@
+{
+  "id": "vla",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/profiles/vla.md",
+  "sha256": "611e0e9c4c0bd02fe5a7f98caeb3ae6c6a840d23cb78fb4404f62be60fd7c552",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "action interface、chunking、控制频率和时延完整",
+    "seen/OOD、takeover/safety stop 与单训练 run 边界清楚",
+    "遥操作数据 overlap 与跨 embodiment 风险未隐藏"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "4-action chunk",
+      "present": true
+    },
+    {
+      "text": "400 ms",
+      "present": true
+    },
+    {
+      "text": "p50/p95",
+      "present": true
+    },
+    {
+      "text": "16/20",
+      "present": true
+    },
+    {
+      "text": "8/20",
+      "present": true
+    },
+    {
+      "text": "5/20",
+      "present": true
+    },
+    {
+      "text": "800 条",
+      "present": true
+    },
+    {
+      "text": "人工接管",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "跨机器人泛化",
+      "absent": true
+    },
+    {
+      "pattern": "部署安全",
+      "absent": true
+    },
+    {
+      "pattern": "因果关系",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

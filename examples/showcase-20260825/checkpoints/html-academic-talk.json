@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:20:45.199244+00:00",
+  "task": "用 experiment-report、vla profile 和 academic-talk slide surface 展示 synthetic VLA action chunking 实验，保留不确定性与泛化边界",
+  "task_sha256": "e9efaa8cd4ea1713d0372d3e9386a4ad3fcb14b1f10689c02f7fef934eab8a51",
+  "mode": "experiment-report",
+  "surface": "slide",
+  "audience": "研究负责人",
+  "modules": [
+    "visuals",
+    "tables"
+  ],
+  "must_show": [],
+  "intent_sha256": "915a97c0c98d0401dd48a3b474996df64cc569c9aa8c0f489ac75eff73f57961"
+}

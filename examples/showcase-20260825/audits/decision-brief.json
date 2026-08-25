@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/decision-brief.md",
+  "mode": "decision-brief",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 1403,
+      "sha256": "006b6007f15fdba6d8d10345af5d139f87f28c783ec63a3e3be662fb80ddb34e"
+    },
+    "checkpoint": {
+      "intent_sha256": "a98bceeeb82d8f5abfa2bbcc17063be6d47b96c671767e7e8879bebc907e868a"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/decision-brief.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

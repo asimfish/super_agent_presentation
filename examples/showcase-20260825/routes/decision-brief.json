@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "mode": "decision-brief",
+  "mode_inferred": false,
+  "profile": null,
+  "profile_inferred": false,
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "tables",
+    "conclusions"
+  ],
+  "task": "用 decision-brief 比较 synthetic 批处理方案的选项、标准、权衡、推荐和复审触发器",
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "route_scores": {
+    "concise-answer": 0,
+    "implementation-handoff": 0,
+    "status-update": 0,
+    "investigation-report": 0,
+    "experiment-report": 0,
+    "decision-brief": 16,
+    "academic-synthesis": 0,
+    "research-idea": 0,
+    "review-report": 0,
+    "incident-update": 0,
+    "postmortem": 0,
+    "risk-report": 0
+  },
+  "profile_scores": {
+    "reinforcement-learning": 0,
+    "embodied-ai": 0,
+    "world-models": 0,
+    "vla": 0
+  },
+  "mode_reference": "modes/decision-brief.md",
+  "profile_reference": null,
+  "surface_reference": null,
+  "module_references": [
+    "modules/tables.md",
+    "modules/conclusions.md"
+  ],
+  "recommended_templates": []
+}

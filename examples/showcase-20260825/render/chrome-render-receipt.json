@@ -1,0 +1,26 @@
+{
+  "chrome": "Google Chrome 151.0.7922.172",
+  "input": "/private/tmp/agent-report-showcase-20260825-agent/html/deck.html",
+  "output_pdf": "/private/tmp/agent-report-showcase-20260825-agent/render/academic-talk.pdf",
+  "launch_command": [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "--headless=new",
+    "--disable-gpu",
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--metrics-recording-only",
+    "--no-first-run",
+    "--disable-default-apps",
+    "--remote-allow-origins=*",
+    "--remote-debugging-port=0",
+    "--user-data-dir=<isolated-profile>",
+    "about:blank"
+  ],
+  "print_options": {
+    "paper": "16in x 9in",
+    "preferCSSPageSize": true,
+    "background": true,
+    "margins": 0
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/audit-summary.md",
+  "mode": "implementation-handoff",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 2133,
+      "sha256": "0e25bb8eb5020f2559c18ae4bc68ff88014b972a4799a5e98809b114e728be08"
+    },
+    "checkpoint": {
+      "intent_sha256": "7636fdd7c98f90b01bd48acb169a4b415b3b25e1b31854b9f24beab82a9822b3"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/showcase-overall.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

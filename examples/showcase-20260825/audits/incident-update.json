@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/incident-update.md",
+  "mode": "incident-update",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 1160,
+      "sha256": "c477dce5ad6db89e497508d7d86acfec4358cabc32c629c18d72c668cfeae503"
+    },
+    "checkpoint": {
+      "intent_sha256": "fc8b6c4dfefad476d7dfd2bfd9e73e5f1c6d1a4aa7dd88fccd1a91992b18a359"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/incident-update.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

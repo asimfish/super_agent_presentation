@@ -1,0 +1,77 @@
+{
+  "id": "reinforcement-learning",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/profiles/reinforcement-learning.md",
+  "sha256": "3f3d4570dadc2d31d6e375b9e6ade95c8ff28cb145b3525c6cab5c9a2151406f",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "5 个 seed 全量呈现且无排除",
+    "mean±SD 与 95% t CI 定义清楚",
+    "selection rule、compute 与 significance 边界明确"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "Seed 1",
+      "present": true
+    },
+    {
+      "text": "Seed 5",
+      "present": true
+    },
+    {
+      "text": "510.0±15.8",
+      "present": true
+    },
+    {
+      "text": "500.0±7.9",
+      "present": true
+    },
+    {
+      "text": "[490.4, 529.6]",
+      "present": true
+    },
+    {
+      "text": "最终 checkpoint",
+      "present": true
+    },
+    {
+      "text": "没有假设检验",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "显著优于",
+      "absent": true
+    },
+    {
+      "pattern": "最佳 seed 代表",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "concise-answer",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/concise-answer.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/concise-answer.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "implementation-handoff",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/implementation-handoff.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/implementation-handoff.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "status-update",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/status-update.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/status-update.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "investigation-report",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/investigation-report.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/investigation-report.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "experiment-report",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/experiment-report.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/experiment-report.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "decision-brief",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/decision-brief.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/decision-brief.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "academic-synthesis",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/academic-synthesis.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/academic-synthesis.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "research-idea",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/research-idea.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/research-idea.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "review-report",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/review-report.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/review-report.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "incident-update",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/incident-update.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/incident-update.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "postmortem",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/postmortem.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/postmortem.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "risk-report",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/modes/risk-report.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/risk-report.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "reinforcement-learning",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/reinforcement-learning.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/reinforcement-learning.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "embodied-ai",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/embodied-ai.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/embodied-ai.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "world-models",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/world-models.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/world-models.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "vla",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/vla.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/vla.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  }
+]

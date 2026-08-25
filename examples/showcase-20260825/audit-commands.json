@@ -1,0 +1,26 @@
+[
+  {
+    "id": "reinforcement-learning",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/reinforcement-learning.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/reinforcement-learning.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "embodied-ai",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/embodied-ai.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/embodied-ai.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "world-models",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/world-models.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/world-models.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "id": "vla",
+    "command": "python3 /Users/liyufeng/Desktop/research/super_agent_presentation/skills/agentic-reporting/scripts/reportctl.py audit --file /private/tmp/agent-report-showcase-20260825-agent/profiles/vla.md --checkpoint /private/tmp/agent-report-showcase-20260825-agent/checkpoints/vla.json --strict --json",
+    "exit_code": 0,
+    "stderr": ""
+  }
+]

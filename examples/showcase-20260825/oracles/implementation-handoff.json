@@ -1,0 +1,73 @@
+{
+  "id": "implementation-handoff",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/implementation-handoff.md",
+  "sha256": "152c5a1d60596fd15496eb217bb46d91d078dd3987154c0be07a2f5c40ed1880",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "改动、验证与剩余项分离",
+    "8 个单元案例没有扩写成全面完成",
+    "集成/安装/Unicode 缺口可见"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "部分完成",
+      "present": true
+    },
+    {
+      "text": "3/3",
+      "present": true
+    },
+    {
+      "text": "2/2",
+      "present": true
+    },
+    {
+      "text": "对象存储集成",
+      "present": true
+    },
+    {
+      "text": "多行 Unicode",
+      "present": true
+    },
+    {
+      "text": "下一步",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "全面完成",
+      "absent": true
+    },
+    {
+      "pattern": "可发布交付已完成",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

@@ -1,0 +1,77 @@
+{
+  "id": "experiment-report",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/experiment-report.md",
+  "sha256": "e53591f429966247fa397bb77b68b249cb6d98db8c429900550289b8ed57b64c",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "协议、指标方向/单位/分母完整",
+    "逐 run 与 mean±sample SD 一致",
+    "允许解释保留速度—准确率权衡"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "4 次独立运行",
+      "present": true
+    },
+    {
+      "text": "84.00±0.16",
+      "present": true
+    },
+    {
+      "text": "83.55±0.13",
+      "present": true
+    },
+    {
+      "text": "40.0±0.82",
+      "present": true
+    },
+    {
+      "text": "29.0±0.82",
+      "present": true
+    },
+    {
+      "text": "没有显著性检验",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "显著优于",
+      "absent": true
+    },
+    {
+      "pattern": "state-of-the-art",
+      "absent": true
+    },
+    {
+      "pattern": "SOTA",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

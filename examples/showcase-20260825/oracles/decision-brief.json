@@ -1,0 +1,69 @@
+{
+  "id": "decision-brief",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/decision-brief.md",
+  "sha256": "006b6007f15fdba6d8d10345af5d139f87f28c783ec63a3e3be662fb80ddb34e",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "选项使用同一标准",
+    "建议与授权分开",
+    "代价和复审触发条件可见"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "待批准",
+      "present": true
+    },
+    {
+      "text": "Option B",
+      "present": true
+    },
+    {
+      "text": "150 ms",
+      "present": true
+    },
+    {
+      "text": "3/3",
+      "present": true
+    },
+    {
+      "text": "重新比较 B 与 C",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "已批准",
+      "absent": true
+    },
+    {
+      "pattern": "总成本上优于",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

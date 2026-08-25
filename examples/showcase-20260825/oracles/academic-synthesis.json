@@ -1,0 +1,69 @@
+{
+  "id": "academic-synthesis",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/academic-synthesis.md",
+  "sha256": "6f96cc162224231c7c911213ec3699eebe5094b82e9738dc5c4efceaa7dab81d",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "概念优先而非逐篇堆叠",
+    "只使用合成 S1/S2 作为学术来源标识",
+    "非系统检索与不可比边界明确"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "[S1]",
+      "present": true
+    },
+    {
+      "text": "[S2]",
+      "present": true
+    },
+    {
+      "text": "未核验真实论文",
+      "present": true
+    },
+    {
+      "text": "不能组成统一排行榜",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "\\[S[3-9]\\]",
+      "absent": true
+    },
+    {
+      "pattern": "真实论文表明",
+      "absent": true
+    },
+    {
+      "pattern": "文献共识",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

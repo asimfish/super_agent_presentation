@@ -1,0 +1,77 @@
+{
+  "id": "incident-update",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/incident-update.md",
+  "sha256": "c477dce5ad6db89e497508d7d86acfec4358cabc32c629c18d72c668cfeae503",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "当前状态和影响置前",
+    "回滚动作与 observed effect 分开",
+    "根因/错误率/完整性未知项保留"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "synthetic UTC 09:23",
+      "present": true
+    },
+    {
+      "text": "已恢复、仍在监控",
+      "present": true
+    },
+    {
+      "text": "18 个",
+      "present": true
+    },
+    {
+      "text": "09:18",
+      "present": true
+    },
+    {
+      "text": "不等于事故已经解决",
+      "present": true
+    },
+    {
+      "text": "根因",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "状态：resolved",
+      "absent": true
+    },
+    {
+      "pattern": "根因已确认",
+      "absent": true
+    },
+    {
+      "pattern": "all clear",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

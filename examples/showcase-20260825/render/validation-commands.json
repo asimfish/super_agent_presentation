@@ -1,0 +1,39 @@
+[
+  {
+    "command": [
+      "pdfinfo",
+      "/private/tmp/agent-report-showcase-20260825-agent/render/academic-talk.pdf"
+    ],
+    "exit_code": 0,
+    "stdout": "Title:           Adaptive Action Chunking｜Synthetic VLA Showcase\nCreator:         Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36\nProducer:        Skia/PDF m151\nCreationDate:    Tue Aug 25 00:25:21 2026 CST\nModDate:         Tue Aug 25 00:25:21 2026 CST\nCustom Metadata: no\nMetadata Stream: no\nTagged:          yes\nUserProperties:  no\nSuspects:        no\nForm:            none\nJavaScript:      no\nPages:           7\nEncrypted:       no\nPage size:       1152 x 648 pts\nPage rot:        0\nFile size:       841007 bytes\nOptimized:       no\nPDF version:     1.4\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "pdftotext",
+      "-bbox-layout",
+      "/private/tmp/agent-report-showcase-20260825-agent/render/academic-talk.pdf",
+      "/private/tmp/agent-report-showcase-20260825-agent/render/academic-talk.xml"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "pdftoppm",
+      "-f",
+      "1",
+      "-l",
+      "7",
+      "-png",
+      "-r",
+      "110",
+      "/private/tmp/agent-report-showcase-20260825-agent/render/academic-talk.pdf",
+      "/private/tmp/agent-report-showcase-20260825-agent/render/slide"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

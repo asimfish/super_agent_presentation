@@ -1,0 +1,17 @@
+{
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/html/deck.html",
+  "sha256": "79b628cd4e6d1e33cd81bd96c9b62ea1c1dce98c64c71caf8cdec33140925137",
+  "checks": {
+    "seven_slides": true,
+    "seven_closing_sections": true,
+    "aspect_ratio_print": true,
+    "print_title_inset": true,
+    "no_double_brace": true,
+    "no_placeholder_text": true,
+    "no_remote_dependency": true,
+    "inline_svg_complete": true,
+    "synthetic_label": true
+  },
+  "passed": 9,
+  "failed": 0
+}

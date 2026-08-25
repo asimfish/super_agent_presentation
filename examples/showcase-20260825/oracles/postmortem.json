@@ -1,0 +1,85 @@
+{
+  "id": "postmortem",
+  "report": "/private/tmp/agent-report-showcase-20260825-agent/modes/postmortem.md",
+  "sha256": "e403fcb554d19d948158187b2b03b192d44ae1124665864e21197ebea50bdb5a",
+  "result": "PASS",
+  "human_semantic_checks": [
+    "影响、时间线和原因层次齐全",
+    "修复/预防动作含 owner 与完成条件",
+    "动作计划未写成风险已消除"
+  ],
+  "required_literal_checks": [
+    {
+      "text": "12%",
+      "present": true
+    },
+    {
+      "text": "10:02–10:20",
+      "present": true
+    },
+    {
+      "text": "触发",
+      "present": true
+    },
+    {
+      "text": "近因机制",
+      "present": true
+    },
+    {
+      "text": "系统性因素",
+      "present": true
+    },
+    {
+      "text": "Platform role",
+      "present": true
+    },
+    {
+      "text": "Release role",
+      "present": true
+    },
+    {
+      "text": "Observability role",
+      "present": true
+    }
+  ],
+  "prohibited_expression_checks": [
+    {
+      "pattern": "\\{\\{",
+      "absent": true
+    },
+    {
+      "pattern": "\\}\\}",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTODO\\b",
+      "absent": true
+    },
+    {
+      "pattern": "(?i)\\bTBD\\b",
+      "absent": true
+    },
+    {
+      "pattern": "达到 SOTA",
+      "absent": true
+    },
+    {
+      "pattern": "个人失误",
+      "absent": true
+    },
+    {
+      "pattern": "风险已消除",
+      "absent": true
+    },
+    {
+      "pattern": "不会复发",
+      "absent": true
+    }
+  ],
+  "common_boundary_checks": {
+    "synthetic_anchor": true,
+    "evidence_pack_link": true,
+    "no_unresolved_template_marker": true
+  },
+  "limitation": "Literal checks assist but do not replace the recorded human semantic review; all facts are synthetic fixture facts."
+}

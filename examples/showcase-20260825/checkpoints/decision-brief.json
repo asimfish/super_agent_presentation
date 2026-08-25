@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:10:46.018655+00:00",
+  "task": "用 decision-brief 比较 synthetic 批处理方案的选项、标准、权衡、推荐和复审触发器",
+  "task_sha256": "a13379c70e5f89d65aa5ec4de3516b1487cfa80e8bc1f7752badc656659f773e",
+  "mode": "decision-brief",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "tables",
+    "conclusions"
+  ],
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "intent_sha256": "a98bceeeb82d8f5abfa2bbcc17063be6d47b96c671767e7e8879bebc907e868a"
+}

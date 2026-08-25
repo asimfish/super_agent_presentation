@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:10:44.962114+00:00",
+  "task": "用 concise-answer 汇报一个 synthetic 本地缓存开关是否可启用的直接答案与最小边界",
+  "task_sha256": "729ae77cc32507ece3de31f13d511d3193b1662cb50551785367a1bb1b288351",
+  "mode": "concise-answer",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "conclusions"
+  ],
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "intent_sha256": "ebd887ed9627b68d391a7f4a7038e09f3d96872b315c4720cd7b8e10aeedc4e6"
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/modes/postmortem.md",
+  "mode": "postmortem",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 2091,
+      "sha256": "e403fcb554d19d948158187b2b03b192d44ae1124665864e21197ebea50bdb5a"
+    },
+    "checkpoint": {
+      "intent_sha256": "cbfae8491aebe6e0ff73ecbdce3ff1c68a8ddbe7e03bf51c14ae5625db4c593a"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/postmortem.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

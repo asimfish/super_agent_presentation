@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/profiles/embodied-ai.md",
+  "mode": "experiment-report",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 2156,
+      "sha256": "d0f2955c0e7805d60bcc6d0efa85e489b40fae8998d47259f2af8e389dd82c60"
+    },
+    "checkpoint": {
+      "intent_sha256": "81a4b1adcd5c163e201111168b432349bd40462dd3fc13cf41a90b2431e701bb"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/embodied-ai.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

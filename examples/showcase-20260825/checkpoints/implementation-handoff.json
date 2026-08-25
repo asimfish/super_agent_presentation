@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "kind": "agentic-report-checkpoint",
+  "created_at": "2026-08-24T16:10:45.178408+00:00",
+  "task": "用 implementation-handoff 汇报一个 synthetic CSV 导出改动的局部交付、验证和剩余项",
+  "task_sha256": "240de9ae5e21d3fd391fd36ac4322b27633590ee0bafb74a10a55d760ab1821d",
+  "mode": "implementation-handoff",
+  "surface": "markdown",
+  "audience": "研究负责人",
+  "modules": [
+    "evidence"
+  ],
+  "must_show": [
+    "本报告仅使用合成展示数据，不代表真实研究或生产结果。"
+  ],
+  "intent_sha256": "e1bbeb1adafe13525a7bbe2e1c6ae55fd10f727e2d74aaa552cb96d01a4f10f4"
+}

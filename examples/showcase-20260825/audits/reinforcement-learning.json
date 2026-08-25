@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "file": "/private/tmp/agent-report-showcase-20260825-agent/profiles/reinforcement-learning.md",
+  "mode": "experiment-report",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 2042,
+      "sha256": "3f3d4570dadc2d31d6e375b9e6ade95c8ff28cb145b3525c6cab5c9a2151406f"
+    },
+    "checkpoint": {
+      "intent_sha256": "83046fd2581b479bc0863f004515287c49af7d2a91a9e2a0bce04f91f1637ee3"
+    }
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": [],
+  "checkpoint": {
+    "file": "/private/tmp/agent-report-showcase-20260825-agent/checkpoints/reinforcement-learning.json",
+    "schema_version": 2,
+    "must_show_checked": 1,
+    "must_show_missing": 0
+  }
+}

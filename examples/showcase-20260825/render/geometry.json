@@ -1,0 +1,331 @@
+[
+  {
+    "slide": 1,
+    "slideRect": {
+      "left": 0,
+      "top": 0,
+      "right": 1536,
+      "bottom": 864,
+      "width": 1536,
+      "height": 864
+    },
+    "safe": {
+      "left": 76.8,
+      "top": 76.8,
+      "right": 1459.2,
+      "bottom": 787.2
+    },
+    "title": "Adaptive Action Chunking",
+    "titleRect": {
+      "left": 76.796875,
+      "top": 111.984375,
+      "right": 1459.203125,
+      "bottom": 223.796875,
+      "width": 1382.40625,
+      "height": 111.8125
+    },
+    "firstCharacter": "A",
+    "firstRangeRect": {
+      "left": 89.6875,
+      "top": 103.984375,
+      "right": 162.046875,
+      "bottom": 230.984375,
+      "width": 72.359375,
+      "height": 127
+    },
+    "titleSafeMargin": 12.887500000000003,
+    "titleStyle": {
+      "fontSize": "107.52px",
+      "paddingInlineStart": "12.9024px"
+    },
+    "scroll": {
+      "slideWidth": 1536,
+      "clientWidth": 1536,
+      "slideHeight": 864,
+      "clientHeight": 864
+    },
+    "outside": []
+  },
+  {
+    "slide": 2,
+    "slideRect": {
+      "left": 0,
+      "top": 864,
+      "right": 1536,
+      "bottom": 1728,
+      "width": 1536,
+      "height": 864
+    },
+    "safe": {
+      "left": 76.8,
+      "top": 940.8,
+      "right": 1459.2,
+      "bottom": 1651.2
+    },
+    "title": "视觉 OOD 下，固定四步动作块会延长无反馈执行窗口",
+    "titleRect": {
+      "left": 76.796875,
+      "top": 975.984375,
+      "right": 1051.75,
+      "bottom": 1116.546875,
+      "width": 974.953125,
+      "height": 140.5625
+    },
+    "firstCharacter": "视",
+    "firstRangeRect": {
+      "left": 84.90625,
+      "top": 970.984375,
+      "right": 152.5,
+      "bottom": 1049.984375,
+      "width": 67.59375,
+      "height": 79
+    },
+    "titleSafeMargin": 8.106250000000003,
+    "titleStyle": {
+      "fontSize": "67.584px",
+      "paddingInlineStart": "8.11008px"
+    },
+    "scroll": {
+      "slideWidth": 1536,
+      "clientWidth": 1536,
+      "slideHeight": 864,
+      "clientHeight": 864
+    },
+    "outside": []
+  },
+  {
+    "slide": 3,
+    "slideRect": {
+      "left": 0,
+      "top": 1728,
+      "right": 1536,
+      "bottom": 2592,
+      "width": 1536,
+      "height": 864
+    },
+    "safe": {
+      "left": 76.8,
+      "top": 1804.8,
+      "right": 1459.2,
+      "bottom": 2515.2
+    },
+    "title": "置信度门控只改变测试时的 action chunk 长度",
+    "titleRect": {
+      "left": 76.796875,
+      "top": 1839.984375,
+      "right": 1051.75,
+      "bottom": 1980.546875,
+      "width": 974.953125,
+      "height": 140.5625
+    },
+    "firstCharacter": "置",
+    "firstRangeRect": {
+      "left": 84.90625,
+      "top": 1834.984375,
+      "right": 152.5,
+      "bottom": 1913.984375,
+      "width": 67.59375,
+      "height": 79
+    },
+    "titleSafeMargin": 8.106250000000003,
+    "titleStyle": {
+      "fontSize": "67.584px",
+      "paddingInlineStart": "8.11008px"
+    },
+    "scroll": {
+      "slideWidth": 1536,
+      "clientWidth": 1536,
+      "slideHeight": 864,
+      "clientHeight": 864
+    },
+    "outside": []
+  },
+  {
+    "slide": 4,
+    "slideRect": {
+      "left": 0,
+      "top": 2592,
+      "right": 1536,
+      "bottom": 3456,
+      "width": 1536,
+      "height": 864
+    },
+    "safe": {
+      "left": 76.8,
+      "top": 2668.8,
+      "right": 1459.2,
+      "bottom": 3379.2
+    },
+    "title": "两种 chunk 规则共享 checkpoint、任务与设备",
+    "titleRect": {
+      "left": 76.796875,
+      "top": 2703.984375,
+      "right": 1051.75,
+      "bottom": 2844.546875,
+      "width": 974.953125,
+      "height": 140.5625
+    },
+    "firstCharacter": "两",
+    "firstRangeRect": {
+      "left": 84.90625,
+      "top": 2698.984375,
+      "right": 152.5,
+      "bottom": 2777.984375,
+      "width": 67.59375,
+      "height": 79
+    },
+    "titleSafeMargin": 8.106250000000003,
+    "titleStyle": {
+      "fontSize": "67.584px",
+      "paddingInlineStart": "8.11008px"
+    },
+    "scroll": {
+      "slideWidth": 1536,
+      "clientWidth": 1536,
+      "slideHeight": 864,
+      "clientHeight": 864
+    },
+    "outside": []
+  },
+  {
+    "slide": 5,
+    "slideRect": {
+      "left": 0,
+      "top": 3456,
+      "right": 1536,
+      "bottom": 4320,
+      "width": 1536,
+      "height": 864
+    },
+    "safe": {
+      "left": 76.8,
+      "top": 3532.8,
+      "right": 1459.2,
+      "bottom": 4243.2
+    },
+    "title": "Adaptive-1/4 的 OOD 成功计数更高，但 p95 推理更慢",
+    "titleRect": {
+      "left": 76.796875,
+      "top": 3567.984375,
+      "right": 1084.046875,
+      "bottom": 3674.484375,
+      "width": 1007.25,
+      "height": 106.5
+    },
+    "firstCharacter": "A",
+    "firstRangeRect": {
+      "left": 82.9375,
+      "top": 3563.984375,
+      "right": 117.734375,
+      "bottom": 3624.984375,
+      "width": 34.796875,
+      "height": 61
+    },
+    "titleSafeMargin": 6.137500000000003,
+    "titleStyle": {
+      "fontSize": "51.2px",
+      "paddingInlineStart": "6.144px"
+    },
+    "scroll": {
+      "slideWidth": 1536,
+      "clientWidth": 1536,
+      "slideHeight": 864,
+      "clientHeight": 864
+    },
+    "outside": []
+  },
+  {
+    "slide": 6,
+    "slideRect": {
+      "left": 0,
+      "top": 4320,
+      "right": 1536,
+      "bottom": 5184,
+      "width": 1536,
+      "height": 864
+    },
+    "safe": {
+      "left": 76.8,
+      "top": 4396.8,
+      "right": 1459.2,
+      "bottom": 5107.2
+    },
+    "title": "一次训练运行不能建立 OOD 因果或部署安全",
+    "titleRect": {
+      "left": 76.796875,
+      "top": 4431.984375,
+      "right": 1051.75,
+      "bottom": 4572.546875,
+      "width": 974.953125,
+      "height": 140.5625
+    },
+    "firstCharacter": "一",
+    "firstRangeRect": {
+      "left": 84.90625,
+      "top": 4426.984375,
+      "right": 152.5,
+      "bottom": 4505.984375,
+      "width": 67.59375,
+      "height": 79
+    },
+    "titleSafeMargin": 8.106250000000003,
+    "titleStyle": {
+      "fontSize": "67.584px",
+      "paddingInlineStart": "8.11008px"
+    },
+    "scroll": {
+      "slideWidth": 1536,
+      "clientWidth": 1536,
+      "slideHeight": 864,
+      "clientHeight": 864
+    },
+    "outside": []
+  },
+  {
+    "slide": 7,
+    "slideRect": {
+      "left": 0,
+      "top": 5184,
+      "right": 1536,
+      "bottom": 6048,
+      "width": 1536,
+      "height": 864
+    },
+    "safe": {
+      "left": 76.8,
+      "top": 5260.8,
+      "right": 1459.2,
+      "bottom": 5971.2
+    },
+    "title": "先验证可重复性，再决定是否保留 adaptive chunking",
+    "titleRect": {
+      "left": 76.796875,
+      "top": 5295.984375,
+      "right": 1051.75,
+      "bottom": 5436.546875,
+      "width": 974.953125,
+      "height": 140.5625
+    },
+    "firstCharacter": "先",
+    "firstRangeRect": {
+      "left": 84.90625,
+      "top": 5290.984375,
+      "right": 152.5,
+      "bottom": 5369.984375,
+      "width": 67.59375,
+      "height": 79
+    },
+    "titleSafeMargin": 8.106250000000003,
+    "titleStyle": {
+      "fontSize": "67.584px",
+      "paddingInlineStart": "8.11008px"
+    },
+    "scroll": {
+      "slideWidth": 1536,
+      "clientWidth": 1536,
+      "slideHeight": 864,
+      "clientHeight": 864
+    },
+    "outside": []
+  }
+]

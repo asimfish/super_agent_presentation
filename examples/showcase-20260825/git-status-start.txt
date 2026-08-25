@@ -1,0 +1,12 @@
+## main...origin/main
+ M skills/agentic-reporting/assets/presentations/academic-talk.html
+ M tests/test_presentation_study_host.py
+ M tests/test_template_assets.py
+
+Baseline diff stat:
+ .../assets/presentations/academic-talk.html        |   1 +
+ tests/test_presentation_study_host.py              |   2 +-
+ tests/test_template_assets.py                      | 186 ++++++++++++++++++++ -
+ 3 files changed, 187 insertions(+), 2 deletions(-)
+
+Staged diff stat: empty.
