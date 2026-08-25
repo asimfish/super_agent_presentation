@@ -160,7 +160,7 @@ def study_plan(
             "repository": "https://github.com/asimfish/super_agent_presentation",
             "commit_sha": "b4c014d4b87c0d4556908b492dcf35cccb8631d4",
             "skill_manifest_sha256": (
-                "05881a76082775c2e796258c7a5987c51d56db1a9b7c9434410e62565eeaaf9a"
+                "f36f79373b902c674dee5b10477214fff2cca9bea81c08383d8eb81acf24d7d8"
             ),
             "adapter_sha256": (
                 "c04ab462b766baaf60bbb38e9fffe0555e71ec6d5fb2255bcd93eb2d47108080"
