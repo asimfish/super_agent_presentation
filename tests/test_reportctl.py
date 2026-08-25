@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import runpy
 import subprocess
 import sys
@@ -44,6 +45,18 @@ class ReportCtlTests(unittest.TestCase):
             )
         ]
         self.assertEqual(unsafe, [], f"unsafe terminal controls: {unsafe}")
+
+    def test_version_flag_prints_version_and_exits_zero(self) -> None:
+        result = run_cli("--version")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertRegex(result.stdout.strip(), r"^reportctl \d+\.\d+\.\d+$")
+
+    def test_version_matches_citation_metadata(self) -> None:
+        citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+        match = re.search(r"^version: (?P<version>\S+)$", citation, re.MULTILINE)
+        self.assertIsNotNone(match, "CITATION.cff must declare a version")
+        result = run_cli("--version")
+        self.assertEqual(result.stdout.strip(), f"reportctl {match.group('version')}")
 
     def test_list_contains_all_protocol_families(self) -> None:
         result = run_cli("list", "--json")

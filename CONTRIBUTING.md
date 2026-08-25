@@ -15,11 +15,21 @@ python3 -m pip install -r requirements-dev.txt   # validation-only test deps
 Runtime code is Python standard library only (3.9+); do not add runtime
 dependencies without an ADR in `docs/adr/`.
 
+Keep your working clone outside cloud-synced folders (on macOS that includes
+`~/Desktop` and `~/Documents` when iCloud sync is on). Sync clients evict file
+content lazily, which makes the subprocess-heavy study and render tests hang or
+fail in confusing ways. `scripts/check_test_env.py` detects both hazards:
+
+```bash
+python3 scripts/check_test_env.py          # warns on sync scope, fails on evicted files
+```
+
 ## Before you open a PR
 
 1. **Run the full test suite** — it must stay green on Python 3.9:
 
    ```bash
+   python3 scripts/check_test_env.py        # preflight: local filesystem hazards
    python3 -m unittest discover -s tests -v
    python3 scripts/presentation_benchmark.py smoke
    ```

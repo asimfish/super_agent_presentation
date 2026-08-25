@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.0 — 2026-08-25
+
+- Added `reportctl --version`, with a regression test that binds the CLI
+  version to the version declared in `CITATION.cff`.
+- Added `scripts/check_test_env.py`, a stdlib-only preflight that warns when
+  the working clone sits inside a cloud-sync scope (iCloud Drive, synced
+  Desktop/Documents) and fails when file content has been evicted (dataless
+  files or `.icloud` placeholders). Added after evicted iCloud content was
+  observed making the subprocess-heavy study tests hang and fail
+  non-deterministically; documented in CONTRIBUTING and both READMEs.
+- Published a GitHub Pages demo (landing page plus the live showcase deck),
+  assembled from committed artifacts only by `.github/workflows/pages.yml`;
+  both READMEs gained a live-demo badge and collapsible page previews.
+- Added citation metadata (`CITATION.cff` and README citation sections),
+  issue templates, and a PR checklist mirroring the CONTRIBUTING gates.
+- No changes to protocols, routing, template content, or dist output.
+
 ## 0.5.0 — 2026-08-25
 
 - Fixed the `academic-talk-html` template clipping the leading glyph of long CJK

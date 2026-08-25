@@ -7,6 +7,7 @@ every time.**
 
 [![CI](https://github.com/asimfish/super_agent_presentation/actions/workflows/ci.yml/badge.svg)](https://github.com/asimfish/super_agent_presentation/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/asimfish/super_agent_presentation?color=blue)](https://github.com/asimfish/super_agent_presentation/releases)
+[![Live demo](https://img.shields.io/badge/live%20demo-github.io-9b3d2f)](https://asimfish.github.io/super_agent_presentation/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B%20%C2%B7%20stdlib%20only-blue.svg)](.github/workflows/ci.yml)
 [![中文文档](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-README__CN.md-red.svg)](README_CN.md)
@@ -20,7 +21,18 @@ every time.**
     <img src="examples/showcase-20260825/render/contact-sheet.png" alt="7-page assertion-evidence academic deck rendered from the academic-talk-html template, shown as a contact sheet" width="100%">
   </a>
 </p>
-<p align="center"><em>A real output: 7-page academic deck built from the <code>academic-talk-html</code> template and printed through real Chrome — one of <a href="examples/README.md">16 finished examples with full audit receipts</a>.</em></p>
+<p align="center"><em>A real output: 7-page academic deck built from the <code>academic-talk-html</code> template and printed through real Chrome — one of <a href="examples/README.md">16 finished examples with full audit receipts</a>. <a href="https://asimfish.github.io/super_agent_presentation/deck.html">Open it live</a> or browse the <a href="https://asimfish.github.io/super_agent_presentation/">demo page</a>.</em></p>
+
+<details>
+<summary><b>Page previews</b> — Chrome-printed renders of the same deck (long CJK titles, tables, boundary pages)</summary>
+
+<table><tr>
+<td width="33%"><a href="https://asimfish.github.io/super_agent_presentation/deck.html"><img src="examples/showcase-20260825/render/slide-2.png" alt="Deck page 2 — evidence boundary statement with a long CJK title" width="100%"></a></td>
+<td width="33%"><a href="https://asimfish.github.io/super_agent_presentation/deck.html"><img src="examples/showcase-20260825/render/slide-3.png" alt="Deck page 3 — experiment table in assertion-evidence layout" width="100%"></a></td>
+<td width="33%"><a href="https://asimfish.github.io/super_agent_presentation/deck.html"><img src="examples/showcase-20260825/render/slide-6.png" alt="Deck page 6 — conclusion boundaries and next steps" width="100%"></a></td>
+</tr></table>
+
+</details>
 
 ## Why
 
@@ -235,10 +247,15 @@ tests/                         # 291 unit tests
 ## Verification
 
 ```bash
+python3 scripts/check_test_env.py               # preflight: cloud-sync/eviction hazards
 python3 -m pip install -r requirements-dev.txt
 python3 -m unittest discover -s tests -v
 python3 scripts/presentation_benchmark.py smoke
 ```
+
+The preflight warns when the clone sits in a cloud-synced folder (iCloud
+Desktop/Documents included) and fails when file content has been evicted —
+both make the subprocess-heavy tests hang or flake.
 
 `smoke` validates known-good/bad fixtures and routing and prints
 `host_activation_observed: false` — it calls no real host or model.
@@ -267,7 +284,7 @@ If this framework is useful in your work, cite it via
   author  = {asimfish},
   title   = {Super Agent Presentation: an agent-native reporting framework},
   year    = {2026},
-  version = {0.5.0},
+  version = {0.6.0},
   url     = {https://github.com/asimfish/super_agent_presentation}
 }
 ```

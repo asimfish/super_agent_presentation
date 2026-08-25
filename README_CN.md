@@ -6,14 +6,18 @@
 
 [![CI](https://github.com/asimfish/super_agent_presentation/actions/workflows/ci.yml/badge.svg)](https://github.com/asimfish/super_agent_presentation/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/asimfish/super_agent_presentation?color=blue)](https://github.com/asimfish/super_agent_presentation/releases)
+[![在线演示](https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E6%BC%94%E7%A4%BA-github.io-9b3d2f)](https://asimfish.github.io/super_agent_presentation/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![English](https://img.shields.io/badge/English-README.md-blue.svg)](README.md)
 
-当前版本为 `v0.5.0`。本版本把一次完整的端到端 showcase（16 份成品报告、
-HTML 学术幻灯片、真实渲染与全部审计收据）收入 [`examples/`](examples/README.md)，
-新增英文主 README 与 [目录文档](docs/CATALOG.md)，并修复了 academic-talk
-模板在 Chrome 打印时长中文标题首字被裁切的问题（含真实渲染回归测试）。
-协议、模式与模板内容与 v0.4.0 一致；模板来源和采用边界见
+当前版本为 `v0.6.0`：新增 `reportctl --version`（含与 CITATION.cff 绑定的
+版本一致性测试）、云同步/文件驱逐预检脚本 `scripts/check_test_env.py`、
+[GitHub Pages 在线演示](https://asimfish.github.io/super_agent_presentation/)
+与引用元数据；协议、模式与模板内容不变。v0.5.0 把一次完整的端到端
+showcase（16 份成品报告、HTML 学术幻灯片、真实渲染与全部审计收据）收入
+[`examples/`](examples/README.md)，新增英文主 README 与
+[目录文档](docs/CATALOG.md)，并修复了 academic-talk 模板在 Chrome 打印时
+长中文标题首字被裁切的问题（含真实渲染回归测试）。模板来源和采用边界见
 [docs/TEMPLATE-SOURCES.md](docs/TEMPLATE-SOURCES.md)。
 
 v0.3 系列引入了预注册、生成记录、真实宿主计划、显式执行、盲化、独立评分
@@ -36,10 +40,22 @@ tokens。因此该 pilot 永久标记为 `insufficient_evidence`，本仓库不�
 ## 真实样例
 
 <p align="center">
-  <a href="examples/showcase-20260825/render/academic-talk.pdf">
+  <a href="https://asimfish.github.io/super_agent_presentation/deck.html">
     <img src="examples/showcase-20260825/render/contact-sheet.png" alt="academic-talk-html 模板渲染出的 7 页 assertion-evidence 学术幻灯片总览" width="100%">
   </a>
 </p>
+<p align="center"><em><a href="https://asimfish.github.io/super_agent_presentation/deck.html">在浏览器里打开这份幻灯片</a>，或访问 <a href="https://asimfish.github.io/super_agent_presentation/">在线演示页</a>；PDF 版见 <a href="examples/showcase-20260825/render/academic-talk.pdf">academic-talk.pdf</a>。</em></p>
+
+<details>
+<summary><b>逐页预览</b> — 同一份 deck 经真实 Chrome 打印的渲染页（长中文标题、表格、边界页）</summary>
+
+<table><tr>
+<td width="33%"><a href="https://asimfish.github.io/super_agent_presentation/deck.html"><img src="examples/showcase-20260825/render/slide-2.png" alt="第 2 页 — 长中文标题的证据边界页" width="100%"></a></td>
+<td width="33%"><a href="https://asimfish.github.io/super_agent_presentation/deck.html"><img src="examples/showcase-20260825/render/slide-3.png" alt="第 3 页 — assertion-evidence 布局的实验表格页" width="100%"></a></td>
+<td width="33%"><a href="https://asimfish.github.io/super_agent_presentation/deck.html"><img src="examples/showcase-20260825/render/slide-6.png" alt="第 6 页 — 结论边界与下一步" width="100%"></a></td>
+</tr></table>
+
+</details>
 
 [`examples/showcase-20260825/`](examples/README.md) 收录 12 个核心模式与 4 个
 研究 profile 各一份**真实成品**（非空模板），全部经由
@@ -344,10 +360,15 @@ docs/adr/                      # 架构决策记录
 ## 验证
 
 ```bash
+python3 scripts/check_test_env.py               # 预检：云同步/文件驱逐隐患
 python3 -m pip install -r requirements-dev.txt
 python3 -m unittest discover -s tests -v
 python3 scripts/presentation_benchmark.py smoke
 ```
+
+预检脚本会在克隆位于云同步目录（含开启 iCloud 同步的 ~/Desktop、~/Documents）
+时告警，在文件内容已被驱逐（dataless）时直接失败——这两种情况都会让大量
+spawn 子进程的测试挂起或产生难以解释的假失败。
 
 `smoke` 验证已知好/坏 fixture、场景路由和正例进入 Skill 后的路由代理。
 它明确输出 `host_activation_observed: false`：未调用真实宿主或模型。开发期
@@ -379,7 +400,7 @@ fresh-agent 记录见 [evals/runs/forward/README.md](evals/runs/forward/README.m
   author  = {asimfish},
   title   = {Super Agent Presentation: an agent-native reporting framework},
   year    = {2026},
-  version = {0.5.0},
+  version = {0.6.0},
   url     = {https://github.com/asimfish/super_agent_presentation}
 }
 ```

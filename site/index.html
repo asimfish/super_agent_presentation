@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Agent Presentation — agent-native reporting framework</title>
+  <meta name="description" content="Scenario-routed report protocols, bounded context, checkpointed long-task memory, and mechanical audits — so agent reports stay readable. Live demo of a real rendered deck.">
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #596579;
+      --paper: #fbfaf7;
+      --accent: #9b3d2f;
+      --accent-soft: #f3e6e2;
+      --line: #d8dce3;
+      --good: #176b50;
+      --shell: #e9e7e2;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      color: var(--ink);
+      background: var(--shell);
+      line-height: 1.6;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem; }
+    header.site {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 0; gap: 1rem; flex-wrap: wrap;
+    }
+    .brand { font-weight: 750; letter-spacing: 0.01em; }
+    nav a { margin-left: 1.1rem; color: var(--muted); font-size: 0.95rem; }
+    nav a:hover { color: var(--accent); }
+    .hero {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      padding: clamp(1.6rem, 4vw, 3rem);
+      margin-bottom: 2rem;
+    }
+    .kicker {
+      color: var(--accent); font-weight: 750; font-size: 0.85rem;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    h1 { font-size: clamp(1.6rem, 3.6vw, 2.4rem); line-height: 1.2; margin: 0.5rem 0 0.9rem; }
+    .lede { color: var(--muted); max-width: 44rem; }
+    .cta { margin-top: 1.4rem; display: flex; gap: 0.8rem; flex-wrap: wrap; }
+    .btn {
+      display: inline-block; padding: 0.62rem 1.15rem; border-radius: 0.6rem;
+      font-weight: 650; font-size: 0.95rem; border: 1px solid var(--accent);
+    }
+    .btn.primary { background: var(--accent); color: #fff; }
+    .btn.primary:hover { background: #7f3226; text-decoration: none; }
+    .btn.ghost { color: var(--accent); background: transparent; }
+    .btn.ghost:hover { background: var(--accent-soft); text-decoration: none; }
+    .shot {
+      display: block; width: 100%; border: 1px solid var(--line);
+      border-radius: 0.75rem; margin-top: 1.6rem;
+    }
+    .caption { color: var(--muted); font-size: 0.88rem; margin-top: 0.55rem; }
+    section { margin-bottom: 2rem; }
+    h2 { font-size: 1.25rem; margin-bottom: 0.9rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+    .card {
+      background: var(--paper); border: 1px solid var(--line);
+      border-radius: 0.85rem; padding: 1.1rem 1.2rem;
+    }
+    .card h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+    .card p { color: var(--muted); font-size: 0.92rem; }
+    .thumbs { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.9rem; }
+    .thumbs img {
+      width: 100%; border: 1px solid var(--line); border-radius: 0.6rem;
+      transition: transform 0.15s ease;
+    }
+    .thumbs a:hover img { transform: translateY(-2px); }
+    pre {
+      background: var(--ink); color: #e8ecf4; padding: 1rem 1.2rem;
+      border-radius: 0.75rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.55;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .note {
+      background: var(--accent-soft); border-radius: 0.75rem;
+      padding: 0.85rem 1.1rem; font-size: 0.9rem; color: var(--ink);
+    }
+    footer.site {
+      border-top: 1px solid var(--line); color: var(--muted);
+      font-size: 0.85rem; padding: 1.4rem 0 2.2rem; margin-top: 2.5rem;
+    }
+    footer.site a { color: var(--muted); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <span class="brand">Super Agent Presentation</span>
+      <nav>
+        <a href="deck.html">Live deck</a>
+        <a href="https://github.com/asimfish/super_agent_presentation">GitHub</a>
+        <a href="https://github.com/asimfish/super_agent_presentation/blob/main/docs/CATALOG.md">Catalog</a>
+        <a href="https://github.com/asimfish/super_agent_presentation/blob/main/README_CN.md">中文</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="hero">
+        <span class="kicker">Agent-native reporting framework</span>
+        <h1>The same task should not produce a differently shaped, unreadable report every time.</h1>
+        <p class="lede">
+          Scenario-routed report protocols, bounded context bundles, checkpointed
+          long-task memory, and mechanical structure audits — installable into
+          Claude Code, Codex, Cursor, and GitHub Copilot, or usable by any agent
+          that can read one Markdown index.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="deck.html">Open the live demo deck</a>
+          <a class="btn ghost" href="https://github.com/asimfish/super_agent_presentation">View on GitHub</a>
+        </div>
+        <a href="deck.html">
+          <img class="shot" src="assets/contact-sheet.png"
+               alt="Contact sheet of a 7-page assertion-evidence academic deck rendered from the academic-talk-html template">
+        </a>
+        <p class="caption">
+          A real output: 7-page assertion–evidence academic deck built with the
+          <code>academic-talk-html</code> template, printed through real Chrome, with every
+          audit receipt kept in the repository. Facts on the slides are synthetic fixtures.
+        </p>
+      </div>
+
+      <section>
+        <h2>How it keeps reports consistent</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Route, don't template</h3>
+            <p>12 primary report modes, 5 display modules, and 4 research profiles.
+               Each task loads one bounded protocol — short answers stay short,
+               experiment reports carry protocol, runs, and uncertainty.</p>
+          </div>
+          <div class="card">
+            <h3>Survive long tasks</h3>
+            <p>A tiny resident micro-contract saves an on-disk checkpoint at task
+               start; the final audit is driven by the same checkpoint, so the
+               reporting contract outlives context compaction.</p>
+          </div>
+          <div class="card">
+            <h3>Audit mechanically</h3>
+            <p>A stdlib-only CLI (<code>reportctl</code>) bundles bounded context and runs
+               structural audits with honest limits: it checks structure, never
+               claims your facts are true.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Pages from the live deck</h2>
+        <div class="thumbs">
+          <a href="deck.html"><img src="assets/slide-2.png" alt="Deck page 2 — evidence boundary statement with long CJK title"></a>
+          <a href="deck.html"><img src="assets/slide-3.png" alt="Deck page 3 — experiment table with assertion-evidence layout"></a>
+          <a href="deck.html"><img src="assets/slide-6.png" alt="Deck page 6 — conclusion boundaries and next steps"></a>
+        </div>
+        <p class="caption">
+          Every page above is a Chrome-printed render of <a href="deck.html">the same HTML deck</a> —
+          dependency-free, responsive, keyboard-navigable, printable at 16:9. One of
+          <a href="https://github.com/asimfish/super_agent_presentation/blob/main/examples/README.md">16
+          finished examples with full audit receipts</a>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Try it in two minutes</h2>
+        <pre><code># fastest trial: paste into your agent together with the repo link
+请先读取该仓库的 AGENT_START.md，并用其中的最小路由完成本次最终汇报；
+不要读取全部协议。仓库：https://github.com/asimfish/super_agent_presentation
+
+# or install into a project (Claude Code / Codex / Cursor / Copilot)
+git clone https://github.com/asimfish/super_agent_presentation.git
+cd super_agent_presentation
+python3 scripts/install.py apply --target /path/to/your/project --host codex</code></pre>
+        <p class="note">
+          Evidence policy: this framework does not claim measured quality gains it has
+          not measured. What is verified — deterministic routing, bounded bundles,
+          checkpoint and audit mechanics, real-render regression — is listed with
+          receipts in the repository.
+        </p>
+      </section>
+    </main>
+
+    <footer class="site">
+      MIT License ·
+      <a href="https://github.com/asimfish/super_agent_presentation/blob/main/CITATION.cff">Cite this project</a> ·
+      This page and the demo deck are static artifacts of the repository — no analytics, no remote assets.
+    </footer>
+  </div>
+</body>
+</html>

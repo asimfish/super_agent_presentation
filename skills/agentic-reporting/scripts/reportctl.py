@@ -26,6 +26,8 @@ from typing import Any, Iterable
 from urllib.parse import quote, unquote, urlsplit
 
 
+__version__ = "0.6.0"
+
 SKILL_DIR = Path(__file__).resolve().parent.parent
 REFERENCE_DIR = SKILL_DIR / "references"
 CATALOG_PATH = REFERENCE_DIR / "protocols.json"
@@ -2739,6 +2741,7 @@ def add_route_arguments(parser: argparse.ArgumentParser, include_output: bool = 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = _SafeArgumentParser(prog="reportctl", description=__doc__)
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_parser = subparsers.add_parser("list", help="List primary modes and display modules")
