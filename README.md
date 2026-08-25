@@ -257,6 +257,21 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: run the full test
 suite, keep `dist/` reproducible, and never add an effectiveness claim without
 the evidence gates in [BENCHMARK.md](BENCHMARK.md).
 
+## Citation
+
+If this framework is useful in your work, cite it via
+[CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button) or:
+
+```bibtex
+@software{super_agent_presentation,
+  author  = {asimfish},
+  title   = {Super Agent Presentation: an agent-native reporting framework},
+  year    = {2026},
+  version = {0.5.0},
+  url     = {https://github.com/asimfish/super_agent_presentation}
+}
+```
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

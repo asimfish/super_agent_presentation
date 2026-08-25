@@ -369,6 +369,21 @@ fresh-agent 记录见 [evals/runs/forward/README.md](evals/runs/forward/README.m
 见 [CONTRIBUTING.md](CONTRIBUTING.md)：跑全量测试、保持 `dist/` 可复现、
 不引入未经 [BENCHMARK.md](BENCHMARK.md) 证据门禁的效果声明。
 
+## 引用
+
+如果本框架对你的工作有帮助，可通过 [CITATION.cff](CITATION.cff)
+（GitHub 的 "Cite this repository" 按钮）或以下 BibTeX 引用：
+
+```bibtex
+@software{super_agent_presentation,
+  author  = {asimfish},
+  title   = {Super Agent Presentation: an agent-native reporting framework},
+  year    = {2026},
+  version = {0.5.0},
+  url     = {https://github.com/asimfish/super_agent_presentation}
+}
+```
+
 ## License
 
 MIT，见 [LICENSE](LICENSE)。
