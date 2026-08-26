@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Upgraded the GitHub Pages demo to an evidence-first landing page: an
+  interactive strict-audit repair trajectory quoted from
+  `examples/showcase-20260825/first-failures.md` (1/12 → 12/12), an excerpt
+  gallery covering all 16 committed showcase reports, a numbers wall where
+  every figure links to its receipt, an honest mechanism-comparison table,
+  and a materials section. The showcase deck PDF is now published on Pages.
+- No changes to protocols, routing, template content, tests, or dist output.
+
 ## 0.6.0 — 2026-08-25
 
 - Added `reportctl --version`, with a regression test that binds the CLI
