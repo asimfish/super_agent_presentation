@@ -7,6 +7,7 @@ on:
       - "site/**"
       - "examples/showcase-20260825/html/deck.html"
       - "examples/showcase-20260825/render/*.png"
+      - "examples/showcase-20260825/render/academic-talk.pdf"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -36,6 +37,7 @@ jobs:
           cp examples/showcase-20260825/render/slide-2.png _site/assets/
           cp examples/showcase-20260825/render/slide-3.png _site/assets/
           cp examples/showcase-20260825/render/slide-6.png _site/assets/
+          cp examples/showcase-20260825/render/academic-talk.pdf _site/assets/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
