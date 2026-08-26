@@ -1,0 +1,156 @@
+{
+  "$schema": "study-report.schema.json",
+  "claim": {
+    "effectiveness_claim_eligible": false,
+    "failed_gates": [
+      "long_soak",
+      "loss_rate",
+      "machine_invariant_pass_rate",
+      "semantic_density_noninferior",
+      "token_median",
+      "token_p90",
+      "win_rate",
+      "zero_critical_errors"
+    ],
+    "missing_prerequisites": [
+      "10-50-85-context-strata",
+      "audited-global-instruction-policy",
+      "compaction-resume-stratum",
+      "complete-compaction-telemetry",
+      "enforced-output-token-cap",
+      "external-per-unit-isolation-receipt",
+      "external-preregistration-receipt",
+      "framework-final-audit-contract",
+      "model-revision-receipts",
+      "multiple-model-revisions",
+      "observed-context-occupancy",
+      "public-study-profile"
+    ],
+    "status": "insufficient_evidence"
+  },
+  "claim_boundary": "Private controlled study on 28 held-out synthetic cases with one unpinned model revision and same-account workspace isolation. Results inform the internal claim gates only and cannot support the public effectiveness claim, which additionally requires external isolation receipts, multiple pinned revisions, and the full 1,008-record public design.",
+  "critical_error_count": 46,
+  "gates": {
+    "agreement": true,
+    "human_completeness_and_actionability": true,
+    "human_concision_and_proportionality": true,
+    "human_evidence_calibration": true,
+    "human_information_architecture": true,
+    "human_readability_and_scannability": true,
+    "human_task_fidelity": true,
+    "human_visual_display_fitness": true,
+    "long_soak": false,
+    "loss_rate": false,
+    "machine_invariant_pass_rate": false,
+    "mandatory_display_checks": true,
+    "primary_ci": true,
+    "primary_gain": true,
+    "semantic_density_noninferior": false,
+    "semantic_slots": true,
+    "task_fidelity_noninferior": true,
+    "token_median": false,
+    "token_p90": false,
+    "visual_precision": true,
+    "visual_recall": true,
+    "win_rate": false,
+    "zero_critical_errors": false
+  },
+  "generation": {
+    "pair_count": 84,
+    "record_count": 168
+  },
+  "input_receipts": {
+    "assignment_key_sha256": "b45dee37e6354aae9af651dd9c0055c418f4c5ce69fa6c97c1c236e18ededb8a",
+    "cases_sha256": "dc75925515f76faf3d2a343c89c77744a8fc94f9e48f43909914eb889c6ea70f",
+    "input_artifacts_sha256": "372bd524db57518043b735e96a88eac63942f6ecb69c1d931a98aac7d93f37c3",
+    "plan_sha256": "aa88c29fdf76de0e4e70ced8b96427e6c5a5d434d11c8f9b4ba6a32787442f27",
+    "ratings_lock_sha256": "83cd8306fbb264fc9444af3b93f74ed5170ccb90722400bc4db26da0270f0a7d"
+  },
+  "limitations": [
+    "Unkeyed file digests detect drift but do not authenticate the operator.",
+    "Human scores do not verify scientific truth or host isolation by themselves.",
+    "A/B packets omit controller condition metadata, but verbatim response content or style may reveal treatment to raters."
+  ],
+  "metrics": {
+    "agreement_within_one": 0.9991496598639455,
+    "human_dimension_means": {
+      "baseline": {
+        "completeness_and_actionability": 4.535714285714286,
+        "concision_and_proportionality": 4.654761904761905,
+        "evidence_calibration": 4.803571428571429,
+        "information_architecture": 4.351190476190476,
+        "readability_and_scannability": 4.678571428571429,
+        "task_fidelity": 4.565476190476191,
+        "visual_display_fitness": 4.553571428571429
+      },
+      "framework": {
+        "completeness_and_actionability": 4.946428571428571,
+        "concision_and_proportionality": 4.636904761904762,
+        "evidence_calibration": 4.982142857142857,
+        "information_architecture": 4.833333333333333,
+        "readability_and_scannability": 4.869047619047619,
+        "task_fidelity": 4.9523809523809526,
+        "visual_display_fitness": 4.976190476190476
+      }
+    },
+    "long_soak": {
+      "fresh_pass_rate": 0.05952380952380952,
+      "gap": null,
+      "soak85_pass_rate": null
+    },
+    "machine_invariant_pass_rate": 0.9609375,
+    "mandatory_display_checks": {
+      "pass_rate": 1.0,
+      "passed": 114,
+      "total": 114
+    },
+    "preference": {
+      "baseline": 47,
+      "framework": 76,
+      "loss_rate": 0.27976190476190477,
+      "tie": 45,
+      "win_rate": 0.4523809523809524
+    },
+    "primary_composite": {
+      "case_count": 28,
+      "ci95": [
+        0.11011904761904767,
+        0.5788690476190478
+      ],
+      "difference": 0.3154761904761905,
+      "resamples": 10000
+    },
+    "semantic_slot_adherence": 1.0,
+    "semantic_slot_density_per_1000_output_tokens": {
+      "baseline": 19.883173429594788,
+      "difference": -18.00774297209692,
+      "framework": 1.8754304574978664
+    },
+    "task_fidelity_difference": {
+      "ci95": [
+        0.05952380952380957,
+        0.7976190476190477
+      ],
+      "difference": 0.386904761904762
+    },
+    "token_overhead": {
+      "median": 7.924681586608442,
+      "p90": 26.657720588235293
+    },
+    "visual_selection": {
+      "fn": 0,
+      "fp": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "tn": 48,
+      "tp": 36
+    }
+  },
+  "ratings": {
+    "qualified_independent_count": 2,
+    "rater_count": 2
+  },
+  "schema_version": "1.0",
+  "study_id": "heldout-controlled-codex-20260826-v2",
+  "study_kind": "controlled"
+}

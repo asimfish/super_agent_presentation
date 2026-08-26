@@ -38,9 +38,18 @@ rater agreement-within-one was 1.0.
 The claim gates still failed decisively. Median output-token overhead was `8.1x`
 (p90 `27.8x`) against a `1.15x`/`1.3x` budget; concision was the only losing
 dimension; semantic density per 1,000 output tokens collapsed from 20.3 to 1.9;
-and 22 critical-error records concentrated in one failure mode: some framework
-responses delivered a pointer to a saved report file (exposing a local absolute
-path) instead of the report itself.
+and 22 critical-error records concentrated in one failure mode: responses that
+delivered a pointer to a saved report file (exposing a local absolute path)
+instead of the report itself.
+
+**Correction (2026-08-27):** this README originally attributed the pointer
+failure mode to framework responses. Deblinding shows all 22 critical-error
+records sat on baseline sides; the framework side had zero critical errors in
+this run, and no framework response contained an absolute local path. The
+contract fixes below remain justified — old-contract integration probes did
+produce file-pointer finals — but the rated-study attribution was wrong as
+originally written. See `../codex-20260826/` for the re-run that validates the
+fixes under blind rating.
 
 Accordingly, `study-summary.json` is gated to `insufficient_evidence` and
 `effectiveness_claim_eligible: false`.

@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Executed and published the second private controlled study
+  (`evals/runs/controlled/codex-20260826/`): the exact 20260825 design re-run
+  against the fixed contract (168 Codex executions, 84 blind pairs, two
+  independent model raters, frozen before unblinding). The primary
+  preregistered quality gate passes for the first time (`+0.315`, CI
+  `[0.110, 0.579]`, threshold `+0.3`); win rate rose 33.3% → 45.2%; concision
+  reached parity. Framework-side critical errors: 1 (single-rater flag);
+  all 45 remaining critical errors were baseline pointer-style responses
+  leaking local paths. Efficiency gates (token overhead `7.9x` median,
+  semantic density) still fail structurally, so the claim status correctly
+  remains `insufficient_evidence`.
+- Corrected the `codex-20260825` study README: deblinding shows its 22
+  pointer-style critical errors all sat on baseline sides, not framework
+  responses as originally written. Flagged a telemetry gap for the next run:
+  `final_audit_passed` records a contract-legitimate audit skip as not-passed
+  (79/84 framework units now skip the final audit under proportional
+  ceremony).
 - Extended the `long-sentence` audit warning to CJK prose (sentences over 120
   CJK characters, split on 。！？), so Chinese run-on sentences are caught even
   though they contain no word-separating spaces. Added audit-clean finished
