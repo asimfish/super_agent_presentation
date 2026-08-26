@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Absorbed a set of established reporting standards into the framework and
+  registered the mapping in `docs/REPORTING-STANDARDS.md`: BLUF (AR 25-50),
+  SBAR (IHI/AHRQ/WHO), the Minto pyramid principle, US federal plain-language
+  guidelines (with ISO 24495-1), NN/g scanning research, WCAG 2.2 heading
+  structure, Google SRE postmortem culture, and IBCS SUCCESS (aligned with
+  ISO 24896:2026). Concretely: two new on-demand templates (`sbar-handoff`,
+  `executive-onepager`), pyramid discipline in the decision-brief mode,
+  assertion-title guidance in the visuals module, went-well/wrong/lucky and
+  typed-action prompts in the postmortem template, and four new deterministic
+  audit warnings (`generic-heading`, `heading-level-skip`, `long-sentence`,
+  `deep-list-nesting`) that stay silent on all known-good fixtures and
+  showcase reports. Bundles remain within their character budgets.
 - Executed and published the first private controlled study
   (`evals/runs/controlled/codex-20260825/`): 28 held-out cases, 168 real Codex
   executions, 84 blind-rated pairs by two independent model raters, paired

@@ -66,7 +66,7 @@ class ReportCtlTests(unittest.TestCase):
         self.assertEqual(len(payload["modes"]), 12)
         self.assertEqual(len(payload["modules"]), 5)
         self.assertEqual(len(payload["profiles"]), 4)
-        self.assertEqual(len(payload["templates"]), 8)
+        self.assertEqual(len(payload["templates"]), 10)
 
     def test_every_mode_has_a_scaffold(self) -> None:
         listed = json.loads(run_cli("list", "--json").stdout)
@@ -172,7 +172,7 @@ class ReportCtlTests(unittest.TestCase):
         listed = run_cli("template", "--list", "--json")
         self.assertEqual(listed.returncode, 0, listed.stdout + listed.stderr)
         payload = json.loads(listed.stdout)
-        self.assertEqual(len(payload["templates"]), 8)
+        self.assertEqual(len(payload["templates"]), 10)
         self.assertEqual(payload["templates"][0]["id"], "experiment-report-detailed")
 
         printed = run_cli("template", "rl-experiment-report")
@@ -1365,6 +1365,56 @@ class ReportCtlTests(unittest.TestCase):
             self.assertEqual(result.returncode, 1)
             codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
             self.assertTrue({"unresolved-placeholder", "missing-image-alt", "missing-image-file"} <= codes)
+
+    def test_audit_warns_on_readability_findings_from_absorbed_standards(self) -> None:
+        long_sentence = (
+            "The deployment pipeline was updated so that every service in the fleet "
+            "now receives its configuration from the new registry which also handles "
+            "certificate rotation and secret distribution and health checking and "
+            "regional failover and canary analysis and rollback orchestration and "
+            "cost attribution for every team in the organization without exception."
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# Result\n\nCompleted with verified evidence and a stated boundary.\n\n"
+                "## Notes\n\n"
+                f"{long_sentence}\n\n"
+                "#### Deep detail\n\n"
+                "Supporting facts follow.\n\n"
+                "- level one\n"
+                "  - level two\n"
+                "    - level three\n"
+                "      - level four\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "status-update", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertTrue(
+                {"generic-heading", "heading-level-skip", "long-sentence", "deep-list-nesting"} <= codes,
+                codes,
+            )
+
+    def test_audit_readability_warnings_stay_silent_on_a_clean_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# Result\n\nCompleted with verified evidence and a stated boundary.\n\n"
+                "## Verified changes\n\n"
+                "The parser fix landed. Tests pass on the release branch.\n\n"
+                "### Rollout state\n\n"
+                "- staging: complete\n"
+                "  - canary cohort: complete\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "status-update", "--json")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertFalse(
+                codes & {"generic-heading", "heading-level-skip", "long-sentence", "deep-list-nesting"},
+                codes,
+            )
 
     def test_audit_reports_malformed_image_targets_without_traceback(self) -> None:
         for target in ("//[", "%00.png"):

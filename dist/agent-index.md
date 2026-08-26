@@ -50,5 +50,7 @@ Open exactly one compatible asset only after selecting it; assets are not part o
 - [`vla-experiment-report`](../skills/agentic-reporting/assets/templates/vla-experiment-report.md) — VLA report covering dataset mixtures, action interfaces, rollout protocols, generalization, deployment, and safety.
 - [`academic-talk-html`](../skills/agentic-reporting/assets/presentations/academic-talk.html) — Dependency-free, responsive, printable HTML/PPT-style academic talk with accessible assertion-evidence layouts.
 - [`academic-talk-revealjs`](../skills/agentic-reporting/assets/presentations/academic-talk-revealjs.qmd) — Quarto Reveal.js academic-talk source with citations, notes, self-contained HTML output, and appendix structure.
+- [`sbar-handoff`](../skills/agentic-reporting/assets/templates/sbar-handoff.md) — SBAR-structured operational handoff or escalation: situation, background, assessment, and a time-bound recommendation with contingency.
+- [`executive-onepager`](../skills/agentic-reporting/assets/templates/executive-onepager.md) — Pyramid-structured executive one-pager: governing-thought title, two to four evidence-backed reasons, costs and revisit triggers, decision requested.
 
 Before delivery, manually verify facts, latest state, evidence, numbers, uncertainty, and the user's requested format. A repository link is not an installation or instruction-elevation mechanism.

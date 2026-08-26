@@ -605,6 +605,20 @@
       "modes": ["academic-synthesis", "experiment-report", "research-idea", "status-update"],
       "profiles": [],
       "surfaces": ["slide"]
+    },
+    "sbar-handoff": {
+      "summary": "SBAR-structured operational handoff or escalation: situation, background, assessment, and a time-bound recommendation with contingency.",
+      "path": "assets/templates/sbar-handoff.md",
+      "modes": ["incident-update", "status-update"],
+      "profiles": [],
+      "surfaces": ["chat", "markdown", "issue-pr"]
+    },
+    "executive-onepager": {
+      "summary": "Pyramid-structured executive one-pager: governing-thought title, two to four evidence-backed reasons, costs and revisit triggers, decision requested.",
+      "path": "assets/templates/executive-onepager.md",
+      "modes": ["decision-brief", "status-update"],
+      "profiles": [],
+      "surfaces": ["markdown", "document"]
     }
   },
   "surfaces": [

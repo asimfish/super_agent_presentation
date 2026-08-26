@@ -14,9 +14,12 @@
 
 ## Response assessment
 
-<!-- Explain what helped, what delayed recovery, and which controls failed. -->
+<!-- Explain what went well, what went wrong or delayed recovery, and where luck
+rather than a control limited the impact; the lucky cases are future risks. -->
 
 ## Preventive actions
 
-<!-- REQUIRED: Give owner, priority/status, tracking reference, and verifiable
-completion condition. Remove empty optional sections and all comments. -->
+<!-- REQUIRED: Give each action an owner, a type (prevent recurrence, bound
+impact, or shorten detection/mitigation), priority/status, tracking reference,
+and a verifiable completion condition. Remove empty optional sections and all
+comments. -->

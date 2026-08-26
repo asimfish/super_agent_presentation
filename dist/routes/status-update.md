@@ -4,7 +4,7 @@ Primary mode: `status-update`
 Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
-Recommended exact templates: none
+Recommended exact templates: sbar-handoff, executive-onepager
 Required semantics: current_status, evidence, boundary, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/status-update.md`

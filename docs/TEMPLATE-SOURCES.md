@@ -8,7 +8,9 @@
   open-source skills
 
 This ledger records why a source changed the framework. It is not a claim that one
-source defines a universal best template. The repository independently synthesizes
+source defines a universal best template. General communication standards (BLUF,
+SBAR, pyramid principle, plain language, IBCS, scanning research) are registered
+separately in [REPORTING-STANDARDS.md](REPORTING-STANDARDS.md). The repository independently synthesizes
 structures and checks; it does not redistribute third-party slide decks, paper
 text, figures, CSS, or other template assets.
 

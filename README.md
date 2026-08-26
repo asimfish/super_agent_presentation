@@ -264,6 +264,7 @@ both make the subprocess-heavy tests hang or flake.
 
 [Architecture](docs/ARCHITECTURE.md) · [Catalog](docs/CATALOG.md) ·
 [Research sources](docs/RESEARCH.md) · [Template provenance](docs/TEMPLATE-SOURCES.md) ·
+[Reporting standards](docs/REPORTING-STANDARDS.md) ·
 [Context budgets](docs/CONTEXT-BUDGET.md) · [Performance](docs/PERFORMANCE.md) ·
 [Security review](docs/SECURITY-REVIEW.md) · [Benchmark protocol](BENCHMARK.md) ·
 [Security policy](SECURITY.md) · [ADRs](docs/adr/)

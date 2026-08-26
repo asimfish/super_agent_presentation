@@ -39,6 +39,8 @@ a more honest display.
 ## Charts
 
 - Match title, axes, legend, marks, and caption to the supported claim.
+- Prefer an assertion title that states the finding over a topic label; keep one
+  message per chart and move secondary messages to their own display or prose.
 - Standard magnitude bars start at zero. If a delta-focused display uses a narrowed
   scale, make the scale break or focused range unmistakable and show exact values.
 - Keep comparable charts on consistent scales unless a difference is disclosed.

@@ -68,6 +68,8 @@ TEMPLATE_IDS = (
     "vla-experiment-report",
     "academic-talk-html",
     "academic-talk-revealjs",
+    "sbar-handoff",
+    "executive-onepager",
 )
 SURFACES = ("chat", "markdown", "issue-pr", "document", "slide")
 STATUS_VALUES = ("informational", "completed", "partial", "blocked", "failed")
@@ -1351,6 +1353,40 @@ def _audit_markdown_impl(
     heading_total = sum(1 for _ in re.finditer(r"(?m)^#{1,6}\s+", text))
     if len(text) < 1200 and heading_total > 5:
         findings.append(_finding("over-sectioned", "warning", "Short report has more than five headings"))
+
+    generic_heading_terms = {
+        "introduction", "miscellaneous", "misc", "other", "others", "notes",
+        "general", "information", "more information", "additional information",
+        "简介", "其他", "备注", "说明", "更多信息", "补充信息",
+    }
+    previous_heading_level = 0
+    for match in re.finditer(r"(?m)^(#{1,6})\s+(.+?)\s*#*\s*$", non_code):
+        level = len(match.group(1))
+        line = _line_number(non_code_line_starts, match.start())
+        heading_plain = re.sub(r"[`*_:.,!?，。：]+", "", match.group(2)).strip().casefold()
+        if heading_plain in generic_heading_terms:
+            findings.append(_finding("generic-heading", "warning", f"Heading '{match.group(2).strip()}' names no specific content; scanning research favors headings that carry the section's message", line))
+        if previous_heading_level and level > previous_heading_level + 1:
+            findings.append(_finding("heading-level-skip", "warning", f"Heading level jumps from {previous_heading_level} to {level}; keep levels consecutive so the heading outline stays scannable", line))
+        previous_heading_level = level
+
+    sentence_boundary = re.compile(r"(?<=[.!?])\s+")
+    block_marker = re.compile(r"^(?:#{1,6}\s|[-*+]\s|\d{1,3}[.)]\s|>|\||!\[|\[)")
+    long_sentence_search_start = 0
+    for paragraph in paragraphs:
+        if block_marker.match(paragraph):
+            continue
+        for sentence in sentence_boundary.split(paragraph):
+            if len(sentence.split()) > 45:
+                offset = non_code.find(sentence, long_sentence_search_start)
+                findings.append(_finding("long-sentence", "warning", "Sentence exceeds 45 words; plain-language guidance targets a 15-20 word average, so split it unless precision requires the length", _line_number(non_code_line_starts, max(0, offset))))
+                if offset >= 0:
+                    long_sentence_search_start = offset + len(sentence)
+                break
+
+    deep_list_match = re.search(r"(?m)^[ \t]{6,}(?:[-*+]|\d{1,3}[.)])\s", non_code)
+    if deep_list_match:
+        findings.append(_finding("deep-list-nesting", "warning", "List content is nested three or more levels deep; flatten or restructure it because deep nesting defeats scanning", _line_number(non_code_line_starts, deep_list_match.start())))
 
     scanner = _load_markdown_image_scanner()
     scanned_images = _scan_markdown_images(text)

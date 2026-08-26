@@ -19,6 +19,9 @@ option. Make the decision easy to locate without hiding uncertainty or trade-off
 
 ## Decision discipline
 
+- State the recommendation as one complete claim, supported by two to four
+  non-overlapping reasons that jointly carry the rationale; a reader who stops
+  after the recommendation and reasons should still hold the full picture.
 - Distinguish an accepted decision from an agent recommendation.
 - Use a status such as proposed, accepted, deferred, rejected, or superseded when a
   durable record is needed.
