@@ -28,6 +28,11 @@ that the reporting framework improves quality or efficiency.
   explicitly executed real-host pilots. A pilot is an integration and activation
   signal: it can show that an adapter ran and a Skill was read, but it cannot
   support an effectiveness or efficiency claim.
+- `runs/controlled/` may contain only sanitized narrative and controller-generated
+  aggregate summaries from executed private controlled studies (held-out cases,
+  independent blind ratings, preregistered claim gates). A controlled run informs
+  the internal claim gates; the public effectiveness claim additionally requires
+  the full public-profile design and external receipts.
 
 ## Private-run contract
 
@@ -38,7 +43,8 @@ provider prompts, model responses, JSONL transcripts, host plans, checkpoint
 snapshots or receipts, assignment
 keys, rating files, credentials, or records containing absolute local paths.
 
-Only a deliberately sanitized aggregate may be copied into `runs/pilot/`. Before
+Only a deliberately sanitized aggregate may be copied into `runs/pilot/` or
+`runs/controlled/`. Before
 copying, remove local paths and identifiers, retain the study limitations and
 claim gate, and validate the result against the corresponding schema. Private-run
 artifacts remain the audit source; the public summary is intentionally

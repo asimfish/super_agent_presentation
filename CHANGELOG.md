@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Executed and published the first private controlled study
+  (`evals/runs/controlled/codex-20260825/`): 28 held-out cases, 168 real Codex
+  executions, 84 blind-rated pairs by two independent model raters, paired
+  bootstrap against preregistered gates. Blind quality gains were real (6/7
+  dimensions, composite `+0.214`, CI excluding 0) but the effectiveness claim was
+  correctly rejected: `8.1x` median output-token overhead, pointer-style final
+  responses leaking local paths, and collapsed semantic density.
+- Fixed the two decisive failure surfaces in every host adapter, the repository
+  micro-contract, `SKILL.md`, and the core contract: the final response must now
+  contain the report itself (never a saved-file path, pointer, or scratch path),
+  and ceremony is proportional — short single-session answers skip checkpoints,
+  draft files, and script audits, reserving the file-backed bookend for long,
+  multi-session, multi-agent, or durable-artifact work. Micro-contracts remain
+  within the 150-word bound and bundles within their character budgets.
+- Registered `evals/runs/controlled/` in the evals policy as a sanitized-aggregate
+  destination alongside `runs/pilot/`.
 - Upgraded the GitHub Pages demo to an evidence-first landing page: an
   interactive strict-audit repair trajectory quoted from
   `examples/showcase-20260825/first-failures.md` (1/12 → 12/12), an excerpt
