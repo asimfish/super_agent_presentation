@@ -6,6 +6,13 @@ generated through the actual CLI workflow
 (`route → checkpoint → bundle → write → strict audit → semantic oracle`) and the
 receipts for each step are preserved next to the finished artifact.
 
+## templates-20260826
+
+Filled, audit-clean examples for the two standards-based templates added on
+2026-08-26 (`sbar-handoff` from SBAR, `executive-onepager` from the Minto
+pyramid principle), each with its zero-error, zero-warning audit receipt. See
+[`templates-20260826/README.md`](templates-20260826/README.md).
+
 ## showcase-20260825
 
 One finished sample for every core mode and research profile, plus one rendered

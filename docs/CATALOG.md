@@ -52,7 +52,7 @@ exact template asset separately.
 Surface guides are loaded only when the delivery surface needs one (for
 example the slide guide for academic talks).
 
-## Exact template assets (8)
+## Exact template assets (10)
 
 Templates never enter a bounded route bundle; retrieve exactly one with
 `reportctl template <id> --output <path>` after routing.
@@ -67,6 +67,11 @@ Templates never enter a bounded route bundle; retrieve exactly one with
 | `vla-experiment-report` | VLA report covering dataset mixtures, action interfaces, rollout protocols, generalization, deployment, and safety. | `experiment-report` | chat, markdown, document |
 | `academic-talk-html` | Dependency-free, responsive, printable HTML/PPT-style academic talk with accessible assertion-evidence layouts. | `academic-synthesis`, `experiment-report`, `research-idea`, `status-update` | slide |
 | `academic-talk-revealjs` | Quarto Reveal.js academic-talk source with citations, notes, self-contained HTML output, and appendix structure. | `academic-synthesis`, `experiment-report`, `research-idea`, `status-update` | slide |
+| `sbar-handoff` | SBAR-structured operational handoff or escalation: situation, background, assessment, and a time-bound recommendation with contingency. | `incident-update`, `status-update` | chat, markdown, issue-pr |
+| `executive-onepager` | Pyramid-structured executive one-pager: governing-thought title, two to four evidence-backed reasons, costs and revisit triggers, decision requested. | `decision-brief`, `status-update` | markdown, document |
 
 Template provenance and adaptation boundaries are documented in
-[TEMPLATE-SOURCES.md](TEMPLATE-SOURCES.md).
+[TEMPLATE-SOURCES.md](TEMPLATE-SOURCES.md); communication-standard provenance is
+in [REPORTING-STANDARDS.md](REPORTING-STANDARDS.md). Audit-clean finished
+examples for `sbar-handoff` and `executive-onepager` live in
+[examples/templates-20260826/](../examples/templates-20260826/README.md).

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Extended the `long-sentence` audit warning to CJK prose (sentences over 120
+  CJK characters, split on 。！？), so Chinese run-on sentences are caught even
+  though they contain no word-separating spaces. Added audit-clean finished
+  examples with receipts for the two standards-based templates in
+  `examples/templates-20260826/` and refreshed the catalog to the 10-template
+  inventory.
 - Absorbed a set of established reporting standards into the framework and
   registered the mapping in `docs/REPORTING-STANDARDS.md`: BLUF (AR 25-50),
   SBAR (IHI/AHRQ/WHO), the Minto pyramid principle, US federal plain-language
