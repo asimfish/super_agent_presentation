@@ -67,6 +67,8 @@ state-of-the-art superiority from a larger displayed number alone.
   clearly labeled collapsed section when the surface supports it.
 - Do not add a figure, table, diagram, alert, or executive-summary section merely
   to make a short answer look formal.
+- Short single-session answers skip checkpoints, draft files, and audits.
+- Deliver the report itself, never a file path, pointer, or scratch path.
 
 ## Accessibility and safe presentation
 

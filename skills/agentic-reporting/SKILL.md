@@ -20,8 +20,13 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
 1. Classify the handoff by audience, surface, evidence boundary, and exactly one
    primary mode. For research work, select at most one domain profile. Use `list`
    or `route` when uncertain.
-2. For a long, multi-agent, or multi-session task, save a compact checkpoint near
-   the start. For a short task, defer routing until the reporting boundary.
+2. Scale ceremony to the task. For a short, single-session answer, do not create a
+   checkpoint, a draft file, or a script audit: apply the routed mode's structure
+   directly, self-check its required semantics, and deliver; the file-backed
+   ceremony in steps 4-6 is for long, multi-session, multi-agent, or
+   durable-artifact work. For a long, multi-agent, or multi-session task, save a
+   compact checkpoint near the start; for a short task, defer routing until the
+   reporting boundary.
 3. Complete and verify the actual task. Keep task execution independent of report
    styling.
 4. Immediately before a substantive update or final answer, retrieve one bounded
@@ -56,8 +61,9 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    Use one primary delivery artifact; do not create parallel Markdown, HTML, PPTX,
    and PDF versions unless requested. A copied template is a starting artifact,
    not evidence that its placeholders, visuals, or claims are correct.
-6. Audit a file-backed draft. A long task must use the same checkpoint; a short task
-   without one uses its selected mode:
+6. Before a long-task or durable-artifact final, audit a file-backed draft. A long
+   task must use the same checkpoint; a durable artifact without one uses its
+   selected mode:
 
    ```bash
    python3 <skill-dir>/scripts/reportctl.py audit \
@@ -73,6 +79,15 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    parsed checkpoint intent fingerprint for controller binding.
 7. Manually verify the latest state, scientific or technical claims, numbers,
    evidence links, uncertainty, visual interpretation, and user-specified format.
+
+## Final delivery
+
+The user-visible final response must contain the report itself. A path, link, or
+pointer to a saved draft, checkpoint, or audit receipt is not a deliverable: after
+a checkpoint-backed audit passes, deliver the audited draft content as the
+response. When the user explicitly requested a file, still lead with the outcome
+inline. Never expose local absolute paths, scratch directories, or checkpoint
+locations in the reader-facing response.
 
 ## Mode and module selection
 
