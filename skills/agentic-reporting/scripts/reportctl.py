@@ -1387,6 +1387,17 @@ def _audit_markdown_impl(
                     long_sentence_search_start = offset + len(sentence)
                 break
 
+    halfwidth_between_cjk = re.compile(
+        r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af][,.;:!?](?=[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af])"
+    )
+    halfwidth_lines_seen: set[int] = set()
+    for match in halfwidth_between_cjk.finditer(non_code):
+        line = _line_number(non_code_line_starts, match.start())
+        if line in halfwidth_lines_seen:
+            continue
+        halfwidth_lines_seen.add(line)
+        findings.append(_finding("cjk-halfwidth-punctuation", "warning", "Halfwidth punctuation sits directly between CJK characters; CJK typography uses fullwidth marks (，。：；！？), so convert them unless the text quotes code verbatim", line))
+
     deep_list_match = re.search(r"(?m)^[ \t]{6,}(?:[-*+]|\d{1,3}[.)])\s", non_code)
     if deep_list_match:
         findings.append(_finding("deep-list-nesting", "warning", "List content is nested three or more levels deep; flatten or restructure it because deep nesting defeats scanning", _line_number(non_code_line_starts, deep_list_match.start())))

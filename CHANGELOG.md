@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Added the `cjk-halfwidth-punctuation` readability warning to `reportctl
+  audit`: halfwidth `,.;:!?` sitting directly between two CJK characters is
+  flagged once per line, because mixed-width punctuation is the single most
+  visible typography defect in Chinese reports (Latin-adjacent halfwidth
+  punctuation stays legal). Covered by a positive/negative unit test.
+- Tightened the slide surface contract from showcase feedback ("quality and
+  readability still mediocre"): quantitative results with three or more data
+  points or a trend/tradeoff shape must be charted (inline SVG for the HTML
+  template) with the full-precision table demoted to an appendix; the takeaway
+  must be encoded inside the visual (shaded recommended region, highlighted
+  chosen point, baseline reference line, labeled better-direction); scenario
+  caveats are stated once on the title/closing slide instead of being repeated
+  on every slide.
 - Executed and published the second private controlled study
   (`evals/runs/controlled/codex-20260826/`): the exact 20260825 design re-run
   against the fixed contract (168 Codex executions, 84 blind pairs, two

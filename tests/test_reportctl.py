@@ -1426,6 +1426,29 @@ class ReportCtlTests(unittest.TestCase):
             clean_codes = {item["code"] for item in json.loads(clean_result.stdout)["findings"]}
             self.assertNotIn("long-sentence", clean_codes)
 
+    def test_audit_flags_halfwidth_punctuation_between_cjk_characters(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# 结果\n\n状态:已完成,证据与边界如下。\n\n"
+                "## 验证\n\n测试通过。边界：未覆盖灰度环境。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "status-update", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertIn("cjk-halfwidth-punctuation", codes)
+
+            clean = Path(temporary) / "clean.md"
+            clean.write_text(
+                "# 结果\n\n状态：已完成，证据与边界如下。FID 2.87, Recall 0.58, seed 1/2/3.\n\n"
+                "## 验证\n\n测试通过。边界：未覆盖灰度环境。\n",
+                encoding="utf-8",
+            )
+            clean_result = run_cli("audit", "--file", str(clean), "--mode", "status-update", "--json")
+            clean_codes = {item["code"] for item in json.loads(clean_result.stdout)["findings"]}
+            self.assertNotIn("cjk-halfwidth-punctuation", clean_codes)
+
     def test_audit_readability_warnings_stay_silent_on_a_clean_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "report.md"

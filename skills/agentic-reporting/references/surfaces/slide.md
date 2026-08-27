@@ -19,6 +19,16 @@ heading into one slide.
 
 - Give each evidence slide a sentence assertion as its title and visual or tabular
   evidence that supports that assertion.
+- Chart before table: when a quantitative result has three or more data points or a
+  trend/tradeoff shape (sweeps, curves, Pareto fronts, before/after), render it as a
+  chart (inline SVG for the HTML template) and move the full-precision table to an
+  appendix slide. Tables on main slides are for small lookup facts, not for shapes.
+- Encode the takeaway inside the visual: shade the recommended region, highlight the
+  chosen point, draw the baseline as a reference line, and label the better direction
+  on each axis. A reader should get the message from the visual before the prose.
+- State scenario caveats and evidence boundaries once on the title or closing slide
+  (plus an appendix boundary list when needed); do not repeat the same disclaimer on
+  every slide, because repetition destroys reading flow without adding honesty.
 - Keep one primary message per slide. Move derivations, dense tables, and backup
   ablations to appendix slides.
 - Put metric direction, units, protocol, sample size, and uncertainty on the slide
