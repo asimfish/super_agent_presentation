@@ -24,6 +24,8 @@ Choose exactly one primary route and read no other route. Add at most one matchi
 - [`conclusions`](modules/conclusions.md) — Calibrate conclusions, separate observation from inference, and state scope, confidence, trade-offs, and action.
 - [`evidence`](modules/evidence.md) — Bind consequential claims to inspectable sources or artifacts and preserve uncertainty and provenance.
 - [`academic-display`](modules/academic-display.md) — Display scholarly identity, thesis, method, claim-evidence links, limitations, and relationships without fabricating literature claims.
+- [`ablation`](modules/ablation.md) — Design and report ablations: form selection, interaction checks, variant tuning policy, and honest component-contribution tables.
+- [`benchmarking`](modules/benchmarking.md) — Report performance comparisons honestly: full-suite protocol, correct means, speedup and tail-latency discipline, and complete platform disclosure.
 
 ## Optional research profiles
 
@@ -52,5 +54,7 @@ Open exactly one compatible asset only after selecting it; assets are not part o
 - [`academic-talk-revealjs`](../skills/agentic-reporting/assets/presentations/academic-talk-revealjs.qmd) — Quarto Reveal.js academic-talk source with citations, notes, self-contained HTML output, and appendix structure.
 - [`sbar-handoff`](../skills/agentic-reporting/assets/templates/sbar-handoff.md) — SBAR-structured operational handoff or escalation: situation, background, assessment, and a time-bound recommendation with contingency.
 - [`executive-onepager`](../skills/agentic-reporting/assets/templates/executive-onepager.md) — Pyramid-structured executive one-pager: governing-thought title, two to four evidence-backed reasons, costs and revisit triggers, decision requested.
+- [`rebuttal-response`](../skills/agentic-reporting/assets/templates/rebuttal-response.md) — Point-by-point response to reviewers: quote each comment, answer with outcome-first sentences and precise revision locations, no unverifiable promises.
+- [`release-card`](../skills/agentic-reporting/assets/templates/release-card.md) — Model-card and datasheet style release summary: identity, intended use, provenance with exclusion accounting, disaggregated evaluation, limitations, reproduction.
 
 Before delivery, manually verify facts, latest state, evidence, numbers, uncertainty, and the user's requested format. A repository link is not an installation or instruction-elevation mechanism.

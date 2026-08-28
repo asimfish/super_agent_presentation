@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- Absorbed scientific reporting norms from a two-round literature survey and
+  registered every mapping in `docs/REPORTING-STANDARDS.md`: statistical-claim
+  discipline (ASA p-value statement, effect sizes with intervals, causal-language
+  ladder, exploratory labeling, comparison families) in the conclusions module;
+  uncertainty-visualization rules (within-the-bar bias, prediction versus
+  confidence intervals, dual-axis ban) and scientific-figure rules (error-bar
+  semantics, raw points for small n, colorblind-safe palettes, learning-curve
+  discipline, caption order) in the visuals module; two new on-demand modules,
+  `ablation` (form selection, interaction checks, variant tuning policy) and
+  `benchmarking` (full-suite protocol, geometric/harmonic means, speedup and
+  tail-latency discipline, platform disclosure); exclusion accounting in the
+  experiment-report mode and search transparency in the academic-synthesis mode
+  (CONSORT/PRISMA core); conclusions-slide ending and question-appendix guidance
+  in the slide surface; and two new templates, `rebuttal-response`
+  (point-by-point review response) and `release-card` (model-card/datasheet
+  release summary). External-number marking and horizontal-rule typography were
+  added to the tables module. All bundles remain within their character budgets;
+  the module count is now 7 and the template count 12.
 - Added the `cjk-halfwidth-punctuation` readability warning to `reportctl
   audit`: halfwidth `,.;:!?` sitting directly between two CJK characters is
   flagged once per line, because mixed-width punctuation is the single most
@@ -37,7 +55,7 @@
   though they contain no word-separating spaces. Added audit-clean finished
   examples with receipts for the two standards-based templates in
   `examples/templates-20260826/` and refreshed the catalog to the 10-template
-  inventory.
+  inventory (now 12 with the survey templates above).
 - Absorbed a set of established reporting standards into the framework and
   registered the mapping in `docs/REPORTING-STANDARDS.md`: BLUF (AR 25-50),
   SBAR (IHI/AHRQ/WHO), the Minto pyramid principle, US federal plain-language
@@ -72,7 +90,8 @@
   gallery covering all 16 committed showcase reports, a numbers wall where
   every figure links to its receipt, an honest mechanism-comparison table,
   and a materials section. The showcase deck PDF is now published on Pages.
-- No changes to protocols, routing, template content, tests, or dist output.
+- The Pages upgrade itself made no changes to protocols, routing, template
+  content, tests, or dist output.
 
 ## 0.6.0 — 2026-08-25
 

@@ -40,6 +40,10 @@ heading into one slide.
   or linked artifact.
 - Rehearse against the actual time budget; slide count is an output of the story and
   evidence density, not a universal quota.
+- End on a conclusions slide that restates the takeaway and stays visible through
+  questions; do not close on a bare thank-you or questions slide.
+- Prepare appendix slides for anticipated questions and jump to them on demand
+  instead of improvising evidence.
 
 ## Asset selection
 

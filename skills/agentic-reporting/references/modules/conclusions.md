@@ -51,6 +51,23 @@ trade-off`, or preferred Pareto point without a stated utility function, constra
 or decision threshold. Report the non-dominated choices and make any conditional
 recommendation explicit.
 
+## Statistical claims
+
+- Report exact p-values as graded evidence, not a significant/non-significant
+  binary; never read `p > 0.05` as proof of no effect.
+- Pair any test with an effect size and interval estimate; a p-value measures
+  neither magnitude nor importance.
+- Report risks and rates as absolute change with the base rate, not only a
+  relative ratio.
+- Match causal language to the design: `associated with` for observed
+  relations, `predicts` for predictive use, causal verbs only with
+  randomization or a stated identification strategy. Do not attach causal
+  advice to associational evidence.
+- Label findings formed after seeing the results as exploratory; the same data
+  cannot generate and confirm a hypothesis.
+- When several comparisons feed one conclusion, name the comparison family and
+  the correction applied, or why none was needed.
+
 ## Confidence
 
 State confidence only when it helps a decision. Ground it in evidence quality,

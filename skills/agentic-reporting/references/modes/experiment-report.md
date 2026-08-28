@@ -42,17 +42,18 @@ importance.
 - State how hyperparameters, checkpoints, prompts, seeds, and reported runs were
   selected. Do not compare a selected best run with a baseline mean without making
   the mismatch explicit.
+- Account for every candidate run and sample: report counts and reasons at
+  each exclusion step.
 - Keep zero, missing, not reported, failed, and not applicable distinct.
 
 ## Analysis discipline
 
 - Report verified values before explaining them.
 - Discuss results that contradict the main narrative, not only the best row.
-- Treat nearly equal observed means with overlapping or untested uncertainty as a
-  trade-off or unresolved comparison, not a universal winner.
+- Treat nearly equal means with untested uncertainty as unresolved, not a winner.
 - With opposing metrics, report the Pareto trade-off. Do not collapse it into an
-  overall balance ranking unless the decision supplies a utility function, budget,
-  constraint, or minimum acceptable threshold.
+  overall balance ranking unless the decision supplies a utility function,
+  budget, or threshold.
 - Separate descriptive, diagnostic, predictive, causal, and deployment claims.
 - State compute and resource requirements when they affect reproducibility or the
   comparison.

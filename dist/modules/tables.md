@@ -33,6 +33,9 @@ Every column must help answer the question or audit the result.
   or practical dominance from boldface.
 - Preserve relevant baselines, targets, previous-period values, or denominators.
 - Use appropriate significant digits; false precision reduces trust.
+- Mark numbers cited from other sources apart from numbers reproduced under this
+  protocol; they do not share one ranking.
+- Prefer horizontal-only rules on print surfaces; avoid vertical rules.
 
 ## Missing and special values
 
@@ -54,13 +57,12 @@ used, define it beside the table.
 - Avoid prose-heavy cells and code blocks inside tables.
 - Do not use color, icons, or font weight as the only status signal.
 - On narrow surfaces, prefer fewer columns, split tables, or a vertical record list.
-- Use one clear header association for each cell; complex relationships need explicit
-  textual explanation or a more suitable format.
+- Give each cell one clear header association; explain complex relationships in
+  text or use another format.
 
 ## Avoid
 
 - A wide summary table used in place of an actual explanation.
 - Mixed units or denominators in one unlabeled numeric column.
 - Global rankings across different tasks, datasets, or evaluation conditions.
-- Repeating the same numbers in a table, visual, metric cards, and prose without a
-  distinct purpose.
+- Repeating the same numbers across displays without a distinct purpose.

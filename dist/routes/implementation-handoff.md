@@ -4,7 +4,7 @@ Primary mode: `implementation-handoff`
 Research profile: `none`
 Surface: `markdown`; audience: user
 Display modules: none
-Recommended exact templates: none
+Recommended exact templates: release-card
 Required semantics: outcome, changes, verification, boundary, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/implementation-handoff.md`

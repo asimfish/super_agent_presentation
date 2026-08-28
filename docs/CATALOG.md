@@ -26,7 +26,7 @@ exact template asset separately.
 | `postmortem` | A blameless record of incident impact, timeline, causes, response, and owned preventive actions. | [route](../dist/routes/postmortem.md) | [example](../examples/showcase-20260825/modes/postmortem.md) |
 | `risk-report` | A prioritized risk assessment with explicit rationale, controls, ownership, triggers, and residual exposure. | [route](../dist/routes/risk-report.md) | [example](../examples/showcase-20260825/modes/risk-report.md) |
 
-## Display modules (5)
+## Display modules (7)
 
 | Module | Summary |
 |---|---|
@@ -35,6 +35,8 @@ exact template asset separately.
 | `conclusions` | Calibrate conclusions, separate observation from inference, and state scope, confidence, trade-offs, and action. |
 | `evidence` | Bind consequential claims to inspectable sources or artifacts and preserve uncertainty and provenance. |
 | `academic-display` | Display scholarly identity, thesis, method, claim-evidence links, limitations, and relationships without fabricating literature claims. |
+| `ablation` | Design and report ablations: form selection, interaction checks, variant tuning policy, and honest component-contribution tables. |
+| `benchmarking` | Report performance comparisons honestly: full-suite protocol, correct means, speedup and tail-latency discipline, and complete platform disclosure. |
 
 ## Research profiles (4)
 
@@ -52,7 +54,7 @@ exact template asset separately.
 Surface guides are loaded only when the delivery surface needs one (for
 example the slide guide for academic talks).
 
-## Exact template assets (10)
+## Exact template assets (12)
 
 Templates never enter a bounded route bundle; retrieve exactly one with
 `reportctl template <id> --output <path>` after routing.
@@ -69,6 +71,8 @@ Templates never enter a bounded route bundle; retrieve exactly one with
 | `academic-talk-revealjs` | Quarto Reveal.js academic-talk source with citations, notes, self-contained HTML output, and appendix structure. | `academic-synthesis`, `experiment-report`, `research-idea`, `status-update` | slide |
 | `sbar-handoff` | SBAR-structured operational handoff or escalation: situation, background, assessment, and a time-bound recommendation with contingency. | `incident-update`, `status-update` | chat, markdown, issue-pr |
 | `executive-onepager` | Pyramid-structured executive one-pager: governing-thought title, two to four evidence-backed reasons, costs and revisit triggers, decision requested. | `decision-brief`, `status-update` | markdown, document |
+| `rebuttal-response` | Point-by-point response to reviewers: quote each comment, answer with outcome-first sentences and precise revision locations, no unverifiable promises. | `review-report` | markdown, document |
+| `release-card` | Model-card and datasheet style release summary: identity, intended use, provenance with exclusion accounting, disaggregated evaluation, limitations, reproduction. | `implementation-handoff` | markdown, document |
 
 Template provenance and adaptation boundaries are documented in
 [TEMPLATE-SOURCES.md](TEMPLATE-SOURCES.md); communication-standard provenance is

@@ -19,6 +19,8 @@
     "modules/conclusions.md",
     "modules/evidence.md",
     "modules/academic-display.md",
+    "modules/ablation.md",
+    "modules/benchmarking.md",
     "profiles/reinforcement-learning.md",
     "profiles/embodied-ai.md",
     "profiles/world-models.md",

@@ -64,9 +64,9 @@ class ReportCtlTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(payload["schema_version"], 1)
         self.assertEqual(len(payload["modes"]), 12)
-        self.assertEqual(len(payload["modules"]), 5)
+        self.assertEqual(len(payload["modules"]), 7)
         self.assertEqual(len(payload["profiles"]), 4)
-        self.assertEqual(len(payload["templates"]), 10)
+        self.assertEqual(len(payload["templates"]), 12)
 
     def test_every_mode_has_a_scaffold(self) -> None:
         listed = json.loads(run_cli("list", "--json").stdout)
@@ -172,7 +172,7 @@ class ReportCtlTests(unittest.TestCase):
         listed = run_cli("template", "--list", "--json")
         self.assertEqual(listed.returncode, 0, listed.stdout + listed.stderr)
         payload = json.loads(listed.stdout)
-        self.assertEqual(len(payload["templates"]), 10)
+        self.assertEqual(len(payload["templates"]), 12)
         self.assertEqual(payload["templates"][0]["id"], "experiment-report-detailed")
 
         printed = run_cli("template", "rl-experiment-report")
@@ -3723,7 +3723,7 @@ class ReportCtlTests(unittest.TestCase):
             result = run_cli("build-dist", "--output", str(output))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(len(list((output / "routes").glob("*.md"))), 12)
-            self.assertEqual(len(list((output / "modules").glob("*.md"))), 5)
+            self.assertEqual(len(list((output / "modules").glob("*.md"))), 7)
             self.assertEqual(len(list((output / "profiles").glob("*.md"))), 4)
             self.assertEqual(len(list((output / "surfaces").glob("*.md"))), 1)
             self.assertTrue((output / "agent-index.md").is_file())
@@ -3866,7 +3866,7 @@ class ReportCtlTests(unittest.TestCase):
             self.assertTrue((output / "agent-index.md").is_file())
             self.assertTrue((output / ".agentic-reporting-dist.json").is_file())
             self.assertEqual(len(list((output / "routes").glob("*.md"))), 12)
-            self.assertEqual(len(list((output / "modules").glob("*.md"))), 5)
+            self.assertEqual(len(list((output / "modules").glob("*.md"))), 7)
             self.assertEqual(len(list((output / "profiles").glob("*.md"))), 4)
             self.assertEqual(len(list((output / "surfaces").glob("*.md"))), 1)
 
