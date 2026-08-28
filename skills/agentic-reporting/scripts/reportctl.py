@@ -1372,19 +1372,33 @@ def _audit_markdown_impl(
             findings.append(_finding("heading-level-skip", "warning", f"Heading level jumps from {previous_heading_level} to {level}; keep levels consecutive so the heading outline stays scannable", line))
         previous_heading_level = level
 
-    sentence_boundary = re.compile(r"(?<=[.!?])\s+")
+    sentence_boundary = re.compile(r"(?<=[。！？])|(?<=[.!?])\s+")
+    cjk_characters = re.compile(r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]")
     block_marker = re.compile(r"^(?:#{1,6}\s|[-*+]\s|\d{1,3}[.)]\s|>|\||!\[|\[)")
     long_sentence_search_start = 0
     for paragraph in paragraphs:
         if block_marker.match(paragraph):
             continue
         for sentence in sentence_boundary.split(paragraph):
-            if len(sentence.split()) > 45:
+            too_many_words = len(sentence.split()) > 45
+            too_many_cjk = len(cjk_characters.findall(sentence)) > 120
+            if too_many_words or too_many_cjk:
                 offset = non_code.find(sentence, long_sentence_search_start)
-                findings.append(_finding("long-sentence", "warning", "Sentence exceeds 45 words; plain-language guidance targets a 15-20 word average, so split it unless precision requires the length", _line_number(non_code_line_starts, max(0, offset))))
+                findings.append(_finding("long-sentence", "warning", "Sentence exceeds 45 words (or 120 CJK characters); plain-language guidance targets a 15-20 word average, so split it unless precision requires the length", _line_number(non_code_line_starts, max(0, offset))))
                 if offset >= 0:
                     long_sentence_search_start = offset + len(sentence)
                 break
+
+    halfwidth_between_cjk = re.compile(
+        r"[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af][,.;:!?](?=[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af])"
+    )
+    halfwidth_lines_seen: set[int] = set()
+    for match in halfwidth_between_cjk.finditer(non_code):
+        line = _line_number(non_code_line_starts, match.start())
+        if line in halfwidth_lines_seen:
+            continue
+        halfwidth_lines_seen.add(line)
+        findings.append(_finding("cjk-halfwidth-punctuation", "warning", "Halfwidth punctuation sits directly between CJK characters; CJK typography uses fullwidth marks (，。：；！？), so convert them unless the text quotes code verbatim", line))
 
     deep_list_match = re.search(r"(?m)^[ \t]{6,}(?:[-*+]|\d{1,3}[.)])\s", non_code)
     if deep_list_match:

@@ -1396,6 +1396,59 @@ class ReportCtlTests(unittest.TestCase):
                 codes,
             )
 
+    def test_audit_flags_overlong_cjk_sentence_without_spaces(self) -> None:
+        cjk_run_on = (
+            "部署流水线本次更新之后现在负责整个集群里每一个服务的配置分发以及证书轮换"
+            "还有密钥下发再加上健康检查再加上区域故障切换再加上金丝雀分析再加上回滚编排"
+            "再加上面向组织里每一个团队的成本归因和容量规划和配额审批和用量对账"
+            "而且以上没有任何一个环节可以单独关闭也没有任何一个环节可以独立降级。"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# 结果\n\n状态：已完成，证据与边界如下。\n\n"
+                f"{cjk_run_on}\n\n"
+                "## 验证\n\n测试通过。边界：未覆盖灰度环境。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "status-update", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertIn("long-sentence", codes)
+
+            clean = Path(temporary) / "clean.md"
+            clean.write_text(
+                "# 结果\n\n状态：已完成。修复已合入发布分支，测试全部通过。\n\n"
+                "## 验证\n\n回归测试通过。边界：未覆盖灰度环境，下一步补充。\n",
+                encoding="utf-8",
+            )
+            clean_result = run_cli("audit", "--file", str(clean), "--mode", "status-update", "--json")
+            clean_codes = {item["code"] for item in json.loads(clean_result.stdout)["findings"]}
+            self.assertNotIn("long-sentence", clean_codes)
+
+    def test_audit_flags_halfwidth_punctuation_between_cjk_characters(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# 结果\n\n状态:已完成,证据与边界如下。\n\n"
+                "## 验证\n\n测试通过。边界：未覆盖灰度环境。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "status-update", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertIn("cjk-halfwidth-punctuation", codes)
+
+            clean = Path(temporary) / "clean.md"
+            clean.write_text(
+                "# 结果\n\n状态：已完成，证据与边界如下。FID 2.87, Recall 0.58, seed 1/2/3.\n\n"
+                "## 验证\n\n测试通过。边界：未覆盖灰度环境。\n",
+                encoding="utf-8",
+            )
+            clean_result = run_cli("audit", "--file", str(clean), "--mode", "status-update", "--json")
+            clean_codes = {item["code"] for item in json.loads(clean_result.stdout)["findings"]}
+            self.assertNotIn("cjk-halfwidth-punctuation", clean_codes)
+
     def test_audit_readability_warnings_stay_silent_on_a_clean_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "report.md"

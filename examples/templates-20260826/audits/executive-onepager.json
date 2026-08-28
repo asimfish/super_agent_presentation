@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "file": "examples/templates-20260826/executive-onepager.md",
+  "mode": "decision-brief",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 2062,
+      "sha256": "f1c5942b712e47a223bb66bb809ff7d944b9069bd84e9f34f4f08b3aca182136"
+    },
+    "checkpoint": null
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": []
+}

@@ -20,6 +20,42 @@
   release summary). External-number marking and horizontal-rule typography were
   added to the tables module. All bundles remain within their character budgets;
   the module count is now 7 and the template count 12.
+- Added the `cjk-halfwidth-punctuation` readability warning to `reportctl
+  audit`: halfwidth `,.;:!?` sitting directly between two CJK characters is
+  flagged once per line, because mixed-width punctuation is the single most
+  visible typography defect in Chinese reports (Latin-adjacent halfwidth
+  punctuation stays legal). Covered by a positive/negative unit test.
+- Tightened the slide surface contract from showcase feedback ("quality and
+  readability still mediocre"): quantitative results with three or more data
+  points or a trend/tradeoff shape must be charted (inline SVG for the HTML
+  template) with the full-precision table demoted to an appendix; the takeaway
+  must be encoded inside the visual (shaded recommended region, highlighted
+  chosen point, baseline reference line, labeled better-direction); scenario
+  caveats are stated once on the title/closing slide instead of being repeated
+  on every slide.
+- Executed and published the second private controlled study
+  (`evals/runs/controlled/codex-20260826/`): the exact 20260825 design re-run
+  against the fixed contract (168 Codex executions, 84 blind pairs, two
+  independent model raters, frozen before unblinding). The primary
+  preregistered quality gate passes for the first time (`+0.315`, CI
+  `[0.110, 0.579]`, threshold `+0.3`); win rate rose 33.3% → 45.2%; concision
+  reached parity. Framework-side critical errors: 1 (single-rater flag);
+  all 45 remaining critical errors were baseline pointer-style responses
+  leaking local paths. Efficiency gates (token overhead `7.9x` median,
+  semantic density) still fail structurally, so the claim status correctly
+  remains `insufficient_evidence`.
+- Corrected the `codex-20260825` study README: deblinding shows its 22
+  pointer-style critical errors all sat on baseline sides, not framework
+  responses as originally written. Flagged a telemetry gap for the next run:
+  `final_audit_passed` records a contract-legitimate audit skip as not-passed
+  (79/84 framework units now skip the final audit under proportional
+  ceremony).
+- Extended the `long-sentence` audit warning to CJK prose (sentences over 120
+  CJK characters, split on 。！？), so Chinese run-on sentences are caught even
+  though they contain no word-separating spaces. Added audit-clean finished
+  examples with receipts for the two standards-based templates in
+  `examples/templates-20260826/` and refreshed the catalog to the 10-template
+  inventory (now 12 with the survey templates above).
 - Absorbed a set of established reporting standards into the framework and
   registered the mapping in `docs/REPORTING-STANDARDS.md`: BLUF (AR 25-50),
   SBAR (IHI/AHRQ/WHO), the Minto pyramid principle, US federal plain-language
