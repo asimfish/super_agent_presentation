@@ -232,7 +232,7 @@ implemented and documented in [BENCHMARK.md](BENCHMARK.md) and
 [evals/](evals/README.md).
 
 What *is* verified: deterministic routing, bounded bundles, checkpoint/audit
-mechanics, template rendering (304 unit tests + harness smoke + real-render
+mechanics, template rendering (306 unit tests + harness smoke + real-render
 regression on macOS Chrome 151), and the end-to-end showcase run with receipts in
 [examples/](examples/README.md).
 
@@ -253,7 +253,7 @@ examples/showcase-20260825/    # 16 finished reports + deck + audit receipts
 evals/                         # study schemas, templates, sanitized run records
 scripts/                       # installer, benchmark harness, study controller
 docs/                          # architecture, research, catalog, ADRs
-tests/                         # 304 unit tests
+tests/                         # 306 unit tests
 ```
 
 ## Verification
