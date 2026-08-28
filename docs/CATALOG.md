@@ -26,7 +26,7 @@ exact template asset separately.
 | `postmortem` | A blameless record of incident impact, timeline, causes, response, and owned preventive actions. | [route](../dist/routes/postmortem.md) | [example](../examples/showcase-20260825/modes/postmortem.md) |
 | `risk-report` | A prioritized risk assessment with explicit rationale, controls, ownership, triggers, and residual exposure. | [route](../dist/routes/risk-report.md) | [example](../examples/showcase-20260825/modes/risk-report.md) |
 
-## Display modules (7)
+## Display modules (8)
 
 | Module | Summary |
 |---|---|
@@ -37,6 +37,7 @@ exact template asset separately.
 | `academic-display` | Display scholarly identity, thesis, method, claim-evidence links, limitations, and relationships without fabricating literature claims. |
 | `ablation` | Design and report ablations: form selection, interaction checks, variant tuning policy, and honest component-contribution tables. |
 | `benchmarking` | Report performance comparisons honestly: full-suite protocol, correct means, speedup and tail-latency discipline, and complete platform disclosure. |
+| `natural-tone` | Strip AI-flavored ceremony, jargon, and template rhetoric from reader-facing prose while preserving every fact, relation, and scope. |
 
 ## Research profiles (4)
 

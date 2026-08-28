@@ -43,6 +43,7 @@ provenance (ML, RL, embodied, VLA, academic talks) lives separately in
 | Presentation design (Doumont, "Trees, maps, and theorems" 2009); assertion-evidence practice | Talks end on a conclusions slide that stays visible through questions; anticipated questions get appendix slides; one message per slide. | `references/surfaces/slide.md` slide contract |
 | Peer-review response norms (NeurIPS/ICLR author guides; Parikh rebuttal guidance) | Point-by-point responses quote each comment, lead with the outcome, give precise revision locations, and never promise unverifiable future work. | `assets/templates/rebuttal-response.md` |
 | Model Cards (Mitchell et al., FAT* 2019); Datasheets for Datasets (Gebru et al., CACM 2021); FAIR principles (Wilkinson et al., Sci Data 2016); ACM artifact badging | Releases state identity, license, persistent locator, intended and out-of-scope use, provenance with exclusion accounting, disaggregated evaluation, limitations, and reproduction scope. | `assets/templates/release-card.md` |
+| shuorenhua de-AI rewriting skill (MrGeDiao/shuorenhua, MIT) | Tone rewriting preserves every fact, relation, scope, negation, and abstraction level (two-direction reread); boilerplate lists name rhetorical moves, not strings; domain terms and quoted material get misfire protection; highest-precision phrases become deterministic flags. | `references/modules/natural-tone.md`; SKILL.md drafting step 5 de-AI pass; `ai-tone-boilerplate` audit warning |
 
 ## Update discipline
 

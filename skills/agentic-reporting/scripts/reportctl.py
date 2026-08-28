@@ -48,7 +48,7 @@ MODE_IDS = (
     "postmortem",
     "risk-report",
 )
-MODULE_IDS = ("visuals", "tables", "conclusions", "evidence", "academic-display", "ablation", "benchmarking")
+MODULE_IDS = ("visuals", "tables", "conclusions", "evidence", "academic-display", "ablation", "benchmarking", "natural-tone")
 PROFILE_IDS = ("reinforcement-learning", "embodied-ai", "world-models", "vla")
 SURFACE_GUIDE_IDS = ("slide",)
 PROFILE_APPLICABLE_MODES = (
@@ -1399,6 +1399,60 @@ def _audit_markdown_impl(
             continue
         halfwidth_lines_seen.add(line)
         findings.append(_finding("cjk-halfwidth-punctuation", "warning", "Halfwidth punctuation sits directly between CJK characters; CJK typography uses fullwidth marks (，。：；！？), so convert them unless the text quotes code verbatim", line))
+
+    # Highest-precision subset of the natural-tone module: phrases that mark
+    # AI-boilerplate rhetoric in report prose while staying safe for technical
+    # vocabulary (closed-loop, gripper, convergence, root cause stay untouched).
+    ai_tone_cjk = re.compile(
+        "好问题|让我来为你|接下来我将为你|让我们一起来看看|希望这对你有帮助|如果你有其他问题"
+        "|值得注意的是|值得一提的是|需要指出的是|不可否认|不难发现|不得不说|众所周知|毋庸置疑"
+        "|综上所述|总而言之|归根结底|不言而喻|让我们拭目以待|未来可期"
+        "|赋能|底层逻辑|前所未有|史无前例|保姆级|一文读懂|建议收藏|显著成效|充分体现"
+        "|不仅仅是[^。！？\n]{0,30}更是"
+    )
+    ai_tone_english = re.compile(
+        r"\b(?:it[’']?s worth noting|it is worth noting|it[’']?s important to note"
+        r"|it is important to note|great question|i hope this helps"
+        r"|game[- ]changer|in today[’']?s world|in a world where|at the end of the day"
+        r"|it goes without saying|a testament to|paradigm shift|cutting[- ]edge"
+        r"|delve(?:s|d)?|delving)\b"
+        r"|\bin conclusion[,，:：]",
+        re.IGNORECASE,
+    )
+    # C-speed literal anchors gate the regex scan: each anchor is a substring of
+    # at least one regex alternative, so a document with no anchor cannot match.
+    # Keep both anchor tuples in sync with the two patterns above.
+    ai_tone_cjk_anchors = (
+        "好问题", "让我来为你", "接下来我将为你", "让我们一起来看看", "希望这对你有帮助",
+        "如果你有其他问题", "值得注意的是", "值得一提的是", "需要指出的是", "不可否认",
+        "不难发现", "不得不说", "众所周知", "毋庸置疑", "综上所述", "总而言之", "归根结底",
+        "不言而喻", "让我们拭目以待", "未来可期", "赋能", "底层逻辑", "前所未有", "史无前例",
+        "保姆级", "一文读懂", "建议收藏", "显著成效", "充分体现", "不仅仅是",
+    )
+    ai_tone_english_anchors = (
+        "worth noting", "important to note", "great question", "hope this helps",
+        "game-changer", "game changer", "in today", "in a world where",
+        "at the end of the day", "goes without saying", "a testament to",
+        "paradigm shift", "cutting-edge", "cutting edge", "delv", "in conclusion",
+    )
+    ai_tone_lowered = non_code.casefold()
+    if any(anchor in non_code for anchor in ai_tone_cjk_anchors) or any(
+        anchor in ai_tone_lowered for anchor in ai_tone_english_anchors
+    ):
+        # Same-length masking keeps offsets aligned with non_code_line_starts
+        # while honoring the inline code-span exemption for verbatim quotations.
+        ai_tone_text = re.sub(r"`[^`\n]*`", lambda span: " " * len(span.group(0)), non_code)
+        ai_tone_hits: dict[int, list[str]] = {}
+        for ai_tone_pattern in (ai_tone_cjk, ai_tone_english):
+            for match in ai_tone_pattern.finditer(ai_tone_text):
+                line = _line_number(non_code_line_starts, match.start())
+                phrase = match.group(0)[:40]
+                phrases = ai_tone_hits.setdefault(line, [])
+                if phrase not in phrases:
+                    phrases.append(phrase)
+        for line, phrases in sorted(ai_tone_hits.items()):
+            listed = "', '".join(phrases[:5])
+            findings.append(_finding("ai-tone-boilerplate", "warning", f"AI-boilerplate rhetoric ('{listed}') adds ceremony without information; delete it or state the concrete point directly (verbatim quotations belong in code spans), per the natural-tone module", line))
 
     deep_list_match = re.search(r"(?m)^[ \t]{6,}(?:[-*+]|\d{1,3}[.)])\s", non_code)
     if deep_list_match:

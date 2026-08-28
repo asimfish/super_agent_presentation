@@ -501,6 +501,28 @@
         "基准测试",
         "性能基准"
       ]
+    },
+    "natural-tone": {
+      "summary": "Strip AI-flavored ceremony, jargon, and template rhetoric from reader-facing prose while preserving every fact, relation, and scope.",
+      "file": "modules/natural-tone.md",
+      "signals": [
+        "de-ai",
+        "ai tone",
+        "ai flavor",
+        "humanize the text",
+        "sounds like ai",
+        "boilerplate tone",
+        "natural tone",
+        "说人话",
+        "去AI味",
+        "去AI感",
+        "AI腔",
+        "AI味",
+        "机器味",
+        "模板腔",
+        "自然语气",
+        "像人写的"
+      ]
     }
   },
   "profiles": {

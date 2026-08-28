@@ -21,6 +21,7 @@
     "modules/academic-display.md",
     "modules/ablation.md",
     "modules/benchmarking.md",
+    "modules/natural-tone.md",
     "profiles/reinforcement-learning.md",
     "profiles/embodied-ai.md",
     "profiles/world-models.md",
