@@ -6,6 +6,14 @@ generated through the actual CLI workflow
 (`route → checkpoint → bundle → write → strict audit → semantic oracle`) and the
 receipts for each step are preserved next to the finished artifact.
 
+## templates-20260828
+
+Filled, audit-clean examples for the two templates absorbed from the
+scientific-reporting literature survey (`rebuttal-response` from peer-review
+response norms, `release-card` from model cards and datasheets), each with its
+zero-error, zero-warning audit receipt. See
+[`templates-20260828/README.md`](templates-20260828/README.md).
+
 ## templates-20260826
 
 Filled, audit-clean examples for the two standards-based templates added on

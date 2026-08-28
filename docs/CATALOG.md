@@ -78,4 +78,6 @@ Template provenance and adaptation boundaries are documented in
 [TEMPLATE-SOURCES.md](TEMPLATE-SOURCES.md); communication-standard provenance is
 in [REPORTING-STANDARDS.md](REPORTING-STANDARDS.md). Audit-clean finished
 examples for `sbar-handoff` and `executive-onepager` live in
-[examples/templates-20260826/](../examples/templates-20260826/README.md).
+[examples/templates-20260826/](../examples/templates-20260826/README.md), and
+for `rebuttal-response` and `release-card` in
+[examples/templates-20260828/](../examples/templates-20260828/README.md).
