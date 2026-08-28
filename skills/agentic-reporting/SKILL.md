@@ -61,6 +61,12 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    Use one primary delivery artifact; do not create parallel Markdown, HTML, PPTX,
    and PDF versions unless requested. A copied template is a starting artifact,
    not evidence that its placeholders, visuals, or claims are correct.
+
+   After the content is complete, give the prose a de-AI tone pass: cut
+   sycophantic openers, performative summaries, inflated jargon, and template
+   rhetoric under the `natural-tone` module's fidelity contract. Tone edits never
+   change facts, relations, scope, or numbers; the audit's `ai-tone-boilerplate`
+   warnings catch only the highest-precision residue.
 6. Before a long-task or durable-artifact final, audit a file-backed draft. A long
    task must use the same checkpoint; a durable artifact without one uses its
    selected mode:

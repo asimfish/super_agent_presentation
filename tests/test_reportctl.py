@@ -64,7 +64,7 @@ class ReportCtlTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(payload["schema_version"], 1)
         self.assertEqual(len(payload["modes"]), 12)
-        self.assertEqual(len(payload["modules"]), 7)
+        self.assertEqual(len(payload["modules"]), 8)
         self.assertEqual(len(payload["profiles"]), 4)
         self.assertEqual(len(payload["templates"]), 12)
 
@@ -1448,6 +1448,48 @@ class ReportCtlTests(unittest.TestCase):
             clean_result = run_cli("audit", "--file", str(clean), "--mode", "status-update", "--json")
             clean_codes = {item["code"] for item in json.loads(clean_result.stdout)["findings"]}
             self.assertNotIn("cjk-halfwidth-punctuation", clean_codes)
+
+    def test_audit_flags_ai_tone_boilerplate_in_chinese_and_english(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# 结果\n\n"
+                "好问题！综上所述，本方案赋能了整个流水线，取得了显著成效。\n\n"
+                "It's worth noting that this is a game-changer. In conclusion, we delve into details.\n\n"
+                "## 验证\n\n测试通过。边界：未覆盖灰度环境。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "status-update", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            findings = json.loads(result.stdout)["findings"]
+            messages = [item["message"] for item in findings if item["code"] == "ai-tone-boilerplate"]
+            self.assertEqual(len(messages), 2, findings)
+            chinese_line, english_line = messages
+            for phrase in ("好问题", "综上所述", "赋能", "显著成效"):
+                self.assertIn(phrase, chinese_line)
+            for phrase in ("It's worth noting", "game-changer", "In conclusion,", "delve"):
+                self.assertIn(phrase, english_line)
+
+    def test_audit_ai_tone_spares_technical_terms_and_code_spans(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# 结果\n\n"
+                "状态：已完成。训练在第 40k 步收敛，闭环控制成功率 82%，机械抓手未打滑；"
+                "事故根因是配置漂移，已在对齐评测集上复核。\n\n"
+                "The planner navigates the graph with Dijkstra. `好问题` stays quoted in a code span.\n\n"
+                "## 验证\n\n回归测试通过。边界：未覆盖真机部署。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "status-update", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertNotIn("ai-tone-boilerplate", codes)
+
+    def test_route_de_ai_signals_select_natural_tone_module(self) -> None:
+        result = run_cli("route", "--task", "把这份实验汇报去AI味，改成自然语气再交付", "--json")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("natural-tone", json.loads(result.stdout)["modules"])
 
     def test_audit_readability_warnings_stay_silent_on_a_clean_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -3723,7 +3765,7 @@ class ReportCtlTests(unittest.TestCase):
             result = run_cli("build-dist", "--output", str(output))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(len(list((output / "routes").glob("*.md"))), 12)
-            self.assertEqual(len(list((output / "modules").glob("*.md"))), 7)
+            self.assertEqual(len(list((output / "modules").glob("*.md"))), 8)
             self.assertEqual(len(list((output / "profiles").glob("*.md"))), 4)
             self.assertEqual(len(list((output / "surfaces").glob("*.md"))), 1)
             self.assertTrue((output / "agent-index.md").is_file())
@@ -3866,7 +3908,7 @@ class ReportCtlTests(unittest.TestCase):
             self.assertTrue((output / "agent-index.md").is_file())
             self.assertTrue((output / ".agentic-reporting-dist.json").is_file())
             self.assertEqual(len(list((output / "routes").glob("*.md"))), 12)
-            self.assertEqual(len(list((output / "modules").glob("*.md"))), 7)
+            self.assertEqual(len(list((output / "modules").glob("*.md"))), 8)
             self.assertEqual(len(list((output / "profiles").glob("*.md"))), 4)
             self.assertEqual(len(list((output / "surfaces").glob("*.md"))), 1)
 

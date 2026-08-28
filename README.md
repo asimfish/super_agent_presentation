@@ -57,9 +57,9 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 - **12 primary report modes** — concise answer, implementation handoff, status
   update, investigation, experiment report, research idea, decision brief, risk
   report, incident update, postmortem, academic synthesis, review report.
-- **7 display modules** — visuals, tables, conclusions, evidence, academic-paper
-  presentation, ablation design, performance benchmarking — loaded only when the
-  report needs them.
+- **8 display modules** — visuals, tables, conclusions, evidence, academic-paper
+  presentation, ablation design, performance benchmarking, natural tone (a
+  fact-preserving de-AI pass) — loaded only when the report needs them.
 - **4 bounded research profiles** — reinforcement learning, embodied AI, world
   models, VLA — domain protocol cards without hardcoding any benchmark's habits.
 - **12 exact template assets** — detailed experiment reports per domain,
@@ -199,6 +199,7 @@ finished-example links lives in [docs/CATALOG.md](docs/CATALOG.md).
 | Quarto slides | `academic-talk-revealjs` | Reveal.js, citations, speaker notes, self-contained HTML, appendix |
 | Ablation study | `ablation` module | variant-versus-full-system comparison, interaction checks, tuning-policy parity, honest contribution tables |
 | Performance comparison | `benchmarking` module | full-suite protocol, geometric/harmonic means, speedup and tail-latency discipline, platform disclosure |
+| De-AI tone pass | `natural-tone` module | fidelity contract (facts, relations, scope survive rewriting), signal-to-action table for CN/EN boilerplate, misfire protection for technical vocabulary |
 | Reviewer response | `rebuttal-response` | point-by-point quoting, outcome-first replies, precise revision locations, no unverifiable promises |
 | Model/dataset release | `release-card` | identity and license, intended use, provenance with exclusion accounting, disaggregated evaluation, limitations |
 

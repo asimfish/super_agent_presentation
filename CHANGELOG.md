@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- Added a de-AI tone capability distilled from the MIT-licensed `shuorenhua`
+  skill (MrGeDiao/shuorenhua) and registered the mapping in
+  `docs/REPORTING-STANDARDS.md`. New on-demand `natural-tone` display module
+  (module count 7 → 8): a fidelity contract that lets tone edits change wording
+  but never facts (protected spans; relations, scope, negation, modality, and
+  abstraction level preserved; two-direction reread), a structural-first
+  processing order, a CN/EN signal-to-action table, and misfire protection for
+  technical vocabulary (闭环/抓手/收敛/根因/对齐 in their domain senses, statistical
+  显著, quoted material, academic passive voice). SKILL.md drafting step 5 now
+  requires a de-AI pass before the final audit; the core contract stays
+  unchanged so every bundle remains within its character budget. New
+  `ai-tone-boilerplate` audit warning flags the highest-precision boilerplate
+  only (CN sycophantic openers, performative closers, value inflation, hype
+  comparatives; EN throat-clearing, `delve`, `game-changer`, `a testament to`),
+  grouped one finding per line with all matched phrases listed, and inline code
+  spans are exempt via same-length masking so quoted examples stay legal.
+  Routing signals (去AI味/说人话/AI腔/humanize/natural tone) select the module;
+  covered by positive/negative audit unit tests and a routing test.
 - Added audit-clean finished examples with receipts for the two survey-absorbed
   templates in `examples/templates-20260828/`: `rebuttal-response` audited under
   `review-report` and `release-card` under `implementation-handoff`, both at

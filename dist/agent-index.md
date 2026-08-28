@@ -26,6 +26,7 @@ Choose exactly one primary route and read no other route. Add at most one matchi
 - [`academic-display`](modules/academic-display.md) — Display scholarly identity, thesis, method, claim-evidence links, limitations, and relationships without fabricating literature claims.
 - [`ablation`](modules/ablation.md) — Design and report ablations: form selection, interaction checks, variant tuning policy, and honest component-contribution tables.
 - [`benchmarking`](modules/benchmarking.md) — Report performance comparisons honestly: full-suite protocol, correct means, speedup and tail-latency discipline, and complete platform disclosure.
+- [`natural-tone`](modules/natural-tone.md) — Strip AI-flavored ceremony, jargon, and template rhetoric from reader-facing prose while preserving every fact, relation, and scope.
 
 ## Optional research profiles
 
