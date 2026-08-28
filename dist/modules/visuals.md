@@ -52,6 +52,34 @@ a more honest display.
 - Do not use color alone; add direct labels, line styles, markers, ordering, texture,
   or another redundant cue.
 
+## Scientific figures
+
+- Error bars: SD describes spread and does not shrink with more runs; SEM or a
+  confidence interval supports comparison of means. State the statistic and the
+  number of independent runs in the caption; technical replicates do not count.
+- With few independent runs (about ten or fewer), plot the raw points; a
+  mean-only bar hides overlap, outliers, and multimodality.
+- Interval overlap is not a significance test in either direction; state the
+  analysis instead of arguing from bar geometry.
+- Prefer a colorblind-safe categorical palette (for example Okabe-Ito) and
+  perceptually uniform sequential colormaps (for example viridis); avoid rainbow
+  or jet colormaps. When highlighting one series, mute the rest.
+- Learning curves: declare smoothing and its parameter; show a center across
+  seeds (mean or interquartile mean) and a band with stated statistic and seed
+  count. Never show only the best seed, a per-step max across seeds, or a
+  mid-training peak as final performance.
+- Show a mean with uncertainty as a point with an interval, not a bar with an
+  error bar; readers judge values inside a bar as more probable. Reserve bars
+  for counts and true-zero magnitudes, with the value axis starting at zero.
+- When the claim concerns individuals, a confidence interval overstates
+  separation; show a prediction interval, the distribution, or raw points.
+- Do not put two independently scaled value axes in one chart; split the chart
+  or index both series to a common base.
+- Caption order: what the figure shows, how to read it (panels, encodings,
+  uncertainty, n), then the takeaway; figure plus caption must stand alone.
+- Cite a figure in prose by stating its finding with the figure number, not a
+  bare `see Figure 2`.
+
 ## Images and screenshots
 
 - Give every image a stable figure ID, purpose, caption, concise alternative text,

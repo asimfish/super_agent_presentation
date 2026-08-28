@@ -224,9 +224,13 @@ text，且不能使用 Markdown delimiter 形式。它不是语义或事实验�
 - 进行中的 incident
 - 事后复盘
 
-图片、图表、表格、结论、证据和学术展示作为正交模块按需加入，不是每份
-汇报的固定装饰。完整清单（12 模式 / 5 模块 / 4 profile / 5 表面 / 8 模板）
-见 [docs/CATALOG.md](docs/CATALOG.md)。
+图片、图表、表格、结论、证据、学术展示、消融设计和性能基准作为正交模块
+按需加入，不是每份汇报的固定装饰。完整清单（12 模式 / 7 模块 / 4 profile /
+5 表面 / 12 模板）见 [docs/CATALOG.md](docs/CATALOG.md)。框架吸收了 30 余个
+具名汇报标准与研究文献（ASA p 值声明、CONSORT/PRISMA 数量账、benchmarking
+crimes、误差条与不确定性可视化研究、Model Cards / Datasheets、审稿回应
+规范等），每条映射可在
+[docs/REPORTING-STANDARDS.md](docs/REPORTING-STANDARDS.md) 审计。
 
 ## 研究与展示模板
 
@@ -240,6 +244,10 @@ text，且不能使用 Markdown delimiter 形式。它不是语义或事实验�
 | VLA | `vla` / `vla-experiment-report` | 数据混合、形态与动作接口、rollout、泛化、延迟和安全 |
 | HTML/PPT-style 学术汇报 | `academic-talk-html` | 零依赖、响应式、可打印、键盘导航、assertion-evidence 页面 |
 | Quarto HTML 幻灯片 | `academic-talk-revealjs` | Reveal.js、引用、speaker notes、自包含 HTML、appendix |
+| 消融实验 | `ablation` 模块 | 变体对全系统比较、交互检验、调参政策对等、诚实的组件贡献表 |
+| 性能对比 | `benchmarking` 模块 | 全套件协议、几何/调和平均、speedup 与尾延迟纪律、平台全披露 |
+| 审稿回应 | `rebuttal-response` | 逐条引用、结论先行、精确修改定位、不开空头支票 |
+| 模型/数据集发布 | `release-card` | 身份与许可、预期用途、含排除计数的来源账、分切片评估、局限 |
 
 领域 profile 是通用汇报协议的增量，不会把某个 benchmark 的 seed 数、指标
 或成功定义硬编码为所有研究的默认值。Agent 应先路由，再只复制一个最匹配

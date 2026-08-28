@@ -57,13 +57,16 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 - **12 primary report modes** — concise answer, implementation handoff, status
   update, investigation, experiment report, research idea, decision brief, risk
   report, incident update, postmortem, academic synthesis, review report.
-- **5 display modules** — visuals, tables, conclusions, evidence, academic-paper
-  presentation — loaded only when the report needs them.
+- **7 display modules** — visuals, tables, conclusions, evidence, academic-paper
+  presentation, ablation design, performance benchmarking — loaded only when the
+  report needs them.
 - **4 bounded research profiles** — reinforcement learning, embodied AI, world
   models, VLA — domain protocol cards without hardcoding any benchmark's habits.
-- **8 exact template assets** — detailed experiment reports per domain, paper-idea
-  brief, dependency-free HTML/PPT-style academic deck, Quarto Reveal.js source —
-  retrieved one at a time, never bundled into context.
+- **12 exact template assets** — detailed experiment reports per domain,
+  paper-idea brief, dependency-free HTML/PPT-style academic deck, Quarto
+  Reveal.js source, SBAR handoff, executive one-pager, reviewer response, and
+  model/dataset release card — retrieved one at a time, never bundled into
+  context.
 - **A stdlib-only CLI** (`reportctl`) that routes, bundles bounded context,
   checkpoints long tasks, scaffolds, audits structure mechanically, and renders a
   strict JSON report IR.
@@ -73,6 +76,11 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 - **Evidence-first culture** — audits check structure mechanically; the repository
   never claims your facts are correct, and it does not claim measured quality
   gains it has not measured (see [Evidence status](#evidence-status)).
+- **Absorbed reporting standards** — 30+ named sources (ASA p-value statement,
+  CONSORT/PRISMA accounting, benchmarking-crimes literature, error-bar and
+  uncertainty-visualization research, model cards and datasheets, peer-review
+  response norms) encoded into modes, modules, and templates, with every mapping
+  auditable in [docs/REPORTING-STANDARDS.md](docs/REPORTING-STANDARDS.md).
 
 ## Quick start
 
@@ -175,7 +183,7 @@ flowchart LR
 
 ## Catalog
 
-12 modes · 5 display modules · 4 research profiles · 5 surfaces · 8 exact
+12 modes · 7 display modules · 4 research profiles · 5 surfaces · 12 exact
 templates — the full inventory with per-item summaries, bounded route files, and
 finished-example links lives in [docs/CATALOG.md](docs/CATALOG.md).
 
@@ -189,6 +197,10 @@ finished-example links lives in [docs/CATALOG.md](docs/CATALOG.md).
 | VLA | `vla` / `vla-experiment-report` | data mixture, embodiment and action interface, rollouts, generalization, latency, safety |
 | HTML/PPT academic talk | `academic-talk-html` | dependency-free, responsive, printable, keyboard nav, assertion-evidence pages |
 | Quarto slides | `academic-talk-revealjs` | Reveal.js, citations, speaker notes, self-contained HTML, appendix |
+| Ablation study | `ablation` module | variant-versus-full-system comparison, interaction checks, tuning-policy parity, honest contribution tables |
+| Performance comparison | `benchmarking` module | full-suite protocol, geometric/harmonic means, speedup and tail-latency discipline, platform disclosure |
+| Reviewer response | `rebuttal-response` | point-by-point quoting, outcome-first replies, precise revision locations, no unverifiable promises |
+| Model/dataset release | `release-card` | identity and license, intended use, provenance with exclusion accounting, disaggregated evaluation, limitations |
 
 ## Deployment and constraint ladder
 
@@ -220,7 +232,7 @@ implemented and documented in [BENCHMARK.md](BENCHMARK.md) and
 [evals/](evals/README.md).
 
 What *is* verified: deterministic routing, bounded bundles, checkpoint/audit
-mechanics, template rendering (291 unit tests + harness smoke + real-render
+mechanics, template rendering (304 unit tests + harness smoke + real-render
 regression on macOS Chrome 151), and the end-to-end showcase run with receipts in
 [examples/](examples/README.md).
 
@@ -241,7 +253,7 @@ examples/showcase-20260825/    # 16 finished reports + deck + audit receipts
 evals/                         # study schemas, templates, sanitized run records
 scripts/                       # installer, benchmark harness, study controller
 docs/                          # architecture, research, catalog, ADRs
-tests/                         # 291 unit tests
+tests/                         # 304 unit tests
 ```
 
 ## Verification

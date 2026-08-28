@@ -145,17 +145,15 @@ as navigation aids; verify consequential literature claims against primary works
 - Give each source a stable identifier and resolvable bibliographic link when
   available.
 - Separate what a paper states from what the synthesis infers across papers.
-- Do not present a paraphrase as a quotation. Keep any necessary quotation short and
+- Do not present a paraphrase as a quotation; keep quotations short and
   attributable.
 - Verify venue, year, authorship, title, and reported result before relying on them.
 - Do not create a citation to fill a narrative gap.
 - Preserve the source's epistemic operator. `Not reported`, `not found in the
   inspected sections`, `not evaluated`, and `shown to be absent` are different
-  claims. Never turn non-reporting into proof that an experiment or analysis did not
-  occur.
-- Call something an author-reported limitation only when the paper characterizes it
-  that way. Otherwise describe it as a boundary of the supplied or inspected
-  evidence.
+  claims. Never turn non-reporting into proof of absence.
+- Call a limitation author-reported only when the paper says so; otherwise it is
+  a boundary of the inspected evidence.
 - Compare papers only on explicit axes. Different tasks, datasets, access assumptions,
   or metrics do not form one leaderboard.
 
@@ -169,12 +167,13 @@ reader's question. A summary is not an endorsement or a review.
 
 Prefer a concept-first narrative over one paragraph per paper. Use an evidence map
 when several claims depend on different source subsets. State whether the source set
-is systematic, curated, convenience-based, or incomplete.
+is systematic, curated, convenience-based, or incomplete. For a systematic claim,
+disclose sources searched, query strategy, time window, criteria, and screening
+counts; weigh sources by quality, not by count.
 
 ## Avoid
 
 - `The literature shows` without naming the relevant source set.
-- Treating an abstract, search snippet, or related-work sentence as verification of a
-  detailed result.
+- Treating an abstract or search snippet as verification of a detailed result.
 - Claiming consensus from repeated wording or several papers sharing a benchmark.
 - Overstating generalization, causality, significance, or deployment readiness.

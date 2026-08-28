@@ -466,6 +466,41 @@
         "主张证据映射",
         "文献比较"
       ]
+    },
+    "ablation": {
+      "summary": "Design and report ablations: form selection, interaction checks, variant tuning policy, and honest component-contribution tables.",
+      "file": "modules/ablation.md",
+      "signals": [
+        "ablation",
+        "ablate",
+        "component contribution",
+        "leave-one-out",
+        "decoupling experiment",
+        "消融",
+        "消融实验",
+        "解耦实验",
+        "组件贡献",
+        "逐项削减"
+      ]
+    },
+    "benchmarking": {
+      "summary": "Report performance comparisons honestly: full-suite protocol, correct means, speedup and tail-latency discipline, and complete platform disclosure.",
+      "file": "modules/benchmarking.md",
+      "signals": [
+        "throughput",
+        "speedup",
+        "scalability",
+        "tail latency",
+        "benchmarking",
+        "qps",
+        "吞吐",
+        "加速比",
+        "可扩展性",
+        "尾延迟",
+        "压测",
+        "基准测试",
+        "性能基准"
+      ]
     }
   },
   "profiles": {
@@ -617,6 +652,20 @@
       "summary": "Pyramid-structured executive one-pager: governing-thought title, two to four evidence-backed reasons, costs and revisit triggers, decision requested.",
       "path": "assets/templates/executive-onepager.md",
       "modes": ["decision-brief", "status-update"],
+      "profiles": [],
+      "surfaces": ["markdown", "document"]
+    },
+    "rebuttal-response": {
+      "summary": "Point-by-point response to reviewers: quote each comment, answer with outcome-first sentences and precise revision locations, no unverifiable promises.",
+      "path": "assets/templates/rebuttal-response.md",
+      "modes": ["review-report"],
+      "profiles": [],
+      "surfaces": ["markdown", "document"]
+    },
+    "release-card": {
+      "summary": "Model-card and datasheet style release summary: identity, intended use, provenance with exclusion accounting, disaggregated evaluation, limitations, reproduction.",
+      "path": "assets/templates/release-card.md",
+      "modes": ["implementation-handoff"],
       "profiles": [],
       "surfaces": ["markdown", "document"]
     }

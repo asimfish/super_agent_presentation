@@ -48,7 +48,7 @@ MODE_IDS = (
     "postmortem",
     "risk-report",
 )
-MODULE_IDS = ("visuals", "tables", "conclusions", "evidence", "academic-display")
+MODULE_IDS = ("visuals", "tables", "conclusions", "evidence", "academic-display", "ablation", "benchmarking")
 PROFILE_IDS = ("reinforcement-learning", "embodied-ai", "world-models", "vla")
 SURFACE_GUIDE_IDS = ("slide",)
 PROFILE_APPLICABLE_MODES = (
@@ -70,6 +70,8 @@ TEMPLATE_IDS = (
     "academic-talk-revealjs",
     "sbar-handoff",
     "executive-onepager",
+    "rebuttal-response",
+    "release-card",
 )
 SURFACES = ("chat", "markdown", "issue-pr", "document", "slide")
 STATUS_VALUES = ("informational", "completed", "partial", "blocked", "failed")
