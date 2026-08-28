@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added audit-clean finished examples with receipts for the two survey-absorbed
+  templates in `examples/templates-20260828/`: `rebuttal-response` audited under
+  `review-report` and `release-card` under `implementation-handoff`, both at
+  zero errors and zero warnings. Linked them from the examples index and the
+  catalog.
 - Absorbed scientific reporting norms from a two-round literature survey and
   registered every mapping in `docs/REPORTING-STANDARDS.md`: statistical-claim
   discipline (ASA p-value statement, effect sizes with intervals, causal-language

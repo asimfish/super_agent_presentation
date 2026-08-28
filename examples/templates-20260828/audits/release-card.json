@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "file": "examples/templates-20260828/release-card.md",
+  "mode": "implementation-handoff",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 2989,
+      "sha256": "f648b32bc77e6c7a78d2371e22a2709d68ce48710367d0e78548bd46fb3b11fe"
+    },
+    "checkpoint": null
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": []
+}

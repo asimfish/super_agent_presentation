@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "file": "examples/templates-20260828/rebuttal-response.md",
+  "mode": "review-report",
+  "errors": 0,
+  "warnings": 0,
+  "input_receipts": {
+    "report": {
+      "bytes": 3244,
+      "sha256": "a7ad5b8aa71af94f7efed582edbbbae545aa0673567f296d3e3ccc1352c3f22b"
+    },
+    "checkpoint": null
+  },
+  "manual_checks_required": [
+    "latest-state accuracy",
+    "claim and number fidelity",
+    "evidence and citation validity",
+    "uncertainty and comparison boundaries",
+    "visual interpretability in the final surface",
+    "explicit user-format compliance"
+  ],
+  "findings": []
+}
