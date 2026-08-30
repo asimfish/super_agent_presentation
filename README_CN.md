@@ -10,21 +10,50 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![English](https://img.shields.io/badge/English-README.md-blue.svg)](README.md)
 
-当前版本为 `v0.6.0`：新增 `reportctl --version`（含与 CITATION.cff 绑定的
-版本一致性测试）、云同步/文件驱逐预检脚本 `scripts/check_test_env.py`、
-[GitHub Pages 在线演示](https://asimfish.github.io/super_agent_presentation/)
-与引用元数据；协议、模式与模板内容不变。v0.5.0 把一次完整的端到端
-showcase（16 份成品报告、HTML 学术幻灯片、真实渲染与全部审计收据）收入
-[`examples/`](examples/README.md)，新增英文主 README 与
-[目录文档](docs/CATALOG.md)，并修复了 academic-talk 模板在 Chrome 打印时
-长中文标题首字被裁切的问题（含真实渲染回归测试）。模板来源和采用边界见
-[docs/TEMPLATE-SOURCES.md](docs/TEMPLATE-SOURCES.md)。
+English | [中文版](README_CN.md)
 
-v0.3 系列引入了预注册、生成记录、真实宿主计划、显式执行、盲化、独立评分
-冻结和成对汇总流水线。一次最小 Codex pilot 观察到 treatment 读取了 Skill，
-baseline/framework 分别通过 9/10 与 10/10 机器检查；但它只有一个公开 case、
-一个未固定 revision 的模型和一次重复，且 framework 输出从 358 增至 980
-tokens。因此该 pilot 永久标记为 `insufficient_evidence`，本仓库不宣称已经
+💡 *可作为已安装 Skill 在 [Claude Code](adapters/) / [Codex](adapters/) /
+[Cursor](adapters/) / [GitHub Copilot](adapters/) 中使用，也可以让任意 Agent
+读取一份 Markdown 索引走[链接模式](AGENT_START.md)——无框架、无守护进程、
+无锁定。*
+
+🤖 **AI agent 请直接读 [`AGENT_START.md`](AGENT_START.md)**——它是为 LLM
+消费而组织的最小引导入口，不是给人浏览的页面。
+
+🪶 **极致轻量。** 整个 skill 层就是纯 Markdown 加一个仅用标准库的 Python
+CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 fork 改写、适配到
+你自己的技术栈。
+
+## 📢 最近更新
+
+- **2026-08-29** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  🗣️ **去 AI 味通道**（[#4](https://github.com/asimfish/super_agent_presentation/pull/4)）：
+  新增 `natural-tone` 展示模块（模块数 7 → 8），蒸馏自 MIT 协议的
+  [shuorenhua](https://github.com/MrGeDiao/shuorenhua)：保真合同（语气改写只
+  动措辞，事实、关系、范围、数字一律不变）、中英「信号→动作」对照表、领域
+  术语误杀保护；审计新增 `ai-tone-boilerplate` 高精度套话告警（行内代码段
+  豁免）。
+- **2026-08-28** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  📐 **吸收 30+ 科学汇报规范**（[#1](https://github.com/asimfish/super_agent_presentation/pull/1)）：
+  ASA p 值纪律、CONSORT/PRISMA 排除记账、不确定性可视化与误差棒语义、
+  benchmarking-crimes 对策，落进 conclusions/visuals 模块、两个新模块
+  （`ablation`、`benchmarking`）与两份新模板（`rebuttal-response`、
+  `release-card`），每条映射可在
+  [docs/REPORTING-STANDARDS.md](docs/REPORTING-STANDARDS.md) 审计；同日补齐
+  两份零告警成品示例（[#3](https://github.com/asimfish/super_agent_presentation/pull/3)）。
+- **2026-08-28** — ![FIX](https://img.shields.io/badge/FIX-2ea44f?style=flat-square)
+  📊 **依据真实 showcase 反馈收紧幻灯片合同**：三个以上数据点必须图表化、
+  结论编码进视觉、全精度表格降级到附录；审计新增 `cjk-halfwidth-punctuation`
+  告警（中文夹半角标点）。
+- **2026-08-25** — **v0.6.0 / v0.5.0**：
+  [GitHub Pages 在线演示](https://asimfish.github.io/super_agent_presentation/)、
+  云同步/文件驱逐预检、[16 份带完整审计收据的成品示例](examples/README.md)。
+  完整历史见 [CHANGELOG.md](CHANGELOG.md)。
+
+关于证据边界：v0.3 系列引入了预注册、盲化、独立评分冻结和成对汇总流水线。
+一次最小 Codex pilot 观察到 treatment 读取了 Skill，baseline/framework 分别
+通过 9/10 与 10/10 机器检查；但它只有一个公开 case、一个未固定 revision 的
+模型和一次重复，因此永久标记为 `insufficient_evidence`，本仓库不宣称已经
 测得质量、可读性或效率提升。
 
 ## 它解决什么
@@ -414,6 +443,39 @@ fresh-agent 记录见 [evals/runs/forward/README.md](evals/runs/forward/README.m
   url     = {https://github.com/asimfish/super_agent_presentation}
 }
 ```
+
+## ⭐ Star History
+
+<a href="https://www.star-history.com/#asimfish/super_agent_presentation&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=asimfish/super_agent_presentation&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=asimfish/super_agent_presentation&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=asimfish/super_agent_presentation&type=Date" />
+ </picture>
+</a>
+
+## 🙏 致谢
+
+**吸收的规范** — 框架编码了 30+ 有名有姓的汇报规范来源（ASA p 值声明、
+CONSORT/PRISMA 记账、IBCS、NN/g 扫描阅读研究、Google SRE 复盘文化、
+plain-language 指南、benchmarking-crimes 文献、model cards 与 datasheets、
+同行评审回应规范等），每条映射可在
+[docs/REPORTING-STANDARDS.md](docs/REPORTING-STANDARDS.md) 审计，模板来源
+逐条记录在 [docs/TEMPLATE-SOURCES.md](docs/TEMPLATE-SOURCES.md)。
+
+**依许可改编** — `natural-tone` 模块蒸馏自
+[@MrGeDiao](https://github.com/MrGeDiao) 的 MIT 协议项目
+[shuorenhua](https://github.com/MrGeDiao/shuorenhua)，落地为带保真合同的
+展示模块加确定性审计规则。
+
+**README 惯例** — 本 README 的结构（带日期的最近更新、编号目录、诚实的
+边界声明）参考了
+[ARIS](https://github.com/wanshuiyin/auto-claude-code-research-in-sleep)
+的开源范例。
+
+**宿主平台** — [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+· [Codex](https://github.com/openai/codex) · [Cursor](https://cursor.com) ·
+[GitHub Copilot](https://github.com/features/copilot)。
 
 ## License
 
