@@ -12,9 +12,18 @@ every time.**
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B%20%C2%B7%20stdlib%20only-blue.svg)](.github/workflows/ci.yml)
 [![中文文档](https://img.shields.io/badge/%E4%B8%AD%E6%96%87-README__CN.md-red.svg)](README_CN.md)
 
-*Works with Claude Code, Codex, Cursor, and GitHub Copilot via
-[host adapters](adapters/), or with any agent that can read one Markdown index
-([link-only mode](AGENT_START.md)).*
+[中文版 README](README_CN.md) | English
+
+💡 *Use it as an installed Skill in [Claude Code](adapters/) / [Codex](adapters/) /
+[Cursor](adapters/) / [GitHub Copilot](adapters/), or hand any agent one Markdown
+index in [link-only mode](AGENT_START.md) — no framework, no daemon, no lock-in.*
+
+🤖 **AI agents:** read [`AGENT_START.md`](AGENT_START.md) instead — the smallest
+bootstrap, structured for LLM consumption, not human browsing.
+
+🪶 **Radically lightweight.** The entire skill layer is plain Markdown plus one
+stdlib-only Python CLI. No database to maintain, no Docker to configure, no
+dependencies to install — fork it, rewrite it, adapt it to your stack.
 
 <p align="center">
   <a href="examples/showcase-20260825/render/academic-talk.pdf">
@@ -34,7 +43,36 @@ every time.**
 
 </details>
 
-## Why
+> 🧾 **Hand your agent the same task twice — get the same readable report shape
+> both times.** Route → bounded bundle → checkpoint → mechanical audit: the
+> reporting contract survives hours of work and context compaction, and a bad
+> delivery can be blocked by exit code instead of by hope.
+
+## Contents
+
+1. [Why — more than a style prompt](#why)
+2. [What's New](#whats-new) · dated changelog
+3. [What you get](#what-you-get) · modes / modules / profiles / templates / CLI
+4. [Quick start](#quick-start) · no-install trial + install + agent workflow
+5. [Real examples](#real-examples) · 16 receipt-backed reports + live deck
+6. [How it survives long tasks](#long-tasks) · checkpointed anti-forgetting
+7. [Catalog](#catalog)
+8. [Deployment and constraint ladder](#deployment)
+9. [Evidence status](#evidence-status) · what is and is not claimed
+10. [Repository structure](#repository-structure)
+11. [Verification](#verification)
+12. [Design docs](#design-docs)
+13. [Contributing](#contributing)
+14. [Citation](#citation)
+15. [Star History](#star-history)
+16. [Acknowledgements](#acknowledgements)
+17. [License](#license)
+
+---
+
+<a id="why"></a>
+
+## 1. 🎯 Why — more than a style prompt
 
 Give an agent the same substantive task twice and you get two differently shaped
 reports; some are unreadable for humans. Style guides alone do not survive long
@@ -52,7 +90,74 @@ Short answers may stay one sentence. Experiment reports must carry protocol,
 metrics, run counts, uncertainty, tables, and conclusion boundaries. An explicit
 user-requested format (JSON, three sentences, a paper section) always wins.
 
-## What you get
+> 💭 **Why routing instead of one big prompt?** A resident mega-template taxes
+> every turn and dies at the first compaction. Here a tiny micro-contract only
+> decides *when* to activate; the full protocol is loaded once, at the reporting
+> boundary, and the checkpoint file — not the context window — carries the
+> contract across compaction.
+>
+> 💭 **Why mechanical audits instead of "please follow the style"?** Prompts
+> reduce forgetting; they cannot block a bad delivery. `audit --strict` returns
+> a real exit code you can wire into CI, so structure is enforceable — while the
+> repository stays honest that no audit can verify your *facts*.
+
+<a id="whats-new"></a>
+
+## 2. 📢 What's New
+
+- **2026-08-29** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  🗣️ **De-AI tone pass** ([#4](https://github.com/asimfish/super_agent_presentation/pull/4)).
+  New `natural-tone` display module (module count 7 → 8), distilled from the
+  MIT-licensed [shuorenhua](https://github.com/MrGeDiao/shuorenhua) rewriting
+  skill: a fidelity contract (tone edits change wording, never facts, relations,
+  scope, or numbers), a CN/EN signal-to-action table, and misfire protection for
+  technical vocabulary. A new `ai-tone-boilerplate` audit warning flags only the
+  highest-precision boilerplate (`值得注意的是`, `综上所述`, `delve`,
+  `game-changer`, …), with inline code spans exempt.
+- **2026-08-28** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  📐 **30+ scientific reporting standards absorbed** ([#1](https://github.com/asimfish/super_agent_presentation/pull/1)).
+  ASA p-value discipline, CONSORT/PRISMA accounting, uncertainty-visualization
+  and error-bar semantics, benchmarking-crimes countermeasures — encoded into
+  the conclusions/visuals modules, two new modules (`ablation`, `benchmarking`),
+  and two new templates (`rebuttal-response`, `release-card`), every mapping
+  auditable in [docs/REPORTING-STANDARDS.md](docs/REPORTING-STANDARDS.md).
+  Audit-clean finished examples for both templates landed the same day
+  ([#3](https://github.com/asimfish/super_agent_presentation/pull/3)).
+- **2026-08-28** — ![FIX](https://img.shields.io/badge/FIX-2ea44f?style=flat-square)
+  📊 **Slide contract tightened from real showcase feedback.** Three or more
+  data points must be charted with the takeaway encoded inside the visual;
+  full-precision tables demote to an appendix; new `cjk-halfwidth-punctuation`
+  audit warning catches the most visible CJK typography defect.
+- **2026-08-25** — **v0.6.0 / v0.5.0**: live
+  [GitHub Pages demo](https://asimfish.github.io/super_agent_presentation/),
+  cloud-sync/eviction preflight, and
+  [16 finished showcase examples](examples/README.md) with full audit receipts.
+
+<details>
+<summary><b>Release history</b> (v0.1.0 → v0.6.0, 2026-08-24 → 2026-08-25)</summary>
+
+- **v0.6.0** (2026-08-25) — `reportctl --version`, GitHub Pages demo, citation
+  metadata, cloud-sync test preflight.
+- **v0.5.0** (2026-08-25) — `examples/showcase-20260825/` (16 finished reports +
+  deck + receipts), EN/CN README split, CJK print-clipping fix with real-render
+  regression tests.
+- **v0.4.0** (2026-08-24) — `research-idea` mode, 4 bounded research profiles
+  (RL / embodied / world models / VLA), 8 exact template assets, slide surface.
+- **v0.3.x** (2026-08-24) — preregistered study controller with immutable
+  receipts, typed host adapter, blind A/B packets, claim gates; checkpoint
+  artifact receipts; one-case Codex pilot published as `insufficient_evidence`.
+- **v0.2.0** (2026-08-24) — schema-v2 full-intent checkpoints, same-checkpoint
+  final audit, shared bounded scanner.
+- **v0.1.0** (2026-08-24) — resident micro-contract, routed Agent Skill,
+  structural audit, 11 modes, 5 modules, 4 host adapters.
+
+Full detail in [CHANGELOG.md](CHANGELOG.md).
+
+</details>
+
+<a id="what-you-get"></a>
+
+## 3. ✨ What you get
 
 - **12 primary report modes** — concise answer, implementation handoff, status
   update, investigation, experiment report, research idea, decision brief, risk
@@ -82,7 +187,9 @@ user-requested format (JSON, three sentences, a paper section) always wins.
   response norms) encoded into modes, modules, and templates, with every mapping
   auditable in [docs/REPORTING-STANDARDS.md](docs/REPORTING-STANDARDS.md).
 
-## Quick start
+<a id="quick-start"></a>
+
+## 4. 🚀 Quick start
 
 ### Fastest trial (no install)
 
@@ -134,7 +241,9 @@ python3 skills/agentic-reporting/scripts/reportctl.py audit \
   --file report.md --checkpoint <private-scratch>/agent-report.json --strict
 ```
 
-## Real examples
+<a id="real-examples"></a>
+
+## 5. 🖼️ Real examples
 
 [`examples/showcase-20260825/`](examples/README.md) holds one finished sample for
 every mode and profile — generated through the real CLI workflow with every
@@ -152,7 +261,9 @@ oracle, 7/7 manual page review).
 All example facts are synthetic fixtures; rendering was verified on macOS Chrome
 151 only. Details and boundaries in [examples/README.md](examples/README.md).
 
-## How it survives long tasks
+<a id="long-tasks"></a>
+
+## 6. 🔄 How it survives long tasks
 
 ```mermaid
 flowchart LR
@@ -181,9 +292,11 @@ flowchart LR
   For that, wrap `checkpoint` + final `audit --checkpoint` exit codes in CI or a
   wrapper.
 
-## Catalog
+<a id="catalog"></a>
 
-12 modes · 7 display modules · 4 research profiles · 5 surfaces · 12 exact
+## 7. 🗂️ Catalog
+
+12 modes · 8 display modules · 4 research profiles · 5 surfaces · 12 exact
 templates — the full inventory with per-item summaries, bounded route files, and
 finished-example links lives in [docs/CATALOG.md](docs/CATALOG.md).
 
@@ -203,7 +316,9 @@ finished-example links lives in [docs/CATALOG.md](docs/CATALOG.md).
 | Reviewer response | `rebuttal-response` | point-by-point quoting, outcome-first replies, precise revision locations, no unverifiable promises |
 | Model/dataset release | `release-card` | identity and license, intended use, provenance with exclusion accounting, disaggregated evaluation, limitations |
 
-## Deployment and constraint ladder
+<a id="deployment"></a>
+
+## 8. 🪜 Deployment and constraint ladder
 
 | Usage | Fits | Constraint strength |
 |---|---|---|
@@ -220,7 +335,9 @@ For formal reports, start from
 evidence IDs. Details in [README_CN.md](README_CN.md#正式报告的-strict-path) and
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Evidence status
+<a id="evidence-status"></a>
+
+## 9. 🔬 Evidence status
 
 This repository practices what it preaches: **it does not claim measured
 effectiveness it does not have.** A minimal one-case Codex pilot observed the
@@ -237,7 +354,9 @@ mechanics, template rendering (309 unit tests + harness smoke + real-render
 regression on macOS Chrome 151), and the end-to-end showcase run with receipts in
 [examples/](examples/README.md).
 
-## Repository structure
+<a id="repository-structure"></a>
+
+## 10. 📁 Repository structure
 
 ```text
 AGENT_START.md                 # smallest bootstrap for link-only agents
@@ -257,7 +376,9 @@ docs/                          # architecture, research, catalog, ADRs
 tests/                         # 309 unit tests
 ```
 
-## Verification
+<a id="verification"></a>
+
+## 11. ✅ Verification
 
 ```bash
 python3 scripts/check_test_env.py               # preflight: cloud-sync/eviction hazards
@@ -273,7 +394,9 @@ both make the subprocess-heavy tests hang or flake.
 `smoke` validates known-good/bad fixtures and routing and prints
 `host_activation_observed: false` — it calls no real host or model.
 
-## Design docs
+<a id="design-docs"></a>
+
+## 12. 📚 Design docs
 
 [Architecture](docs/ARCHITECTURE.md) · [Catalog](docs/CATALOG.md) ·
 [Research sources](docs/RESEARCH.md) · [Template provenance](docs/TEMPLATE-SOURCES.md) ·
@@ -282,13 +405,17 @@ both make the subprocess-heavy tests hang or flake.
 [Security review](docs/SECURITY-REVIEW.md) · [Benchmark protocol](BENCHMARK.md) ·
 [Security policy](SECURITY.md) · [ADRs](docs/adr/)
 
-## Contributing
+<a id="contributing"></a>
+
+## 13. 🤝 Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: run the full test
 suite, keep `dist/` reproducible, and never add an effectiveness claim without
 the evidence gates in [BENCHMARK.md](BENCHMARK.md).
 
-## Citation
+<a id="citation"></a>
+
+## 14. 📖 Citation
 
 If this framework is useful in your work, cite it via
 [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository" button) or:
@@ -303,6 +430,46 @@ If this framework is useful in your work, cite it via
 }
 ```
 
-## License
+<a id="star-history"></a>
+
+## 15. ⭐ Star History
+
+<a href="https://www.star-history.com/#asimfish/super_agent_presentation&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=asimfish/super_agent_presentation&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=asimfish/super_agent_presentation&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=asimfish/super_agent_presentation&type=Date" />
+ </picture>
+</a>
+
+<a id="acknowledgements"></a>
+
+## 16. 🙏 Acknowledgements
+
+**Absorbed standards** — the framework encodes 30+ named reporting sources (the
+ASA statement on p-values, CONSORT/PRISMA accounting, IBCS, NN/g scanning
+research, Google SRE postmortem culture, plain-language guidelines,
+benchmarking-crimes literature, model cards and datasheets, peer-review response
+norms, …). Every mapping is auditable in
+[docs/REPORTING-STANDARDS.md](docs/REPORTING-STANDARDS.md); template provenance
+is tracked source-by-source in
+[docs/TEMPLATE-SOURCES.md](docs/TEMPLATE-SOURCES.md).
+
+**Adapted with license** — the `natural-tone` module distills the MIT-licensed
+[shuorenhua](https://github.com/MrGeDiao/shuorenhua) de-AI rewriting skill by
+[@MrGeDiao](https://github.com/MrGeDiao) into a fidelity-contracted display
+module plus a deterministic audit rule.
+
+**README conventions** — the structure of this README (dated What's New,
+numbered contents, honest boundary callouts) follows the example set by
+[ARIS](https://github.com/wanshuiyin/auto-claude-code-research-in-sleep).
+
+**Host platforms** — [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+· [Codex](https://github.com/openai/codex) · [Cursor](https://cursor.com) ·
+[GitHub Copilot](https://github.com/features/copilot).
+
+<a id="license"></a>
+
+## 17. License
 
 MIT — see [LICENSE](LICENSE).

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Restructured both READMEs following the open-source conventions of the ARIS
+  project (wanshuiyin/auto-claude-code-research-in-sleep): a numbered Contents
+  section with stable anchors, a dated "What's New" changelog with PR links and
+  a collapsible release history, an AI-agent entry pointer to `AGENT_START.md`,
+  platform callouts, a Star History chart, and an Acknowledgements section
+  crediting the absorbed standards, the licensed `shuorenhua` adaptation, and
+  the ARIS README example itself. Fixed a stale display-module count (7 → 8) in
+  the English catalog summary line. No protocol, routing, audit, or dist
+  changes.
 - Added a de-AI tone capability distilled from the MIT-licensed `shuorenhua`
   skill (MrGeDiao/shuorenhua) and registered the mapping in
   `docs/REPORTING-STANDARDS.md`. New on-demand `natural-tone` display module
