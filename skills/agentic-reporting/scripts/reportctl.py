@@ -26,7 +26,7 @@ from typing import Any, Iterable
 from urllib.parse import quote, unquote, urlsplit
 
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 REFERENCE_DIR = SKILL_DIR / "references"

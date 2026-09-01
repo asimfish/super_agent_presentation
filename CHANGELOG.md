@@ -1,7 +1,18 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 — 2026-09-02
 
+- Bumped `reportctl --version`, `CITATION.cff`, and the skill card to 0.7.0
+  (the skill card had lagged at 0.5.0), and refroze the study-plan skill
+  manifest hash for the changed skill tree.
+- Updated the Evidence status sections of both READMEs to report the two
+  blind controlled studies (`evals/runs/controlled/`) instead of only the
+  one-case pilot: the second run passes the preregistered primary quality gate
+  (`+0.315`, 95% CI `[0.110, 0.579]`) while the efficiency gates still fail
+  (`7.9x` median output-token overhead), so the claim status stays
+  `insufficient_evidence` and no effectiveness claim is made.
+- Everything below this line was merged to `main` between v0.6.0 and this
+  release.
 - Restructured both READMEs following the open-source conventions of the ARIS
   project (wanshuiyin/auto-claude-code-research-in-sleep): a numbered Contents
   section with stable anchors, a dated "What's New" changelog with PR links and

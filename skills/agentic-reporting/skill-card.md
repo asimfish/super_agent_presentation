@@ -3,7 +3,7 @@
 ## Identity
 
 - Owner: `asimfish`
-- Version: `0.5.0`
+- Version: `0.7.0`
 - Status: released
 - License: MIT
 - Source: `skills/agentic-reporting/SKILL.md`

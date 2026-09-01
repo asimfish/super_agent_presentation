@@ -105,6 +105,23 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 
 ## 2. 📢 What's New
 
+- **2026-09-02** — ![RELEASE](https://img.shields.io/badge/RELEASE-v0.7.0-blue?style=flat-square)
+  📦 **v0.7.0** bundles everything below: two blind controlled studies, 30+
+  absorbed reporting standards, the de-AI tone pass, four new templates, three
+  new display modules, seven new readability audit warnings, and the
+  proportional-ceremony / report-in-response contract fixes. Skill card and
+  `reportctl --version` are back in sync. Details in
+  [CHANGELOG.md](CHANGELOG.md#070--2026-09-02).
+- **2026-08-27** — ![EVIDENCE](https://img.shields.io/badge/EVIDENCE-blind%20study-8a2be2?style=flat-square)
+  🔬 **Second blind controlled study passes the primary quality gate**
+  ([`evals/runs/controlled/codex-20260826/`](evals/runs/controlled/codex-20260826/README.md)).
+  168 real Codex executions on 28 held-out cases, 84 A/B pairs blind-rated by two
+  independent model raters, frozen before unblinding: composite gain `+0.315`
+  (95% CI `[0.110, 0.579]`, threshold `+0.3`), framework ahead on 6 of 7
+  dimensions with concision at parity, zero framework responses leaking local
+  paths. Efficiency gates still fail (`7.9x` median output-token overhead), so
+  the claim status remains `insufficient_evidence` — see
+  [Evidence status](#evidence-status).
 - **2026-08-29** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   🗣️ **De-AI tone pass** ([#4](https://github.com/asimfish/super_agent_presentation/pull/4)).
   New `natural-tone` display module (module count 7 → 8), distilled from the
@@ -134,8 +151,14 @@ user-requested format (JSON, three sentences, a paper section) always wins.
   [16 finished showcase examples](examples/README.md) with full audit receipts.
 
 <details>
-<summary><b>Release history</b> (v0.1.0 → v0.6.0, 2026-08-24 → 2026-08-25)</summary>
+<summary><b>Release history</b> (v0.1.0 → v0.7.0, 2026-08-24 → 2026-09-02)</summary>
 
+- **v0.7.0** (2026-09-02) — two blind controlled studies published (second
+  passes the primary quality gate; efficiency gates still fail), 30+ reporting
+  standards absorbed, `natural-tone` / `ablation` / `benchmarking` modules,
+  `sbar-handoff` / `executive-onepager` / `rebuttal-response` / `release-card`
+  templates, seven readability audit warnings, report-in-response and
+  proportional-ceremony contract fixes, ARIS-style README restructure.
 - **v0.6.0** (2026-08-25) — `reportctl --version`, GitHub Pages demo, citation
   metadata, cloud-sync test preflight.
 - **v0.5.0** (2026-08-25) — `examples/showcase-20260825/` (16 finished reports +
@@ -340,13 +363,28 @@ evidence IDs. Details in [README_CN.md](README_CN.md#正式报告的-strict-path
 ## 9. 🔬 Evidence status
 
 This repository practices what it preaches: **it does not claim measured
-effectiveness it does not have.** A minimal one-case Codex pilot observed the
-treatment agent reading the Skill and passing machine checks (baseline 9/10,
-framework 10/10), but with one public case, one unpinned model revision, and one
-repetition it is permanently marked `insufficient_evidence` — no quality,
-readability, or efficiency gain is claimed. The preregistered study pipeline,
-blinding, and claim gates that a real effectiveness claim would require are
-implemented and documented in [BENCHMARK.md](BENCHMARK.md) and
+effectiveness it does not have.** Two private blind controlled studies have been
+run through the preregistered pipeline and their controller-generated aggregates
+are published under [`evals/runs/controlled/`](evals/runs/controlled/):
+
+| Run | Design | Primary composite (95% CI) | Primary gate | Token overhead (median / p90) | Claim status |
+|---|---|---|---|---|---|
+| [`codex-20260825`](evals/runs/controlled/codex-20260825/README.md) | 28 held-out cases × 2 conditions × 3 seeds = 168 Codex runs; 84 blind pairs; 2 independent model raters | `+0.214` `[0.015, 0.478]` | fail (`< +0.3`) | `8.1x` / `27.8x` | `insufficient_evidence` |
+| [`codex-20260826`](evals/runs/controlled/codex-20260826/README.md) | identical design, treatment pinned after the report-in-response and proportional-ceremony fixes | `+0.315` `[0.110, 0.579]` | **pass** | `7.9x` / `26.7x` | `insufficient_evidence` |
+
+What the studies support: under blind rating the framework condition scores
+higher on 6 of 7 quality dimensions, concision reached parity in the second run,
+visual selection precision and recall are 1.0, and zero framework responses
+leaked a local path (45 of 46 critical-error records in the second run sit on
+the baseline side). What they do not support: the efficiency gates fail
+structurally — the framework writes full reports where the baseline often
+answers in a line, so output tokens run ~8x and semantic density per 1,000
+tokens collapses — and the 65% win-rate gate is unmet (45.2%). Cases were
+synthetic, raters were models rather than humans, and the provider revision was
+unpinned. The controller therefore keeps `effectiveness_claim_eligible: false`,
+and this README claims no readability or efficiency gain. The earlier one-case
+pilot remains published as `insufficient_evidence` for the same reason. Gates,
+blinding, and receipts are specified in [BENCHMARK.md](BENCHMARK.md) and
 [evals/](evals/README.md).
 
 What *is* verified: deterministic routing, bounded bundles, checkpoint/audit
@@ -425,7 +463,7 @@ If this framework is useful in your work, cite it via
   author  = {asimfish},
   title   = {Super Agent Presentation: an agent-native reporting framework},
   year    = {2026},
-  version = {0.6.0},
+  version = {0.7.0},
   url     = {https://github.com/asimfish/super_agent_presentation}
 }
 ```

@@ -7,8 +7,8 @@ authors:
 license: MIT
 repository-code: "https://github.com/asimfish/super_agent_presentation"
 url: "https://github.com/asimfish/super_agent_presentation"
-version: 0.6.0
-date-released: "2026-08-25"
+version: 0.7.0
+date-released: "2026-09-02"
 abstract: >-
   Scenario-routed report protocols, bounded context bundles, checkpointed
   long-task memory, and mechanical structure audits, so agent-produced

@@ -26,6 +26,20 @@ CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 for
 
 ## 📢 最近更新
 
+- **2026-09-02** — ![RELEASE](https://img.shields.io/badge/RELEASE-v0.7.0-blue?style=flat-square)
+  📦 **v0.7.0** 把下面所有改动打包发布：两次盲评受控研究、30+ 项吸收的汇报
+  规范、去 AI 味通道、4 份新模板、3 个新展示模块、7 个新可读性审计告警，
+  以及「报告本体必须在最终回复里」与「仪式随任务规模缩放」两项合同修复。
+  skill card 与 `reportctl --version` 重新对齐。详见
+  [CHANGELOG.md](CHANGELOG.md#070--2026-09-02)。
+- **2026-08-27** — ![EVIDENCE](https://img.shields.io/badge/EVIDENCE-%E7%9B%B2%E8%AF%84%E7%A0%94%E7%A9%B6-8a2be2?style=flat-square)
+  🔬 **第二次盲评受控研究首次通过预注册的主质量门禁**
+  （[`evals/runs/controlled/codex-20260826/`](evals/runs/controlled/codex-20260826/README.md)）：
+  28 个 held-out 案例 × 168 次真实 Codex 执行，84 对 A/B 由两位独立模型评分者
+  盲评并在解盲前冻结：综合增益 `+0.315`（95% CI `[0.110, 0.579]`，门槛
+  `+0.3`），7 个维度赢 6 个、简洁度打平，零份框架回复泄露本地路径。效率门禁
+  仍不通过（输出 token 中位数开销 `7.9x`），因此声明状态保持
+  `insufficient_evidence`——见下方「证据边界」。
 - **2026-08-29** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   🗣️ **去 AI 味通道**（[#4](https://github.com/asimfish/super_agent_presentation/pull/4)）：
   新增 `natural-tone` 展示模块（模块数 7 → 8），蒸馏自 MIT 协议的
@@ -50,11 +64,24 @@ CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 for
   云同步/文件驱逐预检、[16 份带完整审计收据的成品示例](examples/README.md)。
   完整历史见 [CHANGELOG.md](CHANGELOG.md)。
 
-关于证据边界：v0.3 系列引入了预注册、盲化、独立评分冻结和成对汇总流水线。
-一次最小 Codex pilot 观察到 treatment 读取了 Skill，baseline/framework 分别
-通过 9/10 与 10/10 机器检查；但它只有一个公开 case、一个未固定 revision 的
-模型和一次重复，因此永久标记为 `insufficient_evidence`，本仓库不宣称已经
-测得质量、可读性或效率提升。
+关于证据边界：本仓库**不宣称任何未经测量的效果**。两次私有盲评受控研究已
+经由预注册流水线跑完，控制器生成的脱敏聚合发布在
+[`evals/runs/controlled/`](evals/runs/controlled/)：
+
+| 运行 | 设计 | 主综合差异（95% CI） | 主门禁 | token 开销（中位 / p90） | 声明状态 |
+|---|---|---|---|---|---|
+| [`codex-20260825`](evals/runs/controlled/codex-20260825/README.md) | 28 个 held-out 案例 × 2 条件 × 3 seed = 168 次 Codex 执行；84 对盲评；2 位独立模型评分者 | `+0.214` `[0.015, 0.478]` | 未过（`< +0.3`） | `8.1x` / `27.8x` | `insufficient_evidence` |
+| [`codex-20260826`](evals/runs/controlled/codex-20260826/README.md) | 同一设计，treatment 固定在两项合同修复之后 | `+0.315` `[0.110, 0.579]` | **通过** | `7.9x` / `26.7x` | `insufficient_evidence` |
+
+研究支持的结论：盲评下框架条件在 7 个质量维度中 6 个更高，第二次运行简洁度
+打平，视觉选择精确率与召回率均为 1.0，零份框架回复泄露本地路径（第二次运
+行 46 条关键错误记录中 45 条在 baseline 一侧）。研究不支持的结论：效率门禁
+结构性失败——baseline 常一行作答而框架写出完整报告，输出 token 约 8 倍、每
+千 token 语义密度大幅下降——且 65% 胜率门禁未达（45.2%）。案例为合成、评分者
+为模型而非人类、provider revision 未固定。因此控制器保持
+`effectiveness_claim_eligible: false`，本 README 不宣称可读性或效率提升；更早
+的一案例 pilot 同样保持 `insufficient_evidence`。门禁、盲化与收据规范见
+[BENCHMARK.md](BENCHMARK.md) 与 [evals/README.md](evals/README.md)。
 
 ## 它解决什么
 
@@ -439,7 +466,7 @@ fresh-agent 记录见 [evals/runs/forward/README.md](evals/runs/forward/README.m
   author  = {asimfish},
   title   = {Super Agent Presentation: an agent-native reporting framework},
   year    = {2026},
-  version = {0.6.0},
+  version = {0.7.0},
   url     = {https://github.com/asimfish/super_agent_presentation}
 }
 ```
