@@ -106,7 +106,7 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 ## 2. 📢 What's New
 
 - **2026-09-02** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
-  🧪 **Scientific-claim discipline for research reports.** A keyword audit of the
+  🧪 **Scientific-claim discipline for research reports** ([#6](https://github.com/asimfish/super_agent_presentation/pull/6)). A keyword audit of the
   protocols found the rules reviewers enforce most often were never named, so
   they now are: success rates as `k/n` with Wilson/Clopper-Pearson intervals and
   the resolvable-difference rule (7/10 vs 8/10 is undetermined), matched

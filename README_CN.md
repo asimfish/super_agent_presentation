@@ -27,7 +27,7 @@ CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 for
 ## 📢 最近更新
 
 - **2026-09-02** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
-  🧪 **研究汇报的科学声明纪律。** 对协议做关键词审计后发现，审稿人最常追问的
+  🧪 **研究汇报的科学声明纪律**（[#6](https://github.com/asimfish/super_agent_presentation/pull/6)）：对协议做关键词审计后发现，审稿人最常追问的
   几条规范此前从未被写明，现已补齐：成功率必须写成 `k/n` 并附 Wilson /
   Clopper-Pearson 区间，并按"可分辨差异"规则选试次数（7/10 与 8/10 无法区分）；
   真机对比必须背靠背、匹配初始条件、交错顺序；少 run 的 RL 聚合用分层 bootstrap
