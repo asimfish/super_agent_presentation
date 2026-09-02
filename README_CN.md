@@ -26,6 +26,17 @@ CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 for
 
 ## 📢 最近更新
 
+- **2026-09-02** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  🧪 **研究汇报的科学声明纪律**（[#6](https://github.com/asimfish/super_agent_presentation/pull/6)）：对协议做关键词审计后发现，审稿人最常追问的
+  几条规范此前从未被写明，现已补齐：成功率必须写成 `k/n` 并附 Wilson /
+  Clopper-Pearson 区间，并按"可分辨差异"规则选试次数（7/10 与 8/10 无法区分）；
+  真机对比必须背靠背、匹配初始条件、交错顺序；少 run 的 RL 聚合用分层 bootstrap
+  区间并点名随机化了哪些方差来源；每份实验报告声明数据泄漏与基准污染检查；
+  解释与推测分离、禁止拟人化动词；人工或模型评分须报告一致性统计并控制位置
+  偏差。新增三条研究模式审计告警（`success-rate-without-denominator`、
+  `significance-without-statistic`、`anthropomorphic-claim`）让可机械判断的部分
+  变成门禁；十条一手来源登记于
+  [docs/REPORTING-STANDARDS.md](docs/REPORTING-STANDARDS.md)。
 - **2026-09-02** — ![RELEASE](https://img.shields.io/badge/RELEASE-v0.7.0-blue?style=flat-square)
   📦 **v0.7.0** 把下面所有改动打包发布：两次盲评受控研究、30+ 项吸收的汇报
   规范、去 AI 味通道、4 份新模板、3 个新展示模块、7 个新可读性审计告警，

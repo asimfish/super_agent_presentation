@@ -67,6 +67,14 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    rhetoric under the `natural-tone` module's fidelity contract. Tone edits never
    change facts, relations, scope, or numbers; the audit's `ai-tone-boilerplate`
    warnings catch only the highest-precision residue.
+
+   In the research modes (experiment-report, academic-synthesis, research-idea),
+   also check that every success rate carries `k/n` and a binomial interval, every
+   `significant` carries its test and effect size in the same sentence, and no
+   verb attributes understanding or intent to a system. The audit's
+   `success-rate-without-denominator`, `significance-without-statistic`, and
+   `anthropomorphic-claim` warnings catch the mechanical residue; the profiles
+   and the conclusions module carry the full rules.
 6. Before a long-task or durable-artifact final, audit a file-backed draft. A long
    task must use the same checkpoint; a durable artifact without one uses its
    selected mode:

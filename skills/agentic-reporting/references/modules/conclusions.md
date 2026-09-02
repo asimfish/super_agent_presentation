@@ -68,6 +68,20 @@ recommendation explicit.
 - When several comparisons feed one conclusion, name the comparison family and
   the correction applied, or why none was needed.
 
+## Explanation and language
+
+- Separate explanation from speculation: a mechanism claimed for a result needs
+  its own evidence (an ablation, an intervention, a diagnostic); otherwise write
+  `we speculate` and keep the speculation out of the title, summary, and abstract.
+- Attribute gains to their source. When a system changes several things at once,
+  do not credit the headline component until the other changes are held fixed.
+- Describe what the system does against a defined task instead of what it
+  `understands`, `believes`, `wants`, or `reasons about`. Suggestive words
+  (`human-level`, `superhuman`, `emergent`, `first to`) need the defined
+  comparison, population, and metric in the same sentence.
+- Equations, notation, and technical terms earn their place by carrying the
+  argument; decorative formalism and redefined common words lower precision.
+
 ## Confidence
 
 State confidence only when it helps a decision. Ground it in evidence quality,

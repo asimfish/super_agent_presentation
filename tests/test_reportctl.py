@@ -1511,6 +1511,109 @@ class ReportCtlTests(unittest.TestCase):
                 codes,
             )
 
+    SCIENTIFIC_CLAIM_CODES = frozenset(
+        {"success-rate-without-denominator", "significance-without-statistic", "anthropomorphic-claim"}
+    )
+
+    def test_audit_flags_bare_success_rates_significance_and_anthropomorphism_in_research_modes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# Result\n\n"
+                "Main result: the policy reaches 78% success on the suite and is significantly "
+                "better than the baseline.\n\n"
+                "Our model truly understands the scene layout.\n\n"
+                "模型已经理解了语言指令，成功率达到 82%，显著优于基线。\n\n"
+                "Table 1 reports success by task.\n\n"
+                "| Method | Success rate |\n|---|---|\n| Ours | 78% |\n| Baseline | 61% |\n",
+                encoding="utf-8",
+            )
+            for mode in ("experiment-report", "academic-synthesis", "research-idea"):
+                with self.subTest(mode=mode):
+                    result = run_cli("audit", "--file", str(report), "--mode", mode, "--json")
+                    self.assertNotIn("Traceback", result.stderr)
+                    findings = json.loads(result.stdout)["findings"]
+                    by_code: dict[str, list[dict[str, object]]] = {}
+                    for item in findings:
+                        by_code.setdefault(item["code"], []).append(item)
+                    self.assertEqual(
+                        set(by_code) & self.SCIENTIFIC_CLAIM_CODES, self.SCIENTIFIC_CLAIM_CODES, findings
+                    )
+                    for item in findings:
+                        if item["code"] in self.SCIENTIFIC_CLAIM_CODES:
+                            self.assertEqual(item["severity"], "warning")
+                    success_lines = {item["line"] for item in by_code["success-rate-without-denominator"]}
+                    self.assertEqual(success_lines, {3, 7, 11}, by_code["success-rate-without-denominator"])
+                    significance_messages = [item["message"] for item in by_code["significance-without-statistic"]]
+                    self.assertTrue(any("significantly better" in message for message in significance_messages))
+                    self.assertTrue(any("显著优于" in message for message in significance_messages))
+                    anthropomorphic_messages = [item["message"] for item in by_code["anthropomorphic-claim"]]
+                    self.assertTrue(any("model truly understands" in message for message in anthropomorphic_messages))
+                    self.assertTrue(any("模型已经理解" in message for message in anthropomorphic_messages))
+
+    def test_audit_scientific_claim_warnings_spare_supported_statements_and_code_spans(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# Result\n\n"
+                "Main result: the policy succeeds in 39/50 trials (78%, Wilson 95% CI [0.65, 0.87]) "
+                "versus 30/50 for the baseline, and the difference is statistically significant "
+                "(paired permutation test, p = 0.03, Cohen's h = 0.36).\n\n"
+                "The policy follows the instruction in 41/50 rollouts; a natural language "
+                "understanding benchmark is out of scope. `The model understands` stays quoted.\n\n"
+                "模型在 50 次试次中成功 41 次（成功率 82%，95% 置信区间 [0.69, 0.90]），"
+                "显著优于基线（配对置换检验，p = 0.02）。\n\n"
+                "Table 1 reports success with trial counts.\n\n"
+                "| Method | Success (k/n) | Trials | Wilson 95% CI |\n|---|---|---|---|\n"
+                "| Ours | 39/50 (78%) | 50 | [0.65, 0.87] |\n| Baseline | 30/50 (60%) | 50 | [0.46, 0.72] |\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertFalse(codes & self.SCIENTIFIC_CLAIM_CODES, codes)
+
+    def test_audit_scientific_claim_warnings_stay_silent_outside_research_modes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# Status\n\n"
+                "Status: the checkout service success rate recovered to 99.2% and latency is "
+                "significantly lower after the rollback. The on-call agent understands the runbook.\n",
+                encoding="utf-8",
+            )
+            for mode in ("status-update", "incident-update", "implementation-handoff", "concise-answer"):
+                with self.subTest(mode=mode):
+                    result = run_cli("audit", "--file", str(report), "--mode", mode, "--json")
+                    self.assertNotIn("Traceback", result.stderr)
+                    codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+                    self.assertFalse(codes & self.SCIENTIFIC_CLAIM_CODES, codes)
+
+    def test_audit_success_table_with_accounting_column_is_not_flagged(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            flagged = Path(temporary) / "flagged.md"
+            flagged.write_text(
+                "# Result\n\nMain result: success differs by task; Table 1 lists it.\n\n"
+                "| Task | Success |\n|---|---|\n| Pick | 80% |\n| Place | 65% |\n",
+                encoding="utf-8",
+            )
+            accounted = Path(temporary) / "accounted.md"
+            accounted.write_text(
+                "# Result\n\nMain result: success differs by task; Table 1 lists it.\n\n"
+                "| Task | Trials | Success |\n|---|---|---|\n| Pick | 20 | 16/20 (80%) |\n| Place | 20 | 13/20 (65%) |\n",
+                encoding="utf-8",
+            )
+            flagged_codes = {
+                item["code"]
+                for item in json.loads(run_cli("audit", "--file", str(flagged), "--mode", "experiment-report", "--json").stdout)["findings"]
+            }
+            accounted_codes = {
+                item["code"]
+                for item in json.loads(run_cli("audit", "--file", str(accounted), "--mode", "experiment-report", "--json").stdout)["findings"]
+            }
+            self.assertIn("success-rate-without-denominator", flagged_codes)
+            self.assertNotIn("success-rate-without-denominator", accounted_codes)
+
     def test_audit_reports_malformed_image_targets_without_traceback(self) -> None:
         for target in ("//[", "%00.png"):
             with self.subTest(target=target), tempfile.TemporaryDirectory() as temporary:

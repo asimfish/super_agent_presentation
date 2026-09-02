@@ -51,6 +51,9 @@ MODE_IDS = (
 MODULE_IDS = ("visuals", "tables", "conclusions", "evidence", "academic-display", "ablation", "benchmarking", "natural-tone")
 PROFILE_IDS = ("reinforcement-learning", "embodied-ai", "world-models", "vla")
 SURFACE_GUIDE_IDS = ("slide",)
+# Modes in which a success rate, a significance claim, or an anthropomorphic verb
+# is a result statement, so the scientific-claim audit warnings apply.
+SCIENTIFIC_CLAIM_MODES = ("experiment-report", "academic-synthesis", "research-idea")
 PROFILE_APPLICABLE_MODES = (
     "status-update",
     "investigation-report",
@@ -1277,6 +1280,145 @@ def _scan_markdown_images(
     return [tuple(record) for record in records]
 
 
+_CJK_RANGE = "\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af"
+_SUCCESS_TERM = re.compile(r"(?i)\bsuccess(?:\s+rates?)?\b|\bSRs?\b|成功率|成功")
+_PERCENTAGE = re.compile(r"\d+(?:\.\d+)?\s*(?:%|％|percent\b|per cent\b)")
+# A denominator, trial count, or interval next to a percentage means the reader can
+# see what the rate rests on; any of these exempts the sentence or table.
+_DENOMINATOR_OR_INTERVAL = re.compile(
+    r"(?i)\d+\s*/\s*\d+|\b[nN]\s*=\s*\d+|\d+\s*(?:trials?|rollouts?|episodes?|attempts?|evaluations?)\b"
+    r"|out of\s+\d+|\d+\s*(?:次|条|回合|试次|轮|例)|±|\bCI\b|confidence|interval|置信|区间"
+    r"|\[\s*\d*\.?\d+\s*,\s*\d*\.?\d+\s*\]"
+)
+_TABLE_ACCOUNTING_HEADER = re.compile(
+    r"(?i)trials?|rollouts?|episodes?|attempts?|\bn\b|k\s*/\s*n|denominator|count|\bCI\b|interval|±|95\s*%"
+    r"|试次|次数|回合|区间|样本|分母"
+)
+_SIGNIFICANCE_CLAIM = re.compile(
+    r"(?i)\bstatistically\s+significant(?:ly)?\b"
+    r"|\bsignificant(?:ly)?\s+(?:better|worse|higher|lower|faster|slower|more|less|fewer|greater|smaller|larger"
+    r"|improv\w*|outperform\w*|increas\w*|decreas\w*|reduc\w*|gain\w*|differen\w*|degrad\w*|boost\w*)\b"
+    r"|显著(?:优于|高于|低于|提升|提高|改善|改进|下降|降低|减少|增加|增长|好于|差于|快于|慢于|超过|领先|差异|地)"
+)
+_STATISTIC_MARKER = re.compile(
+    r"(?i)\bp\s*[<=>≤≥]\s*0?\.\d|\bp\s*=\s*\d|\bp-?values?\b|p\s*值|\bCI\b|confidence interval|置信区间"
+    r"|bootstrap|自助|permutation|置换|t-?test|t\s*检验|Wilcoxon|Mann.Whitney|ANOVA|方差分析|chi.square|卡方"
+    r"|Bonferroni|Holm|Benjamini|effect size|效应量|Cohen|Cliff|\bd\s*=\s*-?\d|α\s*=|alpha\s*=|检验"
+)
+_ANTHROPOMORPHIC_EN = re.compile(
+    r"(?i)\b(?:(?:the|our|this|a|each|both)\s+)?(?:models?|polic(?:y|ies)|agents?|networks?|systems?|llms?|vlas?"
+    r"|transformers?|planners?|controllers?)\s+(?:(?:truly|really|actually|genuinely|now|fully|clearly)\s+)?"
+    r"(?:understands?|thinks?|wants?|realiz(?:es|e)|intends?|is\s+aware|are\s+aware|has\s+learned\s+to\s+understand"
+    r"|have\s+learned\s+to\s+understand)\b"
+)
+_ANTHROPOMORPHIC_CJK = re.compile(
+    r"(?:模型|策略|智能体|网络|系统|机器人)(?:真正|已经|完全|能够|可以|似乎|已)?(?:理解了?|明白了?|意识到|想要|相信|懂得)"
+)
+
+
+def _scientific_claim_findings(
+    non_code: str,
+    line_starts: list[int],
+    paragraphs: list[str],
+    sentence_boundary: "re.Pattern[str]",
+) -> list[dict[str, Any]]:
+    """Warnings that apply only where a number or verb is a research result.
+
+    Three deterministic, high-precision checks on prose outside code blocks:
+    a success rate printed as a bare percentage, `significant` used without a
+    statistic in the same sentence, and an anthropomorphic verb attributed to a
+    model or policy. Inline code spans are masked with same-length blanks so the
+    offsets still map onto `line_starts` and quoted examples stay legal.
+    """
+    lowered = non_code.casefold()
+    wants_success = ("%" in non_code or "％" in non_code or "percent" in lowered) and (
+        "success" in lowered or "成功" in non_code or " sr" in lowered or "sr " in lowered
+    )
+    wants_significance = "significant" in lowered or "显著" in non_code
+    wants_anthropomorphic = any(
+        anchor in lowered for anchor in ("understand", "think", "want", "realiz", "intend", "aware")
+    ) or any(anchor in non_code for anchor in ("理解", "明白", "意识到", "想要", "相信", "懂得"))
+    if not (wants_success or wants_significance or wants_anthropomorphic):
+        return []
+
+    masked = re.sub(r"`[^`\n]*`", lambda span: " " * len(span.group(0)), non_code)
+    results: list[dict[str, Any]] = []
+    seen: set[tuple[str, int]] = set()
+
+    def emit(code: str, offset: int, message: str) -> None:
+        line = _line_number(line_starts, max(0, offset))
+        if (code, line) in seen:
+            return
+        seen.add((code, line))
+        results.append(_finding(code, "warning", message, line))
+
+    def sentences(block: str) -> list[tuple[str, int]]:
+        located: list[tuple[str, int]] = []
+        cursor = 0
+        for sentence in sentence_boundary.split(block):
+            if not sentence.strip():
+                continue
+            start = block.find(sentence, cursor)
+            if start < 0:
+                start = cursor
+            located.append((sentence, start))
+            cursor = start + len(sentence)
+        return located
+
+    search_start = 0
+    for paragraph in paragraphs:
+        # Each paragraph is a stripped slice of non_code, so it is found verbatim;
+        # the same span in the masked text drops inline code spans.
+        offset = non_code.find(paragraph, search_start)
+        if offset < 0:
+            continue
+        search_start = offset + len(paragraph)
+        block = masked[offset : offset + len(paragraph)]
+        is_table = paragraph.lstrip().startswith("|")
+
+        if wants_success and _SUCCESS_TERM.search(block) and _PERCENTAGE.search(block):
+            if is_table:
+                header = block.split("\n", 1)[0]
+                if not _TABLE_ACCOUNTING_HEADER.search(header) and not _DENOMINATOR_OR_INTERVAL.search(block):
+                    emit(
+                        "success-rate-without-denominator",
+                        offset,
+                        "Success rates in this table are bare percentages; add the trial count as k/n and a Wilson or Clopper-Pearson interval so readers can see what difference the trials can resolve (embodied-AI and VLA profiles; experiment-report metric contract)",
+                    )
+            else:
+                for sentence, start in sentences(block):
+                    if (
+                        _SUCCESS_TERM.search(sentence)
+                        and _PERCENTAGE.search(sentence)
+                        and not _DENOMINATOR_OR_INTERVAL.search(sentence)
+                    ):
+                        emit(
+                            "success-rate-without-denominator",
+                            offset + start,
+                            "Success rate appears as a bare percentage; report k/n with the trial count and a Wilson or Clopper-Pearson interval so readers can see what difference the trials can resolve (embodied-AI and VLA profiles; experiment-report metric contract)",
+                        )
+
+        if wants_significance and not is_table:
+            for sentence, start in sentences(block):
+                match = _SIGNIFICANCE_CLAIM.search(sentence)
+                if match and not _STATISTIC_MARKER.search(sentence):
+                    emit(
+                        "significance-without-statistic",
+                        offset + start + match.start(),
+                        f"'{match.group(0)}' asserts a statistical result; put the test, exact p-value or interval, and effect size in the same sentence, or use a plain magnitude word such as 'larger' (ASA p-value statement; conclusions module)",
+                    )
+
+        if wants_anthropomorphic:
+            for pattern in (_ANTHROPOMORPHIC_EN, _ANTHROPOMORPHIC_CJK):
+                for match in pattern.finditer(block):
+                    emit(
+                        "anthropomorphic-claim",
+                        offset + match.start(),
+                        f"'{match.group(0).strip()}' attributes understanding or intent to a system; describe the measured behavior against the defined task instead (Lipton & Steinhardt; conclusions module)",
+                    )
+    return results
+
+
 class _AuditFindingLimit(RuntimeError):
     def __init__(self, findings: list[dict[str, Any]]) -> None:
         super().__init__("audit finding limit reached")
@@ -1457,6 +1599,11 @@ def _audit_markdown_impl(
     deep_list_match = re.search(r"(?m)^[ \t]{6,}(?:[-*+]|\d{1,3}[.)])\s", non_code)
     if deep_list_match:
         findings.append(_finding("deep-list-nesting", "warning", "List content is nested three or more levels deep; flatten or restructure it because deep nesting defeats scanning", _line_number(non_code_line_starts, deep_list_match.start())))
+
+    if mode in SCIENTIFIC_CLAIM_MODES:
+        # Append one at a time so the bounded findings list keeps its limit.
+        for item in _scientific_claim_findings(non_code, non_code_line_starts, paragraphs, sentence_boundary):
+            findings.append(item)
 
     scanner = _load_markdown_image_scanner()
     scanned_images = _scan_markdown_images(text)

@@ -484,7 +484,7 @@
       ]
     },
     "benchmarking": {
-      "summary": "Report performance comparisons honestly: full-suite protocol, correct means, speedup and tail-latency discipline, and complete platform disclosure.",
+      "summary": "Report performance comparisons honestly: full-suite protocol, correct means, speedup and tail-latency discipline, complete platform disclosure, leakage and contamination checks, and human or model-judge reporting.",
       "file": "modules/benchmarking.md",
       "signals": [
         "throughput",
@@ -493,13 +493,26 @@
         "tail latency",
         "benchmarking",
         "qps",
+        "leakage",
+        "data contamination",
+        "benchmark contamination",
+        "human evaluation",
+        "human raters",
+        "inter-rater",
+        "llm-as-a-judge",
+        "model judge",
         "吞吐",
         "加速比",
         "可扩展性",
         "尾延迟",
         "压测",
         "基准测试",
-        "性能基准"
+        "性能基准",
+        "数据泄漏",
+        "基准污染",
+        "人工评测",
+        "评分者一致性",
+        "模型评委"
       ]
     },
     "natural-tone": {

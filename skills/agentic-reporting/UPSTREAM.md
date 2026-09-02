@@ -38,6 +38,23 @@ or original sources:
   project;
 - Assertion-Evidence guidance, Quarto presentations, and Reveal.js.
 
+The scientific-claim discipline added after v0.7.0 was informed at the protocol
+level by these primary sources:
+
+- `Interval Estimation for a Binomial Proportion` (Brown, Cai & DasGupta 2001),
+  `How Generalizable Is My Behavior Cloning Policy?` (Vincent et al. 2024), and
+  RoboArena (Atreya et al. 2025) for success-rate intervals, rollout counts, and
+  matched pairwise real-robot comparisons;
+- `Accounting for Variance in Machine Learning Benchmarks` (Bouthillier et al.
+  2021) for named variance sources;
+- `Leakage and the reproducibility crisis in machine-learning-based science`
+  (Kapoor & Narayanan 2023), Sainz et al. 2023, and Jacovi et al. 2023 for leakage
+  and contamination disclosure;
+- `Troubling Trends in Machine Learning Scholarship` (Lipton & Steinhardt 2019) for
+  explanation, attribution, and language discipline;
+- Artstein & Poesio 2008 and `Judging LLM-as-a-Judge` (Zheng et al. 2023) for human
+  and model-judge reporting.
+
 Exact URLs, the design signal taken from each source, and non-transfer boundaries
 are recorded in the repository ledger. The packaged profiles retain provenance IDs
 so a maintainer can trace each rule without treating the source as a universal

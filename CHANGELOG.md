@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+- Absorbed the scientific-claim discipline that reviewers in RL, robotics, and VLA
+  most often enforce and that a keyword audit showed the protocols never named:
+  binomial success-rate intervals (Wilson / Clopper-Pearson; Brown, Cai &
+  DasGupta 2001; Vincent et al., RA-L 2024), matched back-to-back real-robot
+  comparisons with interleaved order (RoboArena, CoRL 2025), stratified bootstrap
+  intervals and named variance sources for few-run RL aggregates (Agarwal et al.
+  2021; Bouthillier et al., MLSys 2021), a leakage-and-contamination declaration
+  (Kapoor & Narayanan, Patterns 2023; Sainz et al. 2023; Jacovi et al. 2023),
+  explanation-versus-speculation, gain attribution, and anthropomorphic-language
+  discipline (Lipton & Steinhardt 2019), and human/model-judge reporting with
+  agreement statistics and position-bias controls (Artstein & Poesio 2008; Zheng
+  et al., NeurIPS 2023). Encoded in the embodied-AI, VLA, and RL profiles, the
+  experiment-report mode, and the conclusions, evidence, and benchmarking modules
+  (the benchmarking module now carries the leakage and judge detail and routes on
+  leakage/contamination/rater/judge signals; the mode and evidence files carry the
+  one-line obligation so the default bundles keep their budgets); every source
+  is registered in `docs/REPORTING-STANDARDS.md` and `docs/TEMPLATE-SOURCES.md`
+  (new IDs RL-4, EMB-3, EMB-4, STAT-1, GEN-4 to GEN-7) with URLs verified against
+  the publisher or CrossRef.
+- Added three deterministic audit warnings that apply only in the research modes
+  (`experiment-report`, `academic-synthesis`, `research-idea`):
+  `success-rate-without-denominator` (a success rate printed as a bare
+  percentage in a sentence, or in a table with no trial/`k/n`/interval column),
+  `significance-without-statistic` (`significant` used as a comparative verdict
+  with no test, p-value, interval, or effect size in the same sentence; EN and
+  CN), and `anthropomorphic-claim` (a model, policy, or agent that `understands`,
+  `thinks`, `wants`, `intends`, or `is aware`; EN and CN). Inline code spans are
+  exempt, one finding is emitted per line, and the checks stay silent on every
+  committed showcase report and outside the research modes. SKILL.md drafting
+  step 5 names the pass; covered by four unit tests.
+- Every budget-tested bundle stays within its guard after the additions: the
+  default experiment bundle at 11,971 of 12,000 characters, the maximum-anchor
+  academic bundle under 16,000, and every experiment + profile + tables route
+  under 16,000 (largest: embodied-AI at 15,690); existing prose in the
+  experiment mode and evidence module was tightened byte-for-byte to make room.
+  Rebuilt `dist/` and refroze the study-plan skill manifest hash.
+
 ## 0.7.0 — 2026-09-02
 
 - Bumped `reportctl --version`, `CITATION.cff`, and the skill card to 0.7.0
