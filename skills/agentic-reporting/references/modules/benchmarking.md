@@ -1,7 +1,9 @@
 # Benchmarking module
 
 Load this module when the report compares throughput, latency, speedup,
-scalability, or resource efficiency across systems, configurations, or hardware.
+scalability, or resource efficiency across systems, configurations, or hardware,
+or when the validity of benchmark numbers is at stake: leakage, contamination, or
+scores produced by human raters or model judges.
 
 ## Protocol
 
@@ -41,6 +43,32 @@ scalability, or resource efficiency across systems, configurations, or hardware.
   matched or each system's optimum is disclosed.
 - Report compute cost (device-hours, energy, or price) when efficiency is part
   of the claim, including failed and search runs where relevant.
+
+## Leakage and contamination
+
+- State how splits were built and that every data-dependent step (normalization,
+  feature selection, tokenizer fitting, early stopping, hyperparameter and
+  checkpoint selection) saw training or validation data only.
+- Report duplicate and near-duplicate checks across splits, temporal ordering for
+  forecasting or deployment-like tasks, and any feature unavailable at prediction
+  time.
+- For pretrained components, state whether evaluation items can appear in their
+  training data (benchmark contamination) and how this was checked; write
+  `not checked` rather than omitting the question.
+- A number produced under unresolved leakage is an upper bound, not a result.
+
+## Human and model judges
+
+- Report the rater count and qualification, the rubric or instructions given, the
+  item sample and how it was drawn, an agreement statistic with its target
+  (Cohen's κ or Krippendorff's α for categories; within-one agreement or
+  correlation for scales), and how disagreements were adjudicated.
+- For a model acting as judge, name the model and version; randomize or swap the
+  presentation order of compared outputs to control position bias; disclose when
+  the judge rates its own model family; and validate its labels against human
+  labels on a subset before treating them as ground truth.
+- A win rate is a paired binomial estimate: report wins, ties, and losses with
+  the pair count and an interval, not a bare percentage.
 
 ## Avoid
 

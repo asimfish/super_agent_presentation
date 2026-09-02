@@ -22,10 +22,12 @@ best seed as the method result.
 
 - Learning curves: name x-axis interaction units, evaluation frequency, aggregation
   over runs, smoothing/window, and interval definition.
-- Multi-task benchmarks: prefer interval estimates plus a robust aggregate such as
-  IQM when appropriate; add performance profiles, probability of improvement, or
-  optimality gap when they answer the claim. Do not prescribe one statistic when
-  its assumptions do not fit.
+- Multi-task benchmarks: prefer stratified bootstrap confidence intervals over runs
+  and tasks plus a robust aggregate such as IQM when appropriate; add performance
+  profiles, probability of improvement, or optimality gap when they answer the
+  claim. Do not prescribe one statistic when its assumptions do not fit.
+- With fewer than ten runs per task, pair IQM or the median with a bootstrap
+  interval instead of `mean ± SD`, and print the run count beside every aggregate.
 - Tables: separate final performance, sample efficiency, wall-clock/compute, and
   per-task results. State normalization references and direction for every metric.
 
@@ -34,9 +36,13 @@ best seed as the method result.
 Distinguish final return, data efficiency, compute efficiency, stability, and task
 coverage. Report tasks or seeds that contradict the aggregate. A point-estimate
 difference without uncertainty is descriptive, not a reliable win. State whether
-paired seeds, common environment instances, or other pairing were used.
+paired seeds, common environment instances, or other pairing were used. Name which
+variance sources the runs randomized (seed, data order, initialization,
+hyperparameter search, evaluation episodes); a seed-only sweep understates the
+variance a reader should expect from reproduction.
 
 Provenance IDs: RL-1 `Deep Reinforcement Learning that Matters`; RL-2 `Deep RL at
 the Edge of the Statistical Precipice` and RLiable; RL-3 `Empirical Design in
-Reinforcement Learning`. The portable source list is in `UPSTREAM.md`; the source
+Reinforcement Learning`; RL-4 `Accounting for Variance in Machine Learning
+Benchmarks`. The portable source list is in `UPSTREAM.md`; the source
 repository's detailed adoption ledger is `docs/TEMPLATE-SOURCES.md`.
