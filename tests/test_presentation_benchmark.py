@@ -45,6 +45,27 @@ class PresentationBenchmarkTests(unittest.TestCase):
         data = json.loads(CASES.read_text(encoding="utf-8"))
         return [case["id"] for case in data["cases"]]
 
+    def test_harness_catalog_constants_track_reportctl_and_case_schema(self) -> None:
+        # The harness deliberately never imports reportctl, so its mode/module/profile
+        # sets are copies; this guard is what keeps them from drifting apart.
+        import importlib.util
+
+        from scripts import presentation_benchmark as harness
+
+        spec = importlib.util.spec_from_file_location(
+            "reportctl_for_drift_check", ROOT / "skills" / "agentic-reporting" / "scripts" / "reportctl.py"
+        )
+        assert spec is not None and spec.loader is not None
+        reportctl = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reportctl)
+        self.assertEqual(harness.MODE_IDS, set(reportctl.MODE_IDS))
+        self.assertEqual(harness.MODULE_IDS, set(reportctl.MODULE_IDS))
+        self.assertEqual(harness.PROFILE_IDS, set(reportctl.PROFILE_IDS))
+        schema = json.loads((ROOT / "evals" / "schema" / "presentation-cases.schema.json").read_text(encoding="utf-8"))
+        route = schema["properties"]["cases"]["items"]["properties"]["expected_route"]["properties"]
+        self.assertEqual(set(route["modules"]["items"]["enum"]), set(reportctl.MODULE_IDS))
+        self.assertEqual(set(route["mode"]["enum"]), set(reportctl.MODE_IDS))
+
     def test_cli_outputs_escape_terminal_controls_and_dynamic_newlines(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             response = Path(temporary) / "response\x7f.md"
@@ -321,11 +342,11 @@ raise SystemExit(1)
         )
         self.assertEqual(vla_idea["expected_route"]["profile"], "vla")
 
-    def test_list_exposes_all_seven_scenarios_without_checks(self) -> None:
+    def test_list_exposes_all_nine_scenarios_without_checks(self) -> None:
         completed = self.run_cli("list", "--suite", "harness-smoke", "--json")
         self.assertEqual(completed.returncode, 0, completed.stderr)
         payload = json.loads(completed.stdout)
-        self.assertEqual(len(payload["cases"]), 7)
+        self.assertEqual(len(payload["cases"]), 9)
         self.assertEqual(
             {item["scenario"] for item in payload["cases"]},
             {
@@ -336,6 +357,8 @@ raise SystemExit(1)
                 "multi_table",
                 "academic_paper_summary",
                 "failure_risk",
+                "ablation_study",
+                "performance_benchmark",
             },
         )
         self.assertTrue(all("machine_checks" not in item for item in payload["cases"]))
@@ -381,8 +404,8 @@ raise SystemExit(1)
         self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
         report = json.loads(completed.stdout)
         self.assertTrue(report["harness_pass"])
-        self.assertEqual(report["fixture_evaluations"], 14)
-        self.assertEqual(report["expectations_met"], 14)
+        self.assertEqual(report["fixture_evaluations"], 18)
+        self.assertEqual(report["expectations_met"], 18)
         self.assertTrue(report["activation_contract_valid"])
         self.assertEqual(report["activation_case_count"], 9)
         self.assertEqual(report["positive_route_proxy_expectations"], 6)

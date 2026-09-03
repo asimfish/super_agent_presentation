@@ -30,7 +30,12 @@ MODE_IDS = {
     "experiment-report", "decision-brief", "academic-synthesis", "research-idea", "review-report",
     "incident-update", "postmortem", "risk-report",
 }
-MODULE_IDS = {"visuals", "tables", "conclusions", "evidence", "academic-display"}
+# Kept in sync with reportctl.MODULE_IDS by a drift test; the harness never imports
+# reportctl so that a broken skill cannot take the evaluator down with it.
+MODULE_IDS = {
+    "visuals", "tables", "conclusions", "evidence", "academic-display",
+    "ablation", "benchmarking", "natural-tone",
+}
 PROFILE_IDS = {"reinforcement-learning", "embodied-ai", "world-models", "vla"}
 ACTIVATION_CATEGORIES = {
     "explicit_positive", "natural_positive", "adjacent_negative", "explicit_exclusion",

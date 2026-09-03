@@ -127,12 +127,21 @@
         "mean return",
         "late-training",
         "training curve",
+        "throughput",
+        "speedup",
+        "tail latency",
+        "scalability",
+        "qps",
         "实验",
         "基准",
         "消融",
         "随机种子",
         "评估结果",
-        "统计分析"
+        "统计分析",
+        "吞吐",
+        "加速比",
+        "尾延迟",
+        "压测"
       ],
       "embedded_modules": [
         "conclusions"

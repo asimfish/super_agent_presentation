@@ -105,6 +105,20 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 
 ## 2. 📢 What's New
 
+- **2026-09-04** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  📏 **Number-presentation audit and benchmark routing.** Seven more
+  research-mode audit warnings make the machine-checkable half of the absorbed
+  statistics and benchmarking norms enforceable: `unlabeled-uncertainty` (a `±`
+  never labeled SD/SEM/CI), `threshold-p-value` (`p < 0.05`, `n.s.`),
+  `p-value-without-effect-size`, `null-result-without-interval`,
+  `significance-euphemism` (`approached significance`),
+  `up-to-without-central-tendency`, and `best-of-n-runs` — EN and CN, silent
+  on all 107 committed examples. A pure throughput/speedup/tail-latency study
+  now routes to `experiment-report` instead of falling through to
+  `concise-answer`; the eval harness accepts the `ablation`, `benchmarking`,
+  and `natural-tone` modules it previously rejected, guarded by a drift test;
+  and two new harness cases (`ablation-component-contribution`,
+  `benchmark-speedup-honest`) are the first to exercise those modules.
 - **2026-09-02** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   🧪 **Scientific-claim discipline for research reports** ([#6](https://github.com/asimfish/super_agent_presentation/pull/6)). A keyword audit of the
   protocols found the rules reviewers enforce most often were never named, so
@@ -402,7 +416,7 @@ blinding, and receipts are specified in [BENCHMARK.md](BENCHMARK.md) and
 [evals/](evals/README.md).
 
 What *is* verified: deterministic routing, bounded bundles, checkpoint/audit
-mechanics, template rendering (313 unit tests + harness smoke + real-render
+mechanics, template rendering (320 unit tests + harness smoke + real-render
 regression on macOS Chrome 151), and the end-to-end showcase run with receipts in
 [examples/](examples/README.md).
 
@@ -425,7 +439,7 @@ examples/showcase-20260825/    # 16 finished reports + deck + audit receipts
 evals/                         # study schemas, templates, sanitized run records
 scripts/                       # installer, benchmark harness, study controller
 docs/                          # architecture, research, catalog, ADRs
-tests/                         # 313 unit tests
+tests/                         # 320 unit tests
 ```
 
 <a id="verification"></a>

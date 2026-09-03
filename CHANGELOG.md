@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+- Added seven deterministic number-presentation audit warnings in the research
+  modes, turning the machine-checkable items of the absorbed statistical and
+  benchmarking norms into enforceable findings: `unlabeled-uncertainty` (a `±`
+  the report never labels as SD, SEM, or CI; Cumming et al. 2007),
+  `threshold-p-value` (`p < 0.05`, `p > 0.05`, `n.s.`, with threshold
+  declarations such as a pre-registered alpha exempt), `p-value-without-effect-size`
+  (a p-value with no magnitude in the same sentence), `null-result-without-interval`
+  (`not significant (p = 0.31)` with no interval or equivalence bound; Greenland et
+  al. 2016), `significance-euphemism` (`approached significance`, `边缘显著`, and
+  relatives), `up-to-without-central-tendency` (`up to N×` with no geometric mean,
+  median, or worst case anywhere in the report), and `best-of-n-runs` (`best of 5
+  runs`, `报告最好的一次`). EN and CN, inline code spans exempt, one finding per line
+  and code, a null-result sentence yields only the more specific finding, and the
+  checks stay silent on all 107 committed examples and fixtures. Registered in
+  `docs/REPORTING-STANDARDS.md`; named in SKILL.md drafting step 5; three unit tests.
+- Fixed a routing gap: a pure performance study (`throughput`, `speedup`, `tail
+  latency`, `scalability`, `qps`, `吞吐`, `加速比`, `尾延迟`, `压测`) with no
+  experiment wording fell through to `concise-answer` while still loading the
+  `benchmarking` module. These measurement terms are now weak experiment-report
+  mode signals; `latency` alone stays out so incidents and status updates keep
+  their routes. All seven existing eval cases route unchanged. Three routing tests
+  cover benchmarking, ablation, and the plain-latency negative.
+- Fixed the evaluation harness's stale module whitelist (`ablation`,
+  `benchmarking`, `natural-tone` were rejected as unknown) and the matching gap
+  in `evals/schema/presentation-cases.schema.json`; a new drift test pins the
+  harness mode/module/profile sets and the schema enums to `reportctl`'s.
+- Added two harness-smoke eval cases with good and mutated fixtures, the first to
+  exercise the new modules: `ablation-component-contribution`
+  (`experiment-report+ablation+tables`: full-system reference row, per-component
+  drops, tuning parity, untested-combination boundary, no additivity or
+  significance claim) and `benchmark-speedup-honest`
+  (`experiment-report+benchmarking+tables`: geometric mean and worst case beside
+  the best case, `up to 3.1x` forbidden without a qualifier in the same line, p99
+  regression, platform, warm-up and repetition protocol, retuned baseline). Smoke
+  suite: 9 cases, 18 fixture evaluations.
 - Absorbed the scientific-claim discipline that reviewers in RL, robotics, and VLA
   most often enforce and that a keyword audit showed the protocols never named:
   binomial success-rate intervals (Wilson / Clopper-Pearson; Brown, Cai &

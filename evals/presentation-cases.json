@@ -14,7 +14,9 @@
         "image-anomaly-boundary",
         "multi-table-incomparable",
         "paper-summary-bounded",
-        "incident-rollback-not-resolved"
+        "incident-rollback-not-resolved",
+        "ablation-component-contribution",
+        "benchmark-speedup-honest"
       ]
     }
   ],
@@ -308,6 +310,79 @@
         {"id": "no-false-resolution", "type": "forbidden_regex", "pattern": "incident (?:is|has been) resolved|root cause (?:is )?confirmed|fully resolved", "message": "Do not confuse rollback with resolution."},
         {"id": "no-incident-image", "type": "forbidden_image", "message": "Do not add a decorative incident image."},
         {"id": "incident-budget", "type": "max_words", "value": 280, "message": "Keep the incident update bounded."}
+      ]
+    },
+    {
+      "id": "ablation-component-contribution",
+      "scenario": "ablation_study",
+      "request": "Report the ablation of the gated diffusion policy: remove the gate, the noise schedule, and the data augmentation one at a time, and state what each component contributes.",
+      "facts": [
+        "Success is higher-is-better and is reported as mean success percent with standard deviation over five seeds, 200 scenes per seed.",
+        "Full system: 84.2 percent success, standard deviation 1.9 points.",
+        "Without gate: 76.5 percent, standard deviation 2.4 points.",
+        "Without noise schedule: 82.9 percent, standard deviation 2.1 points.",
+        "Without data augmentation: 80.1 percent, standard deviation 2.6 points.",
+        "Every variant was tuned with the same 12-trial budget as the full system.",
+        "Removing the gate and the augmentation together was not run.",
+        "No significance test was run."
+      ],
+      "evidence_boundary": "Attribute contributions only as observed drops from the full system under the shared tuning budget. Do not claim the components are independent or additive, and do not claim significance because no test was run.",
+      "artifacts": [],
+      "report_profile": "experiment-report+ablation+tables",
+      "expected_route": {"mode": "experiment-report", "modules": ["ablation", "tables"]},
+      "required_semantic_slots": ["protocol", "full_system_reference", "per_component_drop", "tuning_parity", "interaction_boundary"],
+      "visual_oracle": {
+        "necessity": "required",
+        "allowed_types": ["quantitative_table"],
+        "rationale": "Four variants on one metric with uncertainty read fastest as one table with the full system as the reference row."
+      },
+      "budgets": {"max_output_words": 350},
+      "machine_checks": [
+        {"id": "one-table-min", "type": "min_markdown_tables", "value": 1, "message": "Present the variants in a table with the full system as the reference row."},
+        {"id": "full-system-reference", "type": "required_regex", "pattern": "84\\.2", "message": "Keep the full-system reference value."},
+        {"id": "gate-drop", "type": "required_regex", "pattern": "76\\.5", "message": "Preserve the without-gate value."},
+        {"id": "schedule-drop", "type": "required_regex", "pattern": "82\\.9", "message": "Preserve the without-noise-schedule value."},
+        {"id": "augmentation-drop", "type": "required_regex", "pattern": "80\\.1", "message": "Preserve the without-augmentation value."},
+        {"id": "five-seeds", "type": "required_regex", "pattern": "(?:five|5) seeds", "message": "Report the five-seed protocol."},
+        {"id": "tuning-parity", "type": "required_regex", "pattern": "same (?:12-trial )?(?:tuning )?budget|12[- ]trial|tuned (?:with|under) the same|equal(?:ly)? tuned", "message": "State that every variant received the same tuning budget."},
+        {"id": "interaction-boundary", "type": "required_regex", "pattern": "(?:together|jointly|combined|combination)[^.\\n]{0,80}not (?:run|tested|measured)|not (?:run|tested|measured)[^.\\n]{0,80}(?:together|jointly|combined|combination)|additive|independent|interaction", "message": "State that the untested combination blocks any additivity or independence claim."},
+        {"id": "no-significant-claim", "type": "forbidden_regex", "pattern": "statistically significant|significantly (?:better|worse|higher|lower)", "message": "Do not claim an untested significant difference."},
+        {"id": "no-additivity-claim", "type": "forbidden_regex", "pattern": "(?:effects|contributions|drops) (?:add up|sum) to|(?:are|is) additive\\b(?![^.\\n]{0,40}not)", "message": "Do not claim the component effects add up; the joint removal was not run."},
+        {"id": "ablation-budget", "type": "max_words", "value": 350, "message": "Keep the ablation bounded."}
+      ]
+    },
+    {
+      "id": "benchmark-speedup-honest",
+      "scenario": "performance_benchmark",
+      "request": "Write up the benchmarking study of the new inference kernel against the tuned baseline: report throughput and tail latency across the four batch sizes and give the speedup honestly.",
+      "facts": [
+        "Batch sizes tested: 1, 8, 32, 128. Timings are the median of 20 runs after 5 warm-up runs on one A100 80GB with CUDA 12.4, kernel v2.1 versus baseline v1.9.",
+        "Throughput speedup over the baseline: 1.12x at batch 1, 1.35x at batch 8, 2.40x at batch 32, 3.10x at batch 128.",
+        "Geometric mean speedup across the four batch sizes is 1.83x.",
+        "p99 latency at batch 1 rose from 4.1 ms to 4.6 ms; at every other batch size p99 fell.",
+        "The baseline was retuned for this hardware and measured 8 percent faster than its published numbers."
+      ],
+      "evidence_boundary": "Report the best-case speedup only next to the geometric mean and the worst case. Do not present 3.1x as the headline alone, and disclose the batch-1 tail-latency regression and the hardware and software stack.",
+      "artifacts": [],
+      "report_profile": "experiment-report+benchmarking+tables",
+      "expected_route": {"mode": "experiment-report", "modules": ["benchmarking", "tables"]},
+      "required_semantic_slots": ["platform_disclosure", "measurement_protocol", "per_batch_results", "central_tendency_speedup", "worst_case_and_regression"],
+      "visual_oracle": {
+        "necessity": "required",
+        "allowed_types": ["quantitative_table"],
+        "rationale": "Four batch sizes on two metrics fit one compact table; four points do not need a chart."
+      },
+      "budgets": {"max_output_words": 400},
+      "machine_checks": [
+        {"id": "one-table-min", "type": "min_markdown_tables", "value": 1, "message": "Present the per-batch results in a table."},
+        {"id": "geometric-mean", "type": "required_regex", "pattern": "geometric[- ]mean|geomean|1\\.83", "message": "Report the geometric-mean speedup next to any best case."},
+        {"id": "worst-case", "type": "required_regex", "pattern": "1\\.12", "message": "Report the worst-case speedup."},
+        {"id": "best-case-not-alone", "type": "forbidden_regex", "pattern": "up to 3\\.10?\\s*[x×](?![^\\n]{0,120}(?:geometric|geomean|median|1\\.83|worst))", "message": "Never state up to 3.1x without the geometric mean or worst case in the same breath."},
+        {"id": "regression-disclosed", "type": "required_regex", "pattern": "4\\.6\\s*ms|p99[^.\\n]{0,80}(?:rose|increas|regress|worse|slower)|(?:rose|increas|regress|worse|slower)[^.\\n]{0,80}p99", "message": "Disclose the batch-1 p99 regression."},
+        {"id": "platform-disclosed", "type": "required_regex", "pattern": "A100", "message": "Disclose the hardware."},
+        {"id": "protocol-disclosed", "type": "required_regex", "pattern": "median of 20|20 runs|warm-?up", "message": "Disclose the repetition and warm-up protocol."},
+        {"id": "baseline-tuning-disclosed", "type": "required_regex", "pattern": "retuned|re-tuned|tuned baseline|published numbers", "message": "Disclose that the baseline was retuned and how it compares with its published numbers."},
+        {"id": "benchmark-budget", "type": "max_words", "value": 400, "message": "Keep the write-up bounded."}
       ]
     }
   ]

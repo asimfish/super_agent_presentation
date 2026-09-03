@@ -1,0 +1,1 @@
+The gate is the key driver of performance: removing it drops success from 84.2% to 76.5%, which is significantly worse, so the gate proves essential. The other components matter less, and their contributions add up to the full system's advantage.

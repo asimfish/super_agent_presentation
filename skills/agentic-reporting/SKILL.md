@@ -74,7 +74,12 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    verb attributes understanding or intent to a system. The audit's
    `success-rate-without-denominator`, `significance-without-statistic`, and
    `anthropomorphic-claim` warnings catch the mechanical residue; the profiles
-   and the conclusions module carry the full rules.
+   and the conclusions module carry the full rules. Number presentation has its
+   own residue checks in the same modes: `unlabeled-uncertainty` (a `±` that
+   never says SD, SEM, or CI), `threshold-p-value` (`p < 0.05`, `n.s.`),
+   `p-value-without-effect-size`, `null-result-without-interval`,
+   `significance-euphemism` (`approached significance`),
+   `up-to-without-central-tendency`, and `best-of-n-runs`.
 6. Before a long-task or durable-artifact final, audit a file-backed draft. A long
    task must use the same checkpoint; a durable artifact without one uses its
    selected mode:
