@@ -26,6 +26,18 @@ CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 for
 
 ## 📢 最近更新
 
+- **2026-09-04** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  📏 **数字呈现审计与基准路由。** 新增七条研究模式审计告警，把已吸收的统计与
+  基准测试规范中可机械判定的一半变成门禁：`unlabeled-uncertainty`（`±` 从未
+  说明是 SD/SEM/CI）、`threshold-p-value`（`p < 0.05`、`n.s.`）、
+  `p-value-without-effect-size`、`null-result-without-interval`、
+  `significance-euphemism`（"接近显著"）、`up-to-without-central-tendency`
+  （"最高可达 N 倍"而全文无几何平均/中位数/最差情形）、`best-of-n-runs`
+  （"报告最好的一次"）——中英双语，对全部 107 份已提交示例零误报。纯吞吐/加速比/
+  尾延迟研究现在路由到 `experiment-report`，不再落入 `concise-answer` 兜底；
+  评测器补上此前会拒绝的 `ablation`、`benchmarking`、`natural-tone` 模块并加漂移
+  守卫测试；两条新评测用例（`ablation-component-contribution`、
+  `benchmark-speedup-honest`）首次覆盖这两个模块。
 - **2026-09-02** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   🧪 **研究汇报的科学声明纪律**（[#6](https://github.com/asimfish/super_agent_presentation/pull/6)）：对协议做关键词审计后发现，审稿人最常追问的
   几条规范此前从未被写明，现已补齐：成功率必须写成 `k/n` 并附 Wilson /

@@ -1491,6 +1491,44 @@ class ReportCtlTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("natural-tone", json.loads(result.stdout)["modules"])
 
+    def test_route_benchmarking_signals_select_experiment_report_and_benchmarking_module(self) -> None:
+        for task in (
+            "Report the throughput and tail latency of the new serving stack against the tuned baseline, with speedup per batch size",
+            "压测报告：新网关在 4 台机器上的吞吐和尾延迟对比旧网关",
+        ):
+            with self.subTest(task=task):
+                result = run_cli("route", "--task", task, "--json")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertEqual(payload["mode"], "experiment-report", payload)
+                self.assertIn("benchmarking", payload["modules"], payload)
+
+    def test_route_ablation_signals_select_ablation_module(self) -> None:
+        for task in (
+            "Report the ablation of the gated policy: remove the gate, the noise schedule, and the augmentation one at a time",
+            "汇报消融实验：逐项去掉门控、噪声调度和数据增强，比较各组件贡献",
+        ):
+            with self.subTest(task=task):
+                result = run_cli("route", "--task", task, "--json")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertEqual(payload["mode"], "experiment-report", payload)
+                self.assertIn("ablation", payload["modules"], payload)
+
+    def test_route_plain_latency_wording_does_not_pull_in_benchmarking(self) -> None:
+        # `latency` alone belongs to incidents and status updates as often as to
+        # benchmarks, so only the measurement vocabulary routes to the module.
+        for task, expected_mode in (
+            ("Summarize the latency regression fix in the checkout service and what remains", "status-update"),
+            ("Incident update: p99 latency doubled after the deploy and we rolled back", "incident-update"),
+        ):
+            with self.subTest(task=task):
+                result = run_cli("route", "--task", task, "--json")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertEqual(payload["mode"], expected_mode, payload)
+                self.assertNotIn("benchmarking", payload["modules"], payload)
+
     def test_audit_readability_warnings_stay_silent_on_a_clean_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "report.md"
@@ -1514,6 +1552,90 @@ class ReportCtlTests(unittest.TestCase):
     SCIENTIFIC_CLAIM_CODES = frozenset(
         {"success-rate-without-denominator", "significance-without-statistic", "anthropomorphic-claim"}
     )
+    QUANTITATIVE_CLAIM_CODES = frozenset(
+        {
+            "unlabeled-uncertainty",
+            "threshold-p-value",
+            "p-value-without-effect-size",
+            "null-result-without-interval",
+            "significance-euphemism",
+            "up-to-without-central-tendency",
+            "best-of-n-runs",
+        }
+    )
+
+    def test_audit_flags_number_presentation_defects_in_research_modes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# Result\n\n"
+                "Main result: accuracy is 78.4 ± 1.9 on suite A and the effect was significant (p < 0.05).\n\n"
+                "The gap between arms approached significance, and the seeds were not significant (p = 0.31).\n\n"
+                "Our kernel is up to 12× faster than the baseline, measured as the best of 5 runs.\n\n"
+                "第二组的差异接近显著，吞吐最高可达 8 倍，我们报告了最好的一次运行。\n",
+                encoding="utf-8",
+            )
+            for mode in ("experiment-report", "academic-synthesis", "research-idea"):
+                with self.subTest(mode=mode):
+                    result = run_cli("audit", "--file", str(report), "--mode", mode, "--json")
+                    self.assertNotIn("Traceback", result.stderr)
+                    findings = json.loads(result.stdout)["findings"]
+                    by_code: dict[str, list[dict[str, object]]] = {}
+                    for item in findings:
+                        by_code.setdefault(item["code"], []).append(item)
+                    self.assertEqual(set(by_code) & self.QUANTITATIVE_CLAIM_CODES, self.QUANTITATIVE_CLAIM_CODES, findings)
+                    for item in findings:
+                        if item["code"] in self.QUANTITATIVE_CLAIM_CODES:
+                            self.assertEqual(item["severity"], "warning")
+                    self.assertEqual([item["line"] for item in by_code["unlabeled-uncertainty"]], [3])
+                    self.assertEqual([item["line"] for item in by_code["threshold-p-value"]], [3])
+                    self.assertIn("p < 0.05", by_code["threshold-p-value"][0]["message"])
+                    self.assertEqual([item["line"] for item in by_code["p-value-without-effect-size"]], [3])
+                    self.assertEqual([item["line"] for item in by_code["null-result-without-interval"]], [5])
+                    euphemisms = [item["message"] for item in by_code["significance-euphemism"]]
+                    self.assertTrue(any("approached significance" in message for message in euphemisms))
+                    self.assertTrue(any("接近显著" in message for message in euphemisms))
+                    multipliers = [item["message"] for item in by_code["up-to-without-central-tendency"]]
+                    self.assertTrue(any("up to 12×" in message for message in multipliers))
+                    self.assertTrue(any("最高可达 8 倍" in message for message in multipliers))
+                    best_of = [item["message"] for item in by_code["best-of-n-runs"]]
+                    self.assertTrue(any("best of 5 runs" in message for message in best_of))
+                    self.assertTrue(any("最好的一次" in message for message in best_of))
+
+    def test_audit_number_presentation_warnings_spare_labeled_and_declared_statements(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# Result\n\n"
+                "Main result: accuracy is 78.4 ± 1.9 (mean ± SD over 5 seeds), a gain of 6.2 points over the "
+                "baseline (paired permutation test, p = 0.012, Hedges' g = 0.9, 95% CI [2.1, 10.3]).\n\n"
+                "Seeds were not significant from each other (p = 0.31, 95% CI on the difference [-1.4, 2.0] points).\n\n"
+                "Our kernel is up to 12× faster on the smallest input, 4.1× at the geometric mean, and 1.3× in the "
+                "worst case; timings are the median of 5 runs. We pre-registered the alpha threshold at p < 0.05.\n\n"
+                "The quoted phrases `p < 0.05`, `best of 3 runs`, and `approached significance` stay legal in code spans.\n\n"
+                "Best-of-n sampling is the decoding strategy under study, not a reporting choice.\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertFalse(codes & self.QUANTITATIVE_CLAIM_CODES, codes)
+
+    def test_audit_number_presentation_warnings_stay_silent_outside_research_modes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# Status\n\n"
+                "Status: the new index is up to 3× faster on the hot path; p95 latency is 120 ± 8 ms and the "
+                "regression was not significant (p = 0.4).\n",
+                encoding="utf-8",
+            )
+            for mode in ("status-update", "incident-update", "implementation-handoff", "decision-brief", "concise-answer"):
+                with self.subTest(mode=mode):
+                    result = run_cli("audit", "--file", str(report), "--mode", mode, "--json")
+                    self.assertNotIn("Traceback", result.stderr)
+                    codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+                    self.assertFalse(codes & self.QUANTITATIVE_CLAIM_CODES, codes)
 
     def test_audit_flags_bare_success_rates_significance_and_anthropomorphism_in_research_modes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

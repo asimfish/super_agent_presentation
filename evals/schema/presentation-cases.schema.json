@@ -61,7 +61,7 @@
                 "maxItems": 2,
                 "uniqueItems": true,
                 "items": {
-                  "enum": ["visuals", "tables", "conclusions", "evidence", "academic-display", "ablation", "benchmarking"]
+                  "enum": ["visuals", "tables", "conclusions", "evidence", "academic-display", "ablation", "benchmarking", "natural-tone"]
                 }
               }
             }

@@ -1353,17 +1353,7 @@ def _scientific_claim_findings(
         results.append(_finding(code, "warning", message, line))
 
     def sentences(block: str) -> list[tuple[str, int]]:
-        located: list[tuple[str, int]] = []
-        cursor = 0
-        for sentence in sentence_boundary.split(block):
-            if not sentence.strip():
-                continue
-            start = block.find(sentence, cursor)
-            if start < 0:
-                start = cursor
-            located.append((sentence, start))
-            cursor = start + len(sentence)
-        return located
+        return _locate_sentences(block, sentence_boundary)
 
     search_start = 0
     for paragraph in paragraphs:
@@ -1415,6 +1405,188 @@ def _scientific_claim_findings(
                         "anthropomorphic-claim",
                         offset + match.start(),
                         f"'{match.group(0).strip()}' attributes understanding or intent to a system; describe the measured behavior against the defined task instead (Lipton & Steinhardt; conclusions module)",
+                    )
+    return results
+
+
+_PLUS_MINUS = re.compile(r"±|\+/-|\+/−|\\pm\b")
+_UNCERTAINTY_LABEL = re.compile(
+    r"(?i)\bs\.?d\.?\b|\bs\.?e\.?m?\.?\b|\bstd\b|standard (?:deviation|error|uncertainty)|\bCI\b|confidence interval"
+    r"|credible interval|\bIQR\b|interquartile|median absolute|\bMAD\b|bootstrap|\bsigma\b|σ|tolerance|\bMoE\b|margin of error"
+    r"|标准差|标准误|置信区间|可信区间|四分位|自助|公差|误差范围"
+)
+_P_VALUE = re.compile(r"(?i)\bp\s*[<=>≤≥]\s*0?\.\d|\bp\s*=\s*\d|p\s*值\s*(?:[=<>≤≥]|为|小于|大于|等于)")
+# Threshold forms of a p-value (p < 0.05, p > 0.05, n.s.) turn graded evidence into a
+# binary; p < 0.001 stays legal as the conventional floor for tiny values.
+_THRESHOLD_P = re.compile(
+    r"(?i)\bp\s*(?:值)?\s*(?:[<>≤≥]|小于|大于|低于|高于)\s*(?:0?\.(?:05|01|10?))(?![\d%])"
+    r"|(?<![A-Za-z])n\.\s?s\.(?![A-Za-z])"
+)
+_THRESHOLD_DECLARATION = re.compile(
+    r"(?i)\bα\b|\balpha\b|threshold|criterion|significance level|pre-?registered|preregistration|corrected|bonferroni|holm"
+    r"|阈值|显著性水平|预注册|校正"
+)
+_SIGNIFICANCE_EUPHEMISM = re.compile(
+    r"(?i)\b(?:trend(?:ing|s|ed)?[\s-]+towards?|approach(?:ed|es|ing)?|border(?:line|ing[\s-]+on)|nearly|almost|marginal(?:ly)?|near"
+    r"|close[\s-]+to|verg(?:ed|es|ing)[\s-]+on|tend(?:ed|s|ing)?[\s-]+towards?)[\s-]+(?:statistical[\s-]+)?significan(?:t|ce)\b"
+    r"|\bquasi-significant\b"
+    r"|边缘显著|接近(?:统计学?)?显著|趋于显著|趋近显著|近乎显著|勉强显著"
+)
+_NULL_SIGNIFICANCE = re.compile(
+    r"(?i)\bnot?\s+(?:statistically\s+)?significant(?:ly)?\b|\bnon-?significant\b|\b(?:failed|fails|did not|does not)\s+(?:to\s+)?reach\s+(?:statistical\s+)?significance\b"
+    r"|无显著(?:性)?(?:差异|效应|区别)|不显著|未达(?:到)?(?:统计学?)?显著|没有显著"
+)
+_INTERVAL_OR_EQUIVALENCE = re.compile(
+    r"(?i)\bCI\b|confidence interval|credible interval|\binterval\b|\[\s*-?\d*\.?\d+\s*,\s*-?\d*\.?\d+\s*\]|equivalence|\bTOST\b"
+    r"|smallest effect|\bSESOI\b|bayes factor|\bBF\b|\bpower(?:ed)?\b|minimum detectable|resolvable|rule[sd]? out"
+    r"|置信区间|可信区间|区间|等效|功效|最小可检测|贝叶斯因子|排除"
+)
+_EFFECT_MAGNITUDE = re.compile(
+    r"(?i)effect size|cohen|hedges|cliff|glass|odds ratio|risk ratio|hazard ratio|rate ratio|\b(?:OR|RR|HR)\s*[=:]|\b[dgr]\s*=\s*-?\d|η|eta|omega"
+    r"|\bCI\b|interval|differen\w*|delta|Δ|\bpoints?\b|\bpp\b|from\s+-?\d[\d.,]*\s*%?\s+to\s+-?\d|(?:improvement|gain|increase|decrease|reduction|drop|rise|change)\s+(?:of|by)\s+-?\d"
+    r"|\d+(?:\.\d+)?\s*(?:%|％)\s*(?:higher|lower|faster|slower|more|less|fewer|better|worse)|\bvs\.?\s+-?\d|\bversus\s+-?\d"
+    r"|效应量|差异|差值|提升|提高|下降|降低|增加|减少|百分点|区间|相比|对比|比基线"
+)
+_UP_TO_MULTIPLIER = re.compile(
+    r"(?i)\bup\s+to\s+(?:a\s+|an\s+)?\d+(?:\.\d+)?\s*(?:[×✕]|[xX](?![A-Za-z])|times\b|-?fold\b)"
+    r"|(?:最高|高达|最多|至多)\s*(?:可达|达到|达)?\s*\d+(?:\.\d+)?\s*倍"
+)
+_CENTRAL_TENDENCY = re.compile(
+    r"(?i)\bmedian\b|\bmeans?\b|\baverage[sd]?\b|\bgeomean\b|geometric|harmonic|\btypical(?:ly)?\b|\bp50\b|\bworst[\s-]case\b|\bacross\s+all\b|\bmiddle\b"
+    r"|中位|平均|几何|调和|典型|最差|全部"
+)
+_BEST_OF_N = re.compile(
+    r"(?i)\bbest[\s-]+of[\s-]+(?:\d+|two|three|four|five|six|seven|eight|nine|ten)[\s-]+(?:runs?|trials?|repetitions?|seeds?|attempts?|repeats?|executions?|measurements?)\b"
+    r"|\bbest\s+(?:run|seed|trial|repetition)\s+(?:is|was|are|were)\s+reported\b|\breport(?:ed|ing|s)?\s+(?:only\s+)?the\s+(?:single\s+)?best\s+(?:run|seed|trial|repetition|result)\b"
+    r"|(?:取|报告|汇报|选取|选用|只报)[^。；\n]{0,10}?最(?:好|佳|优)的?(?:一次|一轮|运行|种子|结果)"
+)
+
+
+def _locate_sentences(block: str, sentence_boundary: "re.Pattern[str]") -> list[tuple[str, int]]:
+    located: list[tuple[str, int]] = []
+    cursor = 0
+    for sentence in sentence_boundary.split(block):
+        if not sentence.strip():
+            continue
+        start = block.find(sentence, cursor)
+        if start < 0:
+            start = cursor
+        located.append((sentence, start))
+        cursor = start + len(sentence)
+    return located
+
+
+def _quantitative_claim_findings(
+    non_code: str,
+    line_starts: list[int],
+    paragraphs: list[str],
+    sentence_boundary: "re.Pattern[str]",
+) -> list[dict[str, Any]]:
+    """Warnings for the number-presentation rules in the absorbed reporting norms.
+
+    Deterministic, high-precision checks on prose and tables outside code blocks:
+    `±` never labeled as SD/SEM/CI anywhere in the report, threshold p-values
+    (p < 0.05, n.s.), significance euphemisms, a null result stated with a
+    statistic but no interval, a p-value with no effect magnitude in the same
+    sentence, `up to N×` with no central tendency anywhere, and best-of-n runs.
+    Inline code spans are masked so quoted examples stay legal.
+    """
+    lowered = non_code.casefold()
+    wants_plus_minus = bool(_PLUS_MINUS.search(non_code)) and not _UNCERTAINTY_LABEL.search(non_code)
+    wants_p = "p" in lowered and bool(_P_VALUE.search(non_code) or _THRESHOLD_P.search(non_code))
+    wants_euphemism = "significan" in lowered or "显著" in non_code
+    wants_up_to = ("up to" in lowered or any(anchor in non_code for anchor in ("最高", "高达", "最多", "至多"))) and not _CENTRAL_TENDENCY.search(non_code)
+    wants_best_of = "best" in lowered or "最好" in non_code or "最佳" in non_code or "最优" in non_code
+    if not (wants_plus_minus or wants_p or wants_euphemism or wants_up_to or wants_best_of):
+        return []
+
+    masked = re.sub(r"`[^`\n]*`", lambda span: " " * len(span.group(0)), non_code)
+    results: list[dict[str, Any]] = []
+    seen: set[tuple[str, int]] = set()
+
+    def emit(code: str, offset: int, message: str) -> None:
+        line = _line_number(line_starts, max(0, offset))
+        if (code, line) in seen:
+            return
+        seen.add((code, line))
+        results.append(_finding(code, "warning", message, line))
+
+    if wants_plus_minus:
+        first = _PLUS_MINUS.search(masked)
+        if first:
+            emit(
+                "unlabeled-uncertainty",
+                first.start(),
+                "The report uses ± but never says what the interval denotes; state SD, SEM, or a 95% CI (with the run count) once in the header, caption, or first use, because the three differ by several-fold in width (Cumming et al. 2007; visuals module error-bar semantics)",
+            )
+
+    search_start = 0
+    for paragraph in paragraphs:
+        offset = non_code.find(paragraph, search_start)
+        if offset < 0:
+            continue
+        search_start = offset + len(paragraph)
+        block = masked[offset : offset + len(paragraph)]
+        sentences = _locate_sentences(block, sentence_boundary)
+
+        if wants_p:
+            for sentence, start in sentences:
+                threshold = _THRESHOLD_P.search(sentence)
+                if threshold and not _THRESHOLD_DECLARATION.search(sentence):
+                    emit(
+                        "threshold-p-value",
+                        offset + start + threshold.start(),
+                        f"'{threshold.group(0).strip()}' reports a p-value as a threshold; give the exact value (p = 0.031) so readers see graded evidence, and never read p > 0.05 as proof of no effect (ASA 2016 principles 1-2; conclusions module)",
+                    )
+                null_claim = _NULL_SIGNIFICANCE.search(sentence)
+                # A null-result sentence gets the more specific interval warning below
+                # instead of the generic effect-size one, so one defect yields one finding.
+                if (
+                    not null_claim
+                    and _P_VALUE.search(sentence)
+                    and not _EFFECT_MAGNITUDE.search(sentence)
+                    and not _THRESHOLD_DECLARATION.search(sentence)
+                ):
+                    emit(
+                        "p-value-without-effect-size",
+                        offset + start,
+                        "A p-value stands alone in this sentence; pair it with the effect size or absolute difference and its interval, because p measures neither magnitude nor importance (ASA 2016 principle 5; conclusions module)",
+                    )
+                if null_claim and _STATISTIC_MARKER.search(sentence) and not _INTERVAL_OR_EQUIVALENCE.search(sentence):
+                    emit(
+                        "null-result-without-interval",
+                        offset + start + null_claim.start(),
+                        f"'{null_claim.group(0).strip()}' reads as evidence of no effect; add the interval or an equivalence bound so readers see which effect sizes were ruled out (Greenland et al. 2016; conclusions module)",
+                    )
+
+        if wants_euphemism:
+            for sentence, start in sentences:
+                euphemism = _SIGNIFICANCE_EUPHEMISM.search(sentence)
+                if euphemism:
+                    emit(
+                        "significance-euphemism",
+                        offset + start + euphemism.start(),
+                        f"'{euphemism.group(0).strip()}' softens a result that missed the threshold; report the exact p-value and effect size and let the reader grade it (ASA 2016; conclusions module)",
+                    )
+
+        if wants_up_to:
+            for sentence, start in sentences:
+                multiplier = _UP_TO_MULTIPLIER.search(sentence)
+                if multiplier:
+                    emit(
+                        "up-to-without-central-tendency",
+                        offset + start + multiplier.start(),
+                        f"'{multiplier.group(0).strip()}' is a best case with no central tendency anywhere in the report; add the geometric mean or median and the worst case, and say when the best case occurs (Heiser benchmarking crimes; benchmarking module)",
+                    )
+
+        if wants_best_of:
+            for sentence, start in sentences:
+                best_of = _BEST_OF_N.search(sentence)
+                if best_of:
+                    emit(
+                        "best-of-n-runs",
+                        offset + start + best_of.start(),
+                        f"'{best_of.group(0).strip()}' hides run-to-run variance; report the median or mean with dispersion over all runs, or state why best-of-n is the deployment-relevant statistic (Heiser benchmarking crimes; benchmarking module)",
                     )
     return results
 
@@ -1603,6 +1775,8 @@ def _audit_markdown_impl(
     if mode in SCIENTIFIC_CLAIM_MODES:
         # Append one at a time so the bounded findings list keeps its limit.
         for item in _scientific_claim_findings(non_code, non_code_line_starts, paragraphs, sentence_boundary):
+            findings.append(item)
+        for item in _quantitative_claim_findings(non_code, non_code_line_starts, paragraphs, sentence_boundary):
             findings.append(item)
 
     scanner = _load_markdown_image_scanner()
