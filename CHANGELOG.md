@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Added `docs/AUDIT-CODES.md`, the first complete reference for every finding
+  `reportctl audit` can emit: all 42 codes grouped by severity and scope
+  (delivery-blocking errors, checkpoint-bound errors, structure and scanning,
+  displays, claims, research-mode claim discipline, research-mode number
+  presentation), each with its exact trigger and how to clear it, plus the
+  exemption rules, bounds, and the six manual checks no audit performs. Before
+  this, 18 codes, including every error that blocks a delivery
+  (`unresolved-placeholder`, `missing-image-file`, `malformed-table`,
+  `missing-must-show`), were documented nowhere. A drift test pins the file to
+  the source in both directions, severity included; linked from README and
+  README_CN.
 - Added seven deterministic number-presentation audit warnings in the research
   modes, turning the machine-checkable items of the absorbed statistical and
   benchmarking norms into enforceable findings: `unlabeled-uncertainty` (a `±`

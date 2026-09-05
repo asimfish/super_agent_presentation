@@ -99,7 +99,9 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 > 💭 **Why mechanical audits instead of "please follow the style"?** Prompts
 > reduce forgetting; they cannot block a bad delivery. `audit --strict` returns
 > a real exit code you can wire into CI, so structure is enforceable — while the
-> repository stays honest that no audit can verify your *facts*.
+> repository stays honest that no audit can verify your *facts*. Every finding
+> the audit can emit, with its trigger and fix, is listed in
+> [docs/AUDIT-CODES.md](docs/AUDIT-CODES.md).
 
 <a id="whats-new"></a>
 
@@ -465,6 +467,7 @@ both make the subprocess-heavy tests hang or flake.
 ## 12. 📚 Design docs
 
 [Architecture](docs/ARCHITECTURE.md) · [Catalog](docs/CATALOG.md) ·
+[Audit codes](docs/AUDIT-CODES.md) ·
 [Research sources](docs/RESEARCH.md) · [Template provenance](docs/TEMPLATE-SOURCES.md) ·
 [Reporting standards](docs/REPORTING-STANDARDS.md) ·
 [Context budgets](docs/CONTEXT-BUDGET.md) · [Performance](docs/PERFORMANCE.md) ·
