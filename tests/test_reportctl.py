@@ -2650,6 +2650,35 @@ class ReportCtlTests(unittest.TestCase):
             valid = run_cli("validate-spec", "--file", str(spec), "--json")
             self.assertEqual(valid.returncode, 0, valid.stdout + valid.stderr)
 
+    def test_audit_codes_reference_tracks_every_finding_code(self) -> None:
+        # docs/AUDIT-CODES.md is the user-facing list of every finding the audit can
+        # emit; this pins it to the source in both directions, severity included.
+        source = (ROOT / "skills" / "agentic-reporting" / "scripts" / "reportctl.py").read_text(encoding="utf-8")
+        source_codes: dict[str, str] = {}
+        for match in re.finditer(r'(?:_finding|emit)\(\s*"([a-z0-9-]+)"(?:,\s*"(error|warning)")?', source, re.S):
+            code, severity = match.group(1), match.group(2) or "warning"
+            self.assertEqual(source_codes.setdefault(code, severity), severity, f"{code} emitted with two severities")
+        self.assertGreaterEqual(len(source_codes), 40, sorted(source_codes))
+
+        documented: dict[str, str] = {}
+        section_severity: str | None = None
+        for line in (ROOT / "docs" / "AUDIT-CODES.md").read_text(encoding="utf-8").splitlines():
+            if line.startswith("## "):
+                heading = line[3:].casefold()
+                section_severity = "error" if heading.startswith("errors") else "warning" if heading.startswith("warnings") else None
+                continue
+            row = re.match(r"^\| `([a-z0-9-]+)` \|", line)
+            if row and section_severity:
+                self.assertNotIn(row.group(1), documented, f"{row.group(1)} documented twice")
+                documented[row.group(1)] = section_severity
+
+        self.assertEqual(set(documented), set(source_codes), {
+            "undocumented": sorted(set(source_codes) - set(documented)),
+            "stale": sorted(set(documented) - set(source_codes)),
+        })
+        for code, severity in source_codes.items():
+            self.assertEqual(documented[code], severity, f"{code} is listed under the wrong severity")
+
     def test_strict_semantic_coverage_tracks_every_catalog_mode(self) -> None:
         try:
             from jsonschema import Draft202012Validator
