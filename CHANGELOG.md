@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Corrected number-audit boundaries: inline-code labels such as `SD` and
+  `median` no longer supply missing statistical context for prose; immediate
+  English/Chinese denials of best-run reporting are exempt while later
+  affirmative selections still warn; scientific-notation p-values such as
+  `p < 0.01e-5` are no longer mistaken for the `p < 0.01` threshold.
+  Regression cases cover both the exemptions and retained warnings.
 - Added seven deterministic number-presentation audit warnings in the research
   modes, turning the machine-checkable items of the absorbed statistical and
   benchmarking norms into enforceable findings: `unlabeled-uncertainty` (a `±`
