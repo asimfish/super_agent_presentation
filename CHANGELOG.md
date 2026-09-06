@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Made mode routing robust to natural phrasing. A 25-request probe matrix (every
+  mode, English and Chinese, deliberately avoiding the literal signal words)
+  routed only 12 correctly: several modes registered only compound phrases
+  (`incident ongoing`, `paper summary`, `risk assessment`) so the plain words
+  `incident`, `outage`, `papers`, `risks` scored nothing; ties fell to the
+  earlier catalog entry, so a request containing the word `postmortem` lost to
+  `investigation-report` on `root cause` and `审稿` lost to `experiment-report`
+  on `实验`; and everyday Chinese requests (`复盘`, `排查`, `周报`, `交接`,
+  `审稿`, `进展`) were unregistered. Added plain-word and colloquial signals plus
+  a few intent phrases to nine modes, and `审稿` to the leading-imperative
+  review rule. The matrix now routes 28/28 including three adversarial requests
+  that mention another mode's vocabulary; all nine harness cases and six
+  activation route proxies are unchanged. The matrix is a unit test so routing
+  quality cannot regress silently.
 - Corrected number-audit boundaries: inline-code labels such as `SD` and
   `median` no longer supply missing statistical context for prose; immediate
   English/Chinese denials of best-run reporting are exempt while later

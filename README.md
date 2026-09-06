@@ -107,6 +107,20 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 
 ## 2. 📢 What's New
 
+- **2026-09-06** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  🧭 **Natural-language routing, audit-codes reference, audit boundary fixes.**
+  A probe matrix of natural requests that avoid the literal signal words routed
+  only 12 of 25 correctly (a request containing the word `postmortem` lost a tie
+  to `investigation-report`; `incident`, `papers`, `risks` scored nothing because
+  only compound phrases were registered; `复盘`, `排查`, `周报`, `交接`, `审稿`
+  were unknown). Nine modes gained plain-word and colloquial signals; the matrix
+  now routes 28/28 with all harness and activation routes unchanged, and it is a
+  unit test. New [docs/AUDIT-CODES.md](docs/AUDIT-CODES.md) lists every one of
+  the 42 audit findings with trigger and fix, pinned to the source by a drift
+  test ([#8](https://github.com/asimfish/super_agent_presentation/pull/8)); the
+  number-presentation checks stop reading inline-code tokens as context, exempt
+  explicit denials of best-run reporting, and no longer misread `p < 0.01e-5`
+  as a threshold ([#9](https://github.com/asimfish/super_agent_presentation/pull/9)).
 - **2026-09-04** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   📏 **Number-presentation audit and benchmark routing.** Seven more
   research-mode audit warnings make the machine-checkable half of the absorbed
@@ -418,7 +432,7 @@ blinding, and receipts are specified in [BENCHMARK.md](BENCHMARK.md) and
 [evals/](evals/README.md).
 
 What *is* verified: deterministic routing, bounded bundles, checkpoint/audit
-mechanics, template rendering (320 unit tests + harness smoke + real-render
+mechanics, template rendering (326 unit tests + harness smoke + real-render
 regression on macOS Chrome 151), and the end-to-end showcase run with receipts in
 [examples/](examples/README.md).
 
@@ -441,7 +455,7 @@ examples/showcase-20260825/    # 16 finished reports + deck + audit receipts
 evals/                         # study schemas, templates, sanitized run records
 scripts/                       # installer, benchmark harness, study controller
 docs/                          # architecture, research, catalog, ADRs
-tests/                         # 320 unit tests
+tests/                         # 326 unit tests
 ```
 
 <a id="verification"></a>
