@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Corrected number-audit boundaries: inline-code labels such as `SD` and
+  `median` no longer supply missing statistical context for prose; immediate
+  English/Chinese denials of best-run reporting are exempt while later
+  affirmative selections still warn; scientific-notation p-values such as
+  `p < 0.01e-5` are no longer mistaken for the `p < 0.01` threshold.
+  Regression cases cover both the exemptions and retained warnings; the
+  affected rows in `docs/AUDIT-CODES.md` state the new boundaries.
 - Added `docs/AUDIT-CODES.md`, the first complete reference for every finding
   `reportctl audit` can emit: all 42 codes grouped by severity and scope
   (delivery-blocking errors, checkpoint-bound errors, structure and scanning,

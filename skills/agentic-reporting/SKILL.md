@@ -93,7 +93,8 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
 
    The checkpoint derives the mode. Supplying the same explicit mode is allowed;
    a conflicting mode is an input error. Fix audit errors. Resolve warnings with
-   judgment; never add unsupported filler merely to satisfy a heuristic. With
+   judgment; never add unsupported filler merely to satisfy a heuristic. The
+   repository's `docs/AUDIT-CODES.md` lists every code with its trigger and fix. With
    `--json`, the audit payload includes the exact report byte count/SHA-256 and the
    parsed checkpoint intent fingerprint for controller binding.
 7. Manually verify the latest state, scientific or technical claims, numbers,

@@ -1419,7 +1419,7 @@ _P_VALUE = re.compile(r"(?i)\bp\s*[<=>≤≥]\s*0?\.\d|\bp\s*=\s*\d|p\s*值\s*(?
 # Threshold forms of a p-value (p < 0.05, p > 0.05, n.s.) turn graded evidence into a
 # binary; p < 0.001 stays legal as the conventional floor for tiny values.
 _THRESHOLD_P = re.compile(
-    r"(?i)\bp\s*(?:值)?\s*(?:[<>≤≥]|小于|大于|低于|高于)\s*(?:0?\.(?:05|01|10?))(?![\d%])"
+    r"(?i)\bp\s*(?:值)?\s*(?:[<>≤≥]|小于|大于|低于|高于)\s*(?:0?\.(?:05|01|10?))(?![\d%eE])"
     r"|(?<![A-Za-z])n\.\s?s\.(?![A-Za-z])"
 )
 _THRESHOLD_DECLARATION = re.compile(
@@ -1458,7 +1458,14 @@ _CENTRAL_TENDENCY = re.compile(
 _BEST_OF_N = re.compile(
     r"(?i)\bbest[\s-]+of[\s-]+(?:\d+|two|three|four|five|six|seven|eight|nine|ten)[\s-]+(?:runs?|trials?|repetitions?|seeds?|attempts?|repeats?|executions?|measurements?)\b"
     r"|\bbest\s+(?:run|seed|trial|repetition)\s+(?:is|was|are|were)\s+reported\b|\breport(?:ed|ing|s)?\s+(?:only\s+)?the\s+(?:single\s+)?best\s+(?:run|seed|trial|repetition|result)\b"
-    r"|(?:取|报告|汇报|选取|选用|只报)[^。；\n]{0,10}?最(?:好|佳|优)的?(?:一次|一轮|运行|种子|结果)"
+    r"|(?:取|报告|汇报|选取|选用|只报)[^。！？；，,;.!?\n]{0,10}?最(?:好|佳|优)的?(?:一次|一轮|运行|种子|结果)"
+)
+# Only immediate denials of the reporting choice are exempt. A negation in a
+# different clause must not hide a later affirmative best-run selection.
+_BEST_OF_N_NEGATION = re.compile(
+    r"(?i)(?:\b(?:not|never|without|[a-z]+n['’]t)\s+(?:only\s+)?"
+    r"(?:(?:report(?:ed|ing|s)?|select(?:ed|ing|s)?|us(?:e|ed|ing))\s+)?"
+    r"(?:only\s+)?(?:the\s+)?|(?:不|未|没有|从未)(?:仅|只)?)$"
 )
 
 
@@ -1492,15 +1499,18 @@ def _quantitative_claim_findings(
     Inline code spans are masked so quoted examples stay legal.
     """
     lowered = non_code.casefold()
-    wants_plus_minus = bool(_PLUS_MINUS.search(non_code)) and not _UNCERTAINTY_LABEL.search(non_code)
+    wants_plus_minus = bool(_PLUS_MINUS.search(non_code))
     wants_p = "p" in lowered and bool(_P_VALUE.search(non_code) or _THRESHOLD_P.search(non_code))
     wants_euphemism = "significan" in lowered or "显著" in non_code
-    wants_up_to = ("up to" in lowered or any(anchor in non_code for anchor in ("最高", "高达", "最多", "至多"))) and not _CENTRAL_TENDENCY.search(non_code)
+    wants_up_to = "up to" in lowered or any(anchor in non_code for anchor in ("最高", "高达", "最多", "至多"))
     wants_best_of = "best" in lowered or "最好" in non_code or "最佳" in non_code or "最优" in non_code
     if not (wants_plus_minus or wants_p or wants_euphemism or wants_up_to or wants_best_of):
         return []
 
     masked = re.sub(r"`[^`\n]*`", lambda span: " " * len(span.group(0)), non_code)
+    # Code examples are neither claims nor supporting statistical context.
+    wants_plus_minus = wants_plus_minus and not _UNCERTAINTY_LABEL.search(masked)
+    wants_up_to = wants_up_to and not _CENTRAL_TENDENCY.search(masked)
     results: list[dict[str, Any]] = []
     seen: set[tuple[str, int]] = set()
 
@@ -1581,13 +1591,16 @@ def _quantitative_claim_findings(
 
         if wants_best_of:
             for sentence, start in sentences:
-                best_of = _BEST_OF_N.search(sentence)
-                if best_of:
+                for best_of in _BEST_OF_N.finditer(sentence):
+                    prefix = sentence[max(0, best_of.start() - 120) : best_of.start()]
+                    if _BEST_OF_N_NEGATION.search(prefix):
+                        continue
                     emit(
                         "best-of-n-runs",
                         offset + start + best_of.start(),
                         f"'{best_of.group(0).strip()}' hides run-to-run variance; report the median or mean with dispersion over all runs, or state why best-of-n is the deployment-relevant statistic (Heiser benchmarking crimes; benchmarking module)",
                     )
+                    break
     return results
 
 

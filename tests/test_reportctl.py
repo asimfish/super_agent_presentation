@@ -1637,6 +1637,84 @@ class ReportCtlTests(unittest.TestCase):
                     codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
                     self.assertFalse(codes & self.QUANTITATIVE_CLAIM_CODES, codes)
 
+    def test_audit_number_boundary_code_cannot_supply_statistical_context(self) -> None:
+        cases = (
+            ("Accuracy is 78.4 ± 1.9 over five seeds.", "SD", "unlabeled-uncertainty"),
+            ("Accuracy is 78.4 ± 1.9 over five seeds.", "CI", "unlabeled-uncertainty"),
+            ("The kernel is up to 12× faster than the baseline.", "median", "up-to-without-central-tendency"),
+            ("吞吐最高可达 8 倍。", "平均", "up-to-without-central-tendency"),
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            for claim, token, code in cases:
+                with self.subTest(token=token):
+                    report.write_text(
+                        f"# Result\n\n{claim}\n\nThe parser recognizes `{token}`.\n",
+                        encoding="utf-8",
+                    )
+                    result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+                    findings = json.loads(result.stdout)["findings"]
+                    self.assertEqual([item["line"] for item in findings if item["code"] == code], [3])
+
+    def test_audit_number_boundary_spares_negated_best_run_selection(self) -> None:
+        cases = (
+            "We do not report the best of 5 runs; all runs are retained.",
+            "We don't report the best run; all runs are retained.",
+            "We never report the best of 5 runs; all runs are retained.",
+            "We report the median, not the best of 5 runs.",
+            "我们没有报告最好的一次运行，所有运行均纳入统计。",
+            "我们不取最好的一次，所有运行均纳入统计。",
+            "我们从未选取最佳的一次运行，所有运行均纳入统计。",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            for claim in cases:
+                with self.subTest(claim=claim):
+                    report.write_text(f"# Result\n\n{claim}\n", encoding="utf-8")
+                    result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+                    codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+                    self.assertNotIn("best-of-n-runs", codes)
+
+    def test_audit_number_boundary_negation_does_not_hide_later_selection(self) -> None:
+        cases = (
+            ("We do not report the best of 5 runs, but report the best run for speed.", "report the best run"),
+            ("We do not discard failures; timings are the best of 5 runs.", "best of 5 runs"),
+            ("我们没有报告最好的一次运行，但延迟仍取最佳的一次。", "取最佳的一次"),
+            ("我们没有报告均值，但取最佳的一次。", "取最佳的一次"),
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            for claim, expected in cases:
+                with self.subTest(claim=claim):
+                    report.write_text(f"# Result\n\n{claim}\n", encoding="utf-8")
+                    result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+                    findings = [
+                        item for item in json.loads(result.stdout)["findings"]
+                        if item["code"] == "best-of-n-runs"
+                    ]
+                    self.assertEqual(len(findings), 1)
+                    self.assertIn(expected, findings[0]["message"])
+                    self.assertEqual(findings[0]["line"], 3)
+
+    def test_audit_number_boundary_preserves_scientific_p_value_tokens(self) -> None:
+        cases = (
+            ("p < 0.01e-5", False),
+            ("p < .05E-4", False),
+            ("p > 0.10e-2", False),
+            ("p < 0.001", False),
+            ("p < 0.05", True),
+            ("p > 0.01", True),
+            ("p < 0.10", True),
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            for value, expected in cases:
+                with self.subTest(value=value):
+                    report.write_text(f"# Result\n\nEffect size d = 0.8, {value}.\n", encoding="utf-8")
+                    result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+                    codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+                    self.assertEqual("threshold-p-value" in codes, expected)
+
     def test_audit_flags_bare_success_rates_significance_and_anthropomorphism_in_research_modes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "report.md"
