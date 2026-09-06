@@ -26,6 +26,17 @@ CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 for
 
 ## 📢 最近更新
 
+- **2026-09-06** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  🧭 **自然语言路由、审计码全表、审计边界修复。** 用一组刻意避开信号词原文的
+  自然请求做探针，25 条只有 12 条路由正确：含 "postmortem" 一词的请求同分输给
+  `investigation-report`；`incident`、`papers`、`risks` 因只登记了复合短语而得
+  零分；"复盘""排查""周报""交接""审稿"等日常说法完全未登记。九个模式补上单词
+  级与口语化信号后，矩阵 28/28 全部正确，评测与激活用例路由不变，并固化为单元
+  测试。新增 [docs/AUDIT-CODES.md](docs/AUDIT-CODES.md)，列出审计能报出的全部
+  42 条发现及其触发条件与清除方法，由漂移测试与源码绑定
+  （[#8](https://github.com/asimfish/super_agent_presentation/pull/8)）；数字
+  呈现检查不再把内联代码当作上下文、豁免明确否认"取最好一次"的句子、不再把
+  `p < 0.01e-5` 误读为阈值（[#9](https://github.com/asimfish/super_agent_presentation/pull/9)）。
 - **2026-09-04** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   📏 **数字呈现审计与基准路由。** 新增七条研究模式审计告警，把已吸收的统计与
   基准测试规范中可机械判定的一半变成门禁：`unlabeled-uncertainty`（`±` 从未

@@ -1515,6 +1515,56 @@ class ReportCtlTests(unittest.TestCase):
                 self.assertEqual(payload["mode"], "experiment-report", payload)
                 self.assertIn("ablation", payload["modules"], payload)
 
+    NATURAL_ROUTING_MATRIX = (
+        # Natural phrasings that avoid the literal signal words; every mode, EN and CN,
+        # plus three adversarial requests that mention another mode's vocabulary.
+        ("concise-answer", "Did the nightly build pass? One line."),
+        ("concise-answer", "昨晚的训练跑完了吗？一句话回答"),
+        ("implementation-handoff", "I finished wiring the new cache layer; summarize what changed and how it was tested so the next engineer can take over"),
+        ("implementation-handoff", "把这次重构的改动点、涉及文件和测试结果整理成交接说明"),
+        ("status-update", "Weekly update for the leadership channel: what shipped, what slipped, what is blocked"),
+        ("status-update", "给导师写本周进展：做完了什么，卡在哪，下周计划"),
+        ("investigation-report", "Figure out why training loss spikes at step 40k and write up what you found"),
+        ("investigation-report", "排查一下为什么评测分数比上周掉了 3 个点，把原因和排除过程写出来"),
+        ("experiment-report", "Write up the five-seed comparison of the three schedulers on the held-out suite"),
+        ("experiment-report", "把三种调度器在留出集上五个随机种子的对比结果写成报告"),
+        ("decision-brief", "We need to pick between Postgres and DynamoDB for the event store; lay out the trade-offs and recommend one"),
+        ("decision-brief", "帮我在自建集群和云托管之间做个选型建议，给出推荐和理由"),
+        ("academic-synthesis", "Summarize what the last three papers on flow matching for robot control actually show and where they disagree"),
+        ("academic-synthesis", "综述近两年关于世界模型用于机器人控制的几篇论文，指出共识与分歧"),
+        ("research-idea", "Pitch a new research direction: energy-guided sampling for safe manipulation, with the decisive experiment"),
+        ("research-idea", "提出一个新的研究想法：用能量引导做安全操作，说明关键实验和可能被推翻的地方"),
+        ("review-report", "Review this pull request for correctness and style and list your findings"),
+        ("review-report", "审稿：评审这篇论文的方法和实验，逐条列出问题"),
+        ("incident-update", "Payments API is returning 502s in EU since 09:40; post the current status to the incident channel"),
+        ("incident-update", "线上支付接口从 9:40 开始大量 502，写一条当前事故状态通报"),
+        ("postmortem", "The outage is over; write the postmortem with timeline, root cause, and action items"),
+        ("postmortem", "故障已恢复，写复盘：时间线、根因、改进项"),
+        ("risk-report", "Assess the risks of migrating the training pipeline to the new cluster before the deadline"),
+        ("risk-report", "评估在截止日期前把训练流水线迁到新集群的风险，给出概率和影响"),
+        ("status-update", "Weekly status update: shipped the exporter, one open risk on the deadline, no incidents this week"),
+        ("decision-brief", "Decision needed: choose between the two vendors; the comparison of the two on cost and accuracy is attached"),
+        ("implementation-handoff", "Implementation handoff: fixed the parser, changed files listed below, tests run on the release branch"),
+    )
+
+    def test_route_natural_phrasings_reach_every_mode(self) -> None:
+        # In-process so the 27-row matrix stays cheap; the CLI wraps the same functions.
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "reportctl_for_routing_matrix", ROOT / "skills" / "agentic-reporting" / "scripts" / "reportctl.py"
+        )
+        assert spec is not None and spec.loader is not None
+        reportctl = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reportctl)
+        catalog = reportctl.load_catalog()
+        misses = []
+        for expected, task in self.NATURAL_ROUTING_MATRIX:
+            mode, _scores = reportctl.infer_mode(task, catalog)
+            if mode != expected:
+                misses.append((task, expected, mode))
+        self.assertEqual(misses, [], f"{len(misses)} of {len(self.NATURAL_ROUTING_MATRIX)} natural requests misrouted")
+
     def test_route_plain_latency_wording_does_not_pull_in_benchmarking(self) -> None:
         # `latency` alone belongs to incidents and status updates as often as to
         # benchmarks, so only the measurement vocabulary routes to the module.

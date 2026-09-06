@@ -26,7 +26,7 @@
     },
       "implementation-handoff": {
         "summary": "A completed, partial, or blocked engineering handoff with verification and changed artifacts.",
-        "intent_signals": ["implementation handoff", "final engineering handoff", "give me a handoff", "report changed files"],
+        "intent_signals": ["implementation handoff", "final engineering handoff", "give me a handoff", "report changed files", "hand over", "take over", "handoff", "交接"],
       "file": "modes/implementation-handoff.md",
       "signals": [
         "implemented",
@@ -40,7 +40,16 @@
         "构建",
         "修改文件",
         "测试结果",
-        "代码交付"
+        "代码交付",
+        "what changed",
+        "how it was tested",
+        "take over",
+        "hand over",
+        "handoff",
+        "交接",
+        "接手",
+        "改动点",
+        "涉及文件"
       ],
       "default_modules": [
         "evidence"
@@ -56,7 +65,7 @@
     },
       "status-update": {
         "summary": "A time-bounded progress report that separates completed work, active work, blockers, and next priorities.",
-        "intent_signals": ["status update", "progress report", "weekly update", "current project status"],
+        "intent_signals": ["status update", "progress report", "weekly update", "current project status", "progress update", "weekly report", "本周进展", "周报", "进展汇报"],
       "file": "modes/status-update.md",
       "signals": [
         "status update",
@@ -69,7 +78,18 @@
         "进度更新",
         "已完成",
         "剩余工作",
-        "项目状态"
+        "项目状态",
+        "progress",
+        "this week",
+        "what shipped",
+        "what slipped",
+        "blocked on",
+        "next week",
+        "进展",
+        "周报",
+        "本周",
+        "下周计划",
+        "卡在"
       ],
       "default_modules": [],
       "required_semantics": [
@@ -82,7 +102,7 @@
     },
       "investigation-report": {
         "summary": "A findings-first account of a diagnosis, analysis, or research investigation.",
-        "intent_signals": ["investigate", "diagnose", "root cause", "why did", "find the cause"],
+        "intent_signals": ["investigate", "diagnose", "root cause", "why did", "find the cause", "figure out why", "find out why", "understand why", "排查", "查明原因"],
       "file": "modes/investigation-report.md",
       "signals": [
         "investigate",
@@ -96,7 +116,17 @@
         "诊断",
         "根因",
         "为什么失败",
-        "分析发现"
+        "分析发现",
+        "figure out why",
+        "find out why",
+        "understand why",
+        "what you found",
+        "what we found",
+        "explain why",
+        "排查",
+        "查明",
+        "为什么",
+        "原因"
       ],
       "default_modules": [
         "evidence"
@@ -112,7 +142,7 @@
     },
       "experiment-report": {
         "summary": "A reproducible experimental report with protocol, quantitative results, uncertainty, and bounded conclusions.",
-        "intent_signals": ["experiment report", "benchmark report", "present the benchmark", "analyze the experiment", "ablation report"],
+        "intent_signals": ["experiment report", "benchmark report", "present the benchmark", "analyze the experiment", "ablation report", "write up the experiment", "experiment write-up", "实验结果"],
       "file": "modes/experiment-report.md",
       "signals": [
         "experiment",
@@ -141,7 +171,21 @@
         "吞吐",
         "加速比",
         "尾延迟",
-        "压测"
+        "压测",
+        "seeds",
+        "held-out",
+        "held out",
+        "test set",
+        "eval set",
+        "accuracy",
+        "baseline",
+        "learning curve",
+        "种子",
+        "留出",
+        "测试集",
+        "准确率",
+        "基线",
+        "对比结果"
       ],
       "embedded_modules": [
         "conclusions"
@@ -190,7 +234,7 @@
     },
       "academic-synthesis": {
         "summary": "A source-grounded synthesis of one or more scholarly works, with claims, evidence, disagreements, and limits kept distinct.",
-        "intent_signals": ["academic synthesis", "paper summary", "literature synthesis", "related work", "compare papers"],
+        "intent_signals": ["academic synthesis", "paper summary", "literature synthesis", "related work", "compare papers", "summarize the paper", "summarize these papers", "summarize the papers", "literature review", "what the papers show", "综述", "文献综述"],
       "file": "modes/academic-synthesis.md",
       "signals": [
         "paper summary",
@@ -207,7 +251,16 @@
         "相关工作",
         "研究版图",
         "比较论文",
-        "学术汇报"
+        "学术汇报",
+        "papers",
+        "literature",
+        "survey",
+        "prior work",
+        "what the paper",
+        "论文",
+        "文献",
+        "综述",
+        "这几篇"
       ],
       "default_modules": [
         "evidence",
@@ -223,7 +276,7 @@
     },
       "review-report": {
         "summary": "An evidence-driven review of code, a document, a design, or a scholarly work, ordered by actionable significance.",
-        "intent_signals": ["review this", "review report", "critique", "audit this", "paper review", "code review"],
+        "intent_signals": ["review this", "review report", "critique", "audit this", "paper review", "code review", "审稿", "referee report", "list your findings"],
       "file": "modes/review-report.md",
       "signals": [
         "review",
@@ -237,7 +290,11 @@
         "审计",
         "问题发现",
         "合并前评估",
-        "论文评审"
+        "论文评审",
+        "审稿",
+        "逐条列出问题",
+        "referee report",
+        "reviewer report"
       ],
       "default_modules": [
         "evidence"
@@ -252,7 +309,7 @@
     },
       "incident-update": {
         "summary": "A timestamped live-incident update centered on impact, current state, mitigation, and the next communication point.",
-        "intent_signals": ["incident update", "live incident", "service outage update", "operational incident update"],
+        "intent_signals": ["incident update", "live incident", "service outage update", "operational incident update", "incident channel", "post the current status", "事故状态", "故障通报", "事故通报"],
       "file": "modes/incident-update.md",
       "signals": [
         "incident ongoing",
@@ -269,7 +326,22 @@
         "服务降级",
         "实时故障更新",
         "正在缓解",
-        "下次更新"
+        "下次更新",
+        "incident",
+        "outage",
+        "degraded",
+        "502",
+        "5xx",
+        "error rate",
+        "on-call",
+        "paged",
+        "returning errors",
+        "事故",
+        "故障",
+        "线上",
+        "告警",
+        "报错",
+        "通报"
       ],
       "default_modules": [
         "evidence"
@@ -284,7 +356,7 @@
     },
       "postmortem": {
         "summary": "A blameless record of incident impact, timeline, causes, response, and owned preventive actions.",
-        "intent_signals": ["postmortem", "incident retrospective", "incident root cause analysis", "lessons learned"],
+        "intent_signals": ["postmortem", "incident retrospective", "incident root cause analysis", "lessons learned", "write the postmortem", "复盘", "事后分析"],
       "file": "modes/postmortem.md",
       "signals": [
         "postmortem",
@@ -296,7 +368,16 @@
         "事故复盘",
         "事故根因分析",
         "经验教训",
-        "防止复发"
+        "防止复发",
+        "timeline",
+        "action items",
+        "the outage is over",
+        "after the incident",
+        "incident is resolved",
+        "复盘",
+        "时间线",
+        "改进项",
+        "已恢复"
       ],
       "default_modules": [
         "evidence"
@@ -311,7 +392,7 @@
     },
       "risk-report": {
         "summary": "A prioritized risk assessment with explicit rationale, controls, ownership, triggers, and residual exposure.",
-        "intent_signals": ["risk assessment", "risk report", "risk register", "what could go wrong"],
+        "intent_signals": ["risk assessment", "risk report", "risk register", "what could go wrong", "assess the risk", "risks of", "评估风险"],
       "file": "modes/risk-report.md",
       "signals": [
         "risk assessment",
@@ -325,7 +406,15 @@
         "可能出错",
         "概率和影响",
         "缓解计划",
-        "残余风险"
+        "残余风险",
+        "risks",
+        "risk of",
+        "risky",
+        "exposure",
+        "failure modes",
+        "what could break",
+        "风险",
+        "隐患"
       ],
       "default_modules": [
         "tables",

@@ -536,7 +536,7 @@ def _leading_signal_score(text: str, signals: Iterable[str]) -> int:
 
 def _leading_imperative_mode(text: str) -> str | None:
     leading = _normalized_leading_text(text)
-    if re.match(r"(?:review|audit|critique)\b|(?:审查|评审|审计|点评|批评)", leading):
+    if re.match(r"(?:review|audit|critique)\b|(?:审查|评审|审计|审稿|点评|批评)", leading):
         return "review-report"
     return None
 
