@@ -243,6 +243,10 @@ python3 <skill-dir>/scripts/reportctl.py audit \
   --file report.md --mode experiment-report
 ```
 
+审计能报出的全部发现（触发条件、清除方法、适用模式）见
+[docs/AUDIT-CODES.md](docs/AUDIT-CODES.md)；`error` 无条件失败，`warning`
+仅在 `--strict` 下失败。
+
 查看并复制一个精确模板，而不把全部模板放进上下文：
 
 ```bash
@@ -470,7 +474,8 @@ fresh-agent 记录见 [evals/runs/forward/README.md](evals/runs/forward/README.m
 ## 设计与来源
 
 架构取舍见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，官方资料与独立综合
-边界见 [docs/RESEARCH.md](docs/RESEARCH.md)，畸形 Markdown 的性能回归证据见
+边界见 [docs/RESEARCH.md](docs/RESEARCH.md)，审计发现码全表见
+[docs/AUDIT-CODES.md](docs/AUDIT-CODES.md)，畸形 Markdown 的性能回归证据见
 [docs/PERFORMANCE.md](docs/PERFORMANCE.md)。本仓库没有复制限制性第三方模板或
 视觉资产。
 
