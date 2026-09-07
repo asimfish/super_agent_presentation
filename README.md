@@ -107,6 +107,19 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 
 ## 2. 📢 What's New
 
+- **2026-09-07** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  🔍 **Cross-model semantic review** (`reportctl review-prompt`). The audit
+  checks form; this step checks meaning: claim-versus-visual consistency,
+  derived-number premises, reasoning validity, unsurfaced source contradictions,
+  fidelity to the fact sheet. Fed three pre-fix showcase drafts that had passed a
+  zero-warning audit, a second model flagged all three human-found reasoning
+  errors as blockers and found two more the human had missed. Also fixed two
+  regressions the framework caused on chat surfaces, found by a same-facts
+  same-model A/B against a bare prompt: no section markers and 1.7x hedging
+  (`under-sectioned`, `hedge-saturation` warnings; delta columns in baseline
+  tables). Honest result of that A/B: for a strong model on a one-shot short
+  report, bare and framework are close to a draw; the framework helped gpt-5.5
+  clearly more.
 - **2026-09-06** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   🧭 **Natural-language routing, audit-codes reference, audit boundary fixes.**
   A probe matrix of natural requests that avoid the literal signal words routed
@@ -240,8 +253,8 @@ Full detail in [CHANGELOG.md](CHANGELOG.md).
   model/dataset release card — retrieved one at a time, never bundled into
   context.
 - **A stdlib-only CLI** (`reportctl`) that routes, bundles bounded context,
-  checkpoints long tasks, scaffolds, audits structure mechanically, and renders a
-  strict JSON report IR.
+  checkpoints long tasks, scaffolds, audits structure mechanically, emits a
+  cross-model semantic review prompt, and renders a strict JSON report IR.
 - **Anti-forgetting for long tasks** — a tiny persistent micro-contract, a small
   on-disk checkpoint saved at task start, and a final audit driven by the same
   checkpoint file, so the reporting contract survives context compaction.
@@ -432,7 +445,7 @@ blinding, and receipts are specified in [BENCHMARK.md](BENCHMARK.md) and
 [evals/](evals/README.md).
 
 What *is* verified: deterministic routing, bounded bundles, checkpoint/audit
-mechanics, template rendering (326 unit tests + harness smoke + real-render
+mechanics, template rendering (329 unit tests + harness smoke + real-render
 regression on macOS Chrome 151), and the end-to-end showcase run with receipts in
 [examples/](examples/README.md).
 
@@ -455,7 +468,7 @@ examples/showcase-20260825/    # 16 finished reports + deck + audit receipts
 evals/                         # study schemas, templates, sanitized run records
 scripts/                       # installer, benchmark harness, study controller
 docs/                          # architecture, research, catalog, ADRs
-tests/                         # 326 unit tests
+tests/                         # 329 unit tests
 ```
 
 <a id="verification"></a>

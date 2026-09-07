@@ -160,10 +160,22 @@ reportctl.py checkpoint --task TEXT --output FILE [route fields ...]
 reportctl.py checkpoint --checkpoint FILE --output FILE [matching route assertions ...]
 reportctl.py audit --file FILE --mode MODE [--json] [--strict]
 reportctl.py audit --file FILE --checkpoint FILE [--mode SAME_MODE] [--json] [--strict]
+reportctl.py review-prompt --file FILE --mode MODE [--facts FILE]
 reportctl.py validate-spec --file FILE
 reportctl.py render --file FILE [--output FILE]
 reportctl.py build-dist [--output DIR] [--force]
 ```
+
+`review-prompt` prints a bounded prompt for a cross-model semantic review: it embeds
+the report (and the fact sheet it was written from, when given) inside a fixed
+checklist covering claim-versus-visual consistency, derived-number premises,
+reasoning validity, unsurfaced source contradictions, fidelity, the reader
+contract, and domain-term use, and asks for a `FINDINGS / VERDICT` structure. The
+CLI itself calls no model; the prompt is meant for a model other than the report's
+author, because same-model review shares the author's blind spots. It exists
+because the structural audit provably cannot see these errors: in the 2026-08-31
+showcase review, three reasoning errors passed a zero-warning audit and were found
+only by a human reading the report against its figures.
 
 All runtime commands use Python's standard library. Without a checkpoint, explicit
 route fields select values. A caller may select one `--profile`; `auto` derives it
