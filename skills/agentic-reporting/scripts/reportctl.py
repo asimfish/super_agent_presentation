@@ -1683,6 +1683,43 @@ def _audit_markdown_impl(
     if len(text) < 1200 and heading_total > 5:
         findings.append(_finding("over-sectioned", "warning", "Short report has more than five headings"))
 
+    # The mirror failure: a long report delivered as a wall of paragraphs. Chat
+    # surfaces tend to drop headings once they are described as optional, so
+    # count bold lead-in sentences as section markers too and require at least
+    # two markers past roughly 2,000 characters. Calibrated on framework output
+    # that scored below a bare-prompt baseline on scannability for this reason.
+    bold_leadins = sum(1 for paragraph in paragraphs if re.match(r"^\*\*[^*\n]{2,80}\*\*", paragraph))
+    if mode != "concise-answer" and len(non_code) >= 2000 and heading_total + bold_leadins < 2:
+        findings.append(_finding("under-sectioned", "warning", f"Report of {len(non_code)} characters has fewer than two section markers (headings or bold lead-in sentences); readers navigate by section, so mark each semantic-role boundary even on a chat surface"))
+
+    # Hedge saturation: boundaries belong in one place, stated once. Sections
+    # whose heading or bold lead-in names boundaries, limitations, uncertainty,
+    # or risk are excluded, because that is where hedges are supposed to live;
+    # the density is measured over the remaining body. Calibrated on real
+    # reports: well-edited long reports sit at 1-3 body hedge markers per 1,000
+    # characters, a bare-prompt baseline at about 5, and framework output that
+    # re-hedged every sentence with no sections at about 9. The absolute floor
+    # keeps short incident updates (few markers, high density) out of scope.
+    hedge_markers = re.compile(
+        r"不能|无法|尚不|尚未|尚无|不足以|不宜|不据此|不构成|不应|可能|疑似|暂无|未验证|未确认|未报告|未提供|未说明|不作判断|不做估计"
+        r"|\b(?:cannot|can't|may|might|unclear|uncertain|unverified|unconfirmed|not (?:yet )?(?:verified|confirmed|reported|provided|known))\b",
+        re.IGNORECASE,
+    )
+    boundary_section = re.compile(r"边界|限制|局限|不确定|风险|待补|未覆盖|limitation|boundar|uncertaint|caveat|risk", re.IGNORECASE)
+    body_paragraphs: list[str] = []
+    in_boundary_section = False
+    for paragraph in paragraphs:
+        marker = re.match(r"^#{1,6}\s+(.+)$", paragraph) or re.match(r"^\*\*([^*\n]{2,80})\*\*", paragraph)
+        if marker:
+            in_boundary_section = bool(boundary_section.search(marker.group(1)))
+        if not in_boundary_section:
+            body_paragraphs.append(paragraph)
+    body_text = "\n\n".join(body_paragraphs)
+    hedge_total = len(hedge_markers.findall(body_text))
+    hedge_density = hedge_total * 1000 / max(len(body_text), 1)
+    if hedge_total >= 20 and hedge_density > 7.0:
+        findings.append(_finding("hedge-saturation", "warning", f"{hedge_total} hedging markers in {len(body_text)} characters of body text outside boundary sections ({hedge_density:.1f} per 1,000); state each boundary once in the boundaries section instead of re-hedging every claim in the body"))
+
     generic_heading_terms = {
         "introduction", "miscellaneous", "misc", "other", "others", "notes",
         "general", "information", "more information", "additional information",
@@ -1931,7 +1968,10 @@ def _audit_markdown_impl(
         context = " ".join(lines[max(0, start - 3) : start - 1]).casefold()
         if not any(
             token in context
-            for token in ("table", "表", "comparison", "比较", "results", "结果", "metrics", "指标", "actions", "行动")
+            for token in (
+                "table", "表", "comparison", "比较", "results", "结果", "metrics", "指标", "actions", "行动",
+                "以下", "如下", "below", "following",
+            )
         ):
             findings.append(_finding("table-without-context", "warning", "Table lacks a nearby identifying or explanatory sentence", start))
 
@@ -2274,6 +2314,126 @@ def command_audit(args: argparse.Namespace) -> int:
             )
         _safe_print(f"Audit: {errors} error(s), {warnings} warning(s). Structural checks only; manual verification remains required.")
     return 1 if errors or (args.strict and warnings) else 0
+
+
+REVIEW_CHECKLIST = """\
+## What to check
+
+Work through every item. For each, either quote the exact passage that fails and
+say why, or state `no finding`. Do not rewrite the report; do not praise it.
+
+1. **Claim versus visual.** For every figure, chart, table caption, and every
+   sentence that describes what a visual shows: does the description match the
+   data (direction of change, ordering, which point is best or worst, what a
+   shaded region or arrow denotes)? A caption that says "improves on both axes"
+   over a trajectory that trades one metric for another is a finding.
+2. **Derived numbers and their premises.** For every number the report computed
+   rather than quoted (durations, percentages, ratios, differences, counts):
+   redo the arithmetic, then check that the premise it rests on is not
+   contradicted anywhere in the report or the facts.
+3. **Reasoning validity.** For every "because", "therefore", "so", "means",
+   "shows that" (说明 / 意味着 / 因此 / 表明): does the conclusion actually follow?
+   Check threshold interpretations especially (what a cut-off implies under a
+   uniform or null assumption).
+4. **Source contradictions.** If the facts contain statements that cannot all be
+   true at once (times that do not add up, counts that disagree, a window longer
+   than the outage it contains), the report must surface the contradiction and
+   say which reading it adopted. Silently picking one is a finding.
+5. **Fidelity to the facts.** Every fact in the report traces to the facts; no
+   fact, example, mechanism, cause, or recommendation was added. Relation
+   strength is preserved: suspected is not confirmed, may is not does, observed
+   is not proven, not regressed is not improved. Scope qualifiers stay attached
+   to their claims. Negation and direction are intact.
+6. **Reader contract.** The outcome comes first. Each boundary is stated once, in
+   its place, not re-hedged in every sentence. A report longer than about 2,000
+   characters has headings or bold lead-in sentences at semantic boundaries. No
+   AI-boilerplate rhetoric, no meta-commentary about the report itself, no
+   internal wording (such as "the source material did not provide") that reveals
+   the drafting process to an outside reader.
+7. **Domain terms used correctly.** For example: "significant" only for a stated
+   statistical test; Pareto directions consistent with the axes; a "sweet spot"
+   or "optimum" only over the points actually tested; a grid minimum is not a
+   global minimum.
+
+## How to answer
+
+Respond in the language of the report. Use this exact structure:
+
+```
+FINDINGS
+- [blocker|major|minor] <where: section/line/figure> — "<exact quote>" — <what is wrong> — <smallest fix>
+...
+(or: - no findings)
+
+CHECKS WITH NO FINDING
+- <item numbers from the list above>
+
+VERDICT: pass | revise
+```
+
+`blocker` means a reader would be misled about a fact or conclusion. `major`
+means a reader would draw a weaker or stronger claim than the evidence supports.
+`minor` is wording. A single blocker or major finding makes the verdict `revise`.
+"""
+
+
+def build_review_prompt(report_text: str, mode: str, catalog: dict[str, Any], facts_text: str | None) -> str:
+    mode_entry = catalog["modes"][mode]
+    required = ", ".join(mode_entry.get("required_semantics", ())) or "none declared"
+    parts = [
+        "# Independent semantic review of an agent-written report",
+        "",
+        "You are reviewing a report written by a different model. Your job is the part a",
+        "structural audit cannot do: check whether the report's claims, visuals, numbers,",
+        "and reasoning are consistent with each other and with the supplied facts. Be",
+        "adversarial about meaning and indifferent to style unless style misleads.",
+        "",
+        f"Primary mode: `{mode}`. Required semantic roles for this mode: {required}.",
+        "",
+        REVIEW_CHECKLIST.rstrip(),
+        "",
+    ]
+    if facts_text is not None:
+        parts += [
+            "## Facts the report was written from",
+            "",
+            "Treat this as the only source of truth. Anything in the report that is not",
+            "recoverable from here was added.",
+            "",
+            "<facts>",
+            facts_text.rstrip("\n"),
+            "</facts>",
+            "",
+        ]
+    else:
+        parts += [
+            "## Facts",
+            "",
+            "No fact sheet was supplied. Skip the fidelity check against sources (item 5)",
+            "except for internal consistency, and say so under CHECKS WITH NO FINDING.",
+            "",
+        ]
+    parts += [
+        "## Report under review",
+        "",
+        "<report>",
+        report_text.rstrip("\n"),
+        "</report>",
+        "",
+    ]
+    return "\n".join(parts)
+
+
+def command_review_prompt(args: argparse.Namespace) -> int:
+    catalog = load_catalog()
+    if args.mode not in catalog["modes"]:
+        raise ReportCtlError(f"Unknown mode: {args.mode}")
+    report_text = _read_text_bounded(Path(args.file), MAX_REPORT_BYTES, "Report file")
+    facts_text = (
+        _read_text_bounded(Path(args.facts), MAX_REPORT_BYTES, "Facts file") if args.facts else None
+    )
+    _safe_print(build_review_prompt(report_text, args.mode, catalog, facts_text), end="", preserve_newlines=True)
+    return 0
 
 
 def validate_report_spec(data: Any) -> list[str]:
@@ -3226,6 +3386,15 @@ def build_parser() -> argparse.ArgumentParser:
     audit_parser.add_argument("--json", action="store_true")
     audit_parser.add_argument("--strict", action="store_true", help="Treat warnings as a failing exit status")
     audit_parser.set_defaults(handler=command_audit)
+
+    review_parser = subparsers.add_parser(
+        "review-prompt",
+        help="Print a cross-model semantic review prompt (meaning checks the audit cannot do)",
+    )
+    review_parser.add_argument("--file", required=True)
+    review_parser.add_argument("--mode", choices=MODE_IDS, required=True)
+    review_parser.add_argument("--facts", help="Fact sheet the report was written from, for fidelity checks")
+    review_parser.set_defaults(handler=command_review_prompt)
 
     validate_parser = subparsers.add_parser("validate-spec", help="Validate a structured report specification")
     validate_parser.add_argument("--file", required=True)

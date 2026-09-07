@@ -97,7 +97,24 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    repository's `docs/AUDIT-CODES.md` lists every code with its trigger and fix. With
    `--json`, the audit payload includes the exact report byte count/SHA-256 and the
    parsed checkpoint intent fingerprint for controller binding.
-7. Manually verify the latest state, scientific or technical claims, numbers,
+7. For a durable artifact, or any report that carries figures, derived numbers, or
+   threshold judgments, run a cross-model semantic review before delivery. The
+   audit checks form; this step checks meaning, and it must be done by a model
+   other than the one that drafted the report (same-model review shares the
+   author's blind spots):
+
+   ```bash
+   python3 <skill-dir>/scripts/reportctl.py review-prompt \
+     --file <draft.md> --mode <mode> [--facts <fact-sheet.md>]
+   # Hand the printed prompt to a second model; fix every confirmed
+   # blocker/major finding; re-run the audit on the revised draft.
+   ```
+
+   The prompt asks for claim-versus-visual consistency, derived-number premises,
+   reasoning validity, unsurfaced source contradictions, fidelity to the facts,
+   the reader contract, and domain-term correctness, and returns a fixed
+   `FINDINGS / VERDICT` structure. Treat `revise` as blocking.
+8. Manually verify the latest state, scientific or technical claims, numbers,
    evidence links, uncertainty, visual interpretation, and user-specified format.
 
 ## Final delivery

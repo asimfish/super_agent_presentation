@@ -1579,6 +1579,81 @@ class ReportCtlTests(unittest.TestCase):
                 self.assertEqual(payload["mode"], expected_mode, payload)
                 self.assertNotIn("benchmarking", payload["modules"], payload)
 
+    def test_audit_flags_long_report_without_section_markers(self) -> None:
+        # A 2,000+ character wall of paragraphs: no headings, no bold lead-ins.
+        body = "结果：λ=2 的 FID 为 2.87，基线 3.42。" + "分析段落继续陈述观察值与边界，不带任何标题。" * 14
+        wall = "\n\n".join([body] * 8)
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(wall + "\n", encoding="utf-8")
+            self.assertGreater(len(wall), 2000)
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+            self.assertIn("under-sectioned", codes)
+            # Bold lead-in sentences count as section markers, so the same text
+            # with two of them is not flagged.
+            marked = wall.replace("结果：", "**结果。** ", 1)
+            marked = marked.replace("结果：", "**协议。** ", 1)
+            report.write_text(marked + "\n", encoding="utf-8")
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+            self.assertNotIn("under-sectioned", codes)
+
+    def test_audit_flags_hedge_saturation_but_not_a_single_boundaries_section(self) -> None:
+        hedged_sentence = "该结果可能成立，但尚未验证，不能据此下结论，也无法排除其他解释；未报告的部分暂无数据。"
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# 结果\n\n结论：λ=2 最低。\n\n## 分析\n\n" + "\n\n".join([hedged_sentence] * 6) + "\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            saturated = [item for item in json.loads(result.stdout)["findings"] if item["code"] == "hedge-saturation"]
+            self.assertEqual(len(saturated), 1, result.stdout)
+            self.assertIn("per 1,000", saturated[0]["message"])
+            # The same hedges stated once inside a long, otherwise plain report stay
+            # under the density threshold.
+            plain = "协议、指标与结果按顺序陈述，数值均来自三种子均值。" * 40
+            report.write_text(
+                "# 结果\n\n结论：λ=2 最低。\n\n## 分析\n\n" + plain + "\n\n## 边界\n\n" + hedged_sentence + "\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
+            self.assertNotIn("hedge-saturation", codes)
+
+    def test_review_prompt_embeds_report_facts_and_checklist(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            facts = Path(temporary) / "facts.md"
+            report.write_text("# 结果\n\nλ=2 的 FID 为 2.87（基线 3.42，改善 16%）。\n", encoding="utf-8")
+            facts.write_text("- λ=2：FID 2.87\n- λ=0：FID 3.42\n", encoding="utf-8")
+            result = run_cli(
+                "review-prompt", "--file", str(report), "--mode", "experiment-report", "--facts", str(facts)
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assert_terminal_safe(result.stdout)
+            for marker in (
+                "Claim versus visual",
+                "Derived numbers and their premises",
+                "Source contradictions",
+                "VERDICT: pass | revise",
+                "Required semantic roles for this mode: question, method, metrics, uncertainty, boundary",
+                "<facts>\n- λ=2：FID 2.87\n- λ=0：FID 3.42\n</facts>",
+                "<report>\n# 结果\n\nλ=2 的 FID 为 2.87（基线 3.42，改善 16%）。\n</report>",
+            ):
+                self.assertIn(marker, result.stdout)
+            # Without a fact sheet the prompt says so instead of inventing one.
+            result = run_cli("review-prompt", "--file", str(report), "--mode", "experiment-report")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("No fact sheet was supplied", result.stdout)
+            self.assertNotIn("<facts>", result.stdout)
+            # Unknown mode is rejected by argparse before any file is read.
+            result = run_cli("review-prompt", "--file", str(report), "--mode", "not-a-mode")
+            self.assertEqual(result.returncode, 2)
+
     def test_audit_readability_warnings_stay_silent_on_a_clean_report(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "report.md"

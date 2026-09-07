@@ -2,6 +2,40 @@
 
 ## Unreleased
 
+- Added `reportctl review-prompt --file --mode [--facts]`, which prints a bounded
+  prompt for a cross-model semantic review: claim-versus-visual consistency,
+  derived-number premises, reasoning validity, unsurfaced source contradictions,
+  fidelity to the fact sheet, the reader contract, and domain-term use, answered
+  in a fixed `FINDINGS / VERDICT` structure. The CLI calls no model; SKILL.md
+  step 7 hands the prompt to a model other than the author. Motivation and
+  evidence: in the 2026-08-31 showcase review three reasoning errors (a Pareto
+  caption claiming a both-axes improvement over a trade-off, a 40% threshold
+  explained as "uniform distribution", an unsurfaced 145-minute-versus-4-minute
+  contradiction) passed a zero-warning audit and were found only by a human. Fed
+  the same three pre-fix drafts through the prompt, gpt-6-astra flagged all three
+  as blockers and found two more genuine errors the human review had missed
+  (`ab-test/review/` in the showcase).
+- Fixed two regressions the framework itself introduced on a chat surface,
+  measured in a same-facts, same-model A/B against a bare prompt: the framework
+  report had no section markers at all and hedged 1.7 times as often. Core
+  contract now requires a heading or bold lead-in at every semantic boundary past
+  about 2,000 characters, and states each boundary once instead of re-hedging;
+  new audit warnings `under-sectioned` (fewer than two section markers past 2,000
+  characters) and `hedge-saturation` (20+ hedge markers above 7 per 1,000
+  characters of body text, with boundary/limitation sections excluded, calibrated
+  so well-edited reports at 1-3 and the bare baseline at about 5 stay silent).
+  The tables module now asks for a delta column whenever rows are compared to a
+  baseline row. Re-run under the revised bundle, the framework report gained
+  seven section markers and delta columns and dropped the saturation warning
+  while keeping its stricter boundaries. Bundle budgets held by tightening
+  wording elsewhere (default experiment bundle 11,994 of 12,000 characters).
+- `table-without-context` now also accepts 以下 / 如下 / below / following as
+  table-introducing words.
+- Recorded what the A/B showed honestly: for a strong model on a one-shot short
+  report from a clean fact sheet, bare prompt and framework are close to a draw;
+  for gpt-5.5 the framework version led with the outcome, used 11 headings
+  instead of 21, and drew one audit finding instead of four. Single runs, no
+  effectiveness claim.
 - Made mode routing robust to natural phrasing. A 25-request probe matrix (every
   mode, English and Chinese, deliberately avoiding the literal signal words)
   routed only 12 correctly: several modes registered only compound phrases
