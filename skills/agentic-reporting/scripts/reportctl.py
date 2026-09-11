@@ -1033,25 +1033,37 @@ def command_route(args: argparse.Namespace) -> int:
     return 0
 
 
+# Protocol prose wraps status words and short terms in code spans (`verified`,
+# `complete`, `state of the art`). Models imitate the formatting of what they read:
+# a weaker model given the raw protocol put 77 numbers in code spans in one
+# report. Strip those word-level spans at bundle time; spans that carry real code
+# (symbols, paths, flags, escapes) stay intact.
+_WORD_CODE_SPAN = re.compile(r"`([A-Za-z][A-Za-z ,'-]{0,39})`")
+
+
+def _plain_protocol(text: str) -> str:
+    return _WORD_CODE_SPAN.sub(r"\1", text)
+
+
 def _bundle_text(plan: dict[str, Any], catalog: dict[str, Any]) -> str:
     sections = [
         "# Routed reporting bundle",
         _plan_markdown(plan, catalog),
-        "\n## Universal contract\n\n" + CORE_PATH.read_text(encoding="utf-8").strip(),
-        "\n## Primary mode protocol\n\n" + _read_reference(plan["mode_reference"]),
+        "\n## Universal contract\n\n" + _plain_protocol(CORE_PATH.read_text(encoding="utf-8").strip()),
+        "\n## Primary mode protocol\n\n" + _plain_protocol(_read_reference(plan["mode_reference"])),
     ]
     if plan.get("profile_reference"):
         sections.append(
             f"\n## Research profile: {plan['profile']}\n\n"
-            + _read_reference(plan["profile_reference"])
+            + _plain_protocol(_read_reference(plan["profile_reference"]))
         )
     if plan.get("surface_reference"):
         sections.append(
             f"\n## Surface guide: {plan['surface']}\n\n"
-            + _read_reference(plan["surface_reference"])
+            + _plain_protocol(_read_reference(plan["surface_reference"]))
         )
     for module_id, relative in zip(plan["modules"], plan["module_references"]):
-        sections.append(f"\n## Display module: {module_id}\n\n" + _read_reference(relative))
+        sections.append(f"\n## Display module: {module_id}\n\n" + _plain_protocol(_read_reference(relative)))
     return "\n\n".join(sections).strip() + "\n"
 
 
@@ -1671,6 +1683,12 @@ def _audit_markdown_impl(
         "incident-update": ("impact", "incident", "outage", "影响", "事故", "中断"),
         "risk-report": ("risk", "exposure", "风险", "暴露"),
         "postmortem": ("incident", "impact", "recovered", "事故", "影响", "恢复"),
+        # A result-first opening often states the finding without the word
+        # "result": "λ=2 lowers FID but costs Recall" is an outcome.
+        "experiment-report": (
+            "improve", "outperform", "trade-off", "tradeoff", "lower", "higher", "best", "worse",
+            "改善", "优于", "劣于", "权衡", "最低", "最高", "恶化", "下降", "提升", "上升",
+        ),
     }
     outcome_terms += opening_terms_by_mode.get(mode, ())
     if mode != "concise-answer" and not any(term.casefold() in first_plain[:700] for term in outcome_terms):
@@ -1719,6 +1737,52 @@ def _audit_markdown_impl(
     hedge_density = hedge_total * 1000 / max(len(body_text), 1)
     if hedge_total >= 20 and hedge_density > 7.0:
         findings.append(_finding("hedge-saturation", "warning", f"{hedge_total} hedging markers in {len(body_text)} characters of body text outside boundary sections ({hedge_density:.1f} per 1,000); state each boundary once in the boundaries section instead of re-hedging every claim in the body"))
+
+    # Three tics that make a report read as machine-written, measured on real
+    # output (same facts, same model, bare prompt versus protocol): the protocol
+    # induced all three, a bare prompt almost none.
+    #
+    # 1. Narrated non-inferences: the author announces which conclusions it is
+    #    declining to draw ("not reported, so it cannot be read as zero"). A
+    #    human writes "not reported" and moves on. Bare prompt: 3 in 3,400
+    #    characters; protocol output: 7.
+    non_inference = re.compile(
+        r"不能据此|不据此|不视为|不能解释为|不作判断|不做估计|不能直接等同|不能单独证明|不应表述为|不构成|也不能|亦不能"
+        r"|\b(?:cannot be (?:taken|read|interpreted) as|should not be read as|does not by itself|is not evidence (?:that|of)|we do not infer|nor can it be)\b",
+        re.IGNORECASE,
+    )
+    non_inference_total = len(non_inference.findall(non_code))
+    if non_inference_total >= 4 and non_inference_total * 1000 / max(len(non_code), 1) > 1.0:
+        findings.append(_finding("non-inference-statement", "warning", f"{non_inference_total} sentences narrate an inference the report declines to make ('cannot be read as', '不能据此', '不视为'); state what is known and stop, the reader did not ask for the list of conclusions you are not drawing"))
+
+    # 2. Numbers and short terms wrapped in code spans in prose. Models imitate
+    #    the formatting of the protocol they were given; a weaker model produced
+    #    77 such spans in one report. Code spans belong to code, commands, paths,
+    #    and identifiers. Spans with a path, flag, or call shape are exempt.
+    code_span_number = 0
+    for match in re.finditer(r"`([^`\n]{1,24})`", non_code):
+        span = match.group(1)
+        if re.search(r"\d", span) and not re.search(r"[/\\]|--|\(\)|\.py|\.json|\.md|^[A-Za-z_]+=[^=]", span) and " " not in span.strip():
+            code_span_number += 1
+    if code_span_number >= 5:
+        findings.append(_finding("code-span-number", "warning", f"{code_span_number} numbers or short values sit in inline code spans; write numbers and metric names in plain prose and keep code spans for code, commands, paths, and identifiers"))
+
+    # 3. Process leakage: wording that only makes sense to someone who watched
+    #    the report being drafted from a fact sheet ("the source material did
+    #    not provide", "as instructed"). Readers of the report never saw a fact
+    #    sheet. High-precision phrases only; "本报告" alone is ordinary Chinese.
+    process_leak = re.compile(
+        r"素材未|素材给定|素材口径|素材所述|所提供的(?:实验)?事实|给定的事实|所给(?:合成|均值|事实|数据|实验)|原始事实|事实中未|按要求(?:不|只|仅)|本(?:报告|简报|通报|文)仅整理"
+        r"|\b(?:the provided facts|the supplied facts|the source material|as instructed|per the instructions|the fact sheet (?:did not|does not))\b",
+        re.IGNORECASE,
+    )
+    leak_lines_seen: set[int] = set()
+    for match in process_leak.finditer(non_code):
+        line = _line_number(non_code_line_starts, match.start())
+        if line in leak_lines_seen:
+            continue
+        leak_lines_seen.add(line)
+        findings.append(_finding("process-leakage", "warning", f"'{match.group(0)}' describes the drafting process, not the subject; the reader never saw a fact sheet, so name the gap plainly ('not measured', '尚无数据') instead", line))
 
     generic_heading_terms = {
         "introduction", "miscellaneous", "misc", "other", "others", "notes",
@@ -2422,6 +2486,99 @@ def build_review_prompt(report_text: str, mode: str, catalog: dict[str, Any], fa
         "",
     ]
     return "\n".join(parts)
+
+
+EDIT_BRIEF = """\
+## Your role
+
+You are the senior author on this team, editing a colleague's complete, fact-checked
+draft before it goes to the reader. You change wording, order, and length. You do
+not change facts. The reader is a busy expert who will act on this report and who
+never saw the notes it was written from.
+
+## What must survive unchanged (fidelity contract)
+
+- Every number with the thing it measures, every unit, percentage, time, version,
+  identifier, ticket, name, command, path, and code span: copied verbatim.
+- Every relation at its original strength: suspected stays suspected, may stays
+  may, observed stays observed, not verified stays not verified. Never strengthen,
+  never weaken.
+- Every scope qualifier stays attached to its claim (which split, which seeds,
+  which window). Negation, tense, direction, and abstraction level are intact.
+- Gaps stay gaps: a missing number or owner is named as missing, never filled.
+- Markdown structure: heading levels, table cells, list structure, image links
+  stay as they are unless an instruction below says otherwise.
+- Nothing new: no facts, examples, mechanisms, causes, analogies, or recommendations
+  the draft did not contain.
+
+## What to cut or rewrite
+
+1. Process leakage: any wording that only makes sense to someone who watched the
+   draft being written ("the source material did not provide", "as instructed",
+   "所给", "素材未提供", "本报告仅整理"). Name the gap from the reader's side
+   instead ("not measured", "尚无数据", "待确认").
+2. Narrated non-inferences: sentences that announce which conclusions are not
+   being drawn ("not reported, so it cannot be read as zero or as untested").
+   Keep the fact, delete the commentary.
+3. Repeated hedging: each boundary is stated once, in the boundaries section or
+   beside the one claim it limits. Delete every restatement.
+4. Definitions of things this reader already knows (a metric the field uses
+   daily, a standard protocol).
+5. Exhaustive absence lists: replace a catalogue of missing items with the one or
+   two gaps that change what the reader would do; move the rest to the boundaries
+   section in one sentence.
+6. Decision trees where a position belongs: when the draft offers "if A then X; if
+   B then Y", and the mode asks for a recommendation, state the recommendation and
+   the condition that would flip it.
+7. Formatting imitation: numbers, metric names, and status words in code spans;
+   bold on every other phrase; a table for two data points; emoji as headings.
+8. Machine cadence: openers and closers that perform ("综上所述", "值得注意的是",
+   "In conclusion"), connective clusters (然而 / 此外 / 与此同时 stacked in one
+   paragraph), synonym rotation to dodge repeating a precise term, sentences over
+   40 Chinese characters or 30 English words that join three clauses with
+   semicolons and dashes.
+
+## What to keep
+
+Section markers past about 2,000 characters (headings or bold lead-in sentences);
+the outcome in the first paragraph; tables and figures; the boundaries section;
+precise technical terms even when repeated; the author's actual conclusions.
+
+## Output
+
+The complete edited report only, in the language of the draft, starting at its
+first line. No preamble, no notes on what you changed, no fences around the whole
+document.
+"""
+
+
+def build_edit_prompt(report_text: str, mode: str, catalog: dict[str, Any]) -> str:
+    mode_entry = catalog["modes"][mode]
+    summary = mode_entry.get("summary", "")
+    parts = [
+        "# Editing pass on an agent-written report",
+        "",
+        f"Primary mode: `{mode}`. {summary}".rstrip(),
+        "",
+        EDIT_BRIEF.rstrip(),
+        "",
+        "## Draft to edit",
+        "",
+        "<draft>",
+        report_text.rstrip("\n"),
+        "</draft>",
+        "",
+    ]
+    return "\n".join(parts)
+
+
+def command_edit_prompt(args: argparse.Namespace) -> int:
+    catalog = load_catalog()
+    if args.mode not in catalog["modes"]:
+        raise ReportCtlError(f"Unknown mode: {args.mode}")
+    report_text = _read_text_bounded(Path(args.file), MAX_REPORT_BYTES, "Report file")
+    _safe_print(build_edit_prompt(report_text, args.mode, catalog), end="", preserve_newlines=True)
+    return 0
 
 
 def command_review_prompt(args: argparse.Namespace) -> int:
@@ -3355,7 +3512,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     bundle_parser = subparsers.add_parser("bundle", help="Print the selected bounded reporting context")
     add_route_arguments(bundle_parser)
-    bundle_parser.add_argument("--max-chars", type=int, default=16000)
+    bundle_parser.add_argument("--max-chars", type=int, default=20000)
     bundle_parser.set_defaults(handler=command_bundle)
 
     checkpoint_parser = subparsers.add_parser("checkpoint", help="Save a compact long-task reporting manifest")
@@ -3395,6 +3552,14 @@ def build_parser() -> argparse.ArgumentParser:
     review_parser.add_argument("--mode", choices=MODE_IDS, required=True)
     review_parser.add_argument("--facts", help="Fact sheet the report was written from, for fidelity checks")
     review_parser.set_defaults(handler=command_review_prompt)
+
+    edit_parser = subparsers.add_parser(
+        "edit-prompt",
+        help="Print a cross-model editing prompt (cut machine-written form, keep every fact)",
+    )
+    edit_parser.add_argument("--file", required=True)
+    edit_parser.add_argument("--mode", choices=MODE_IDS, required=True)
+    edit_parser.set_defaults(handler=command_edit_prompt)
 
     validate_parser = subparsers.add_parser("validate-spec", help="Validate a structured report specification")
     validate_parser.add_argument("--file", required=True)

@@ -161,6 +161,7 @@ reportctl.py checkpoint --checkpoint FILE --output FILE [matching route assertio
 reportctl.py audit --file FILE --mode MODE [--json] [--strict]
 reportctl.py audit --file FILE --checkpoint FILE [--mode SAME_MODE] [--json] [--strict]
 reportctl.py review-prompt --file FILE --mode MODE [--facts FILE]
+reportctl.py edit-prompt --file FILE --mode MODE
 reportctl.py validate-spec --file FILE
 reportctl.py render --file FILE [--output FILE]
 reportctl.py build-dist [--output DIR] [--force]
@@ -176,6 +177,16 @@ author, because same-model review shares the author's blind spots. It exists
 because the structural audit provably cannot see these errors: in the 2026-08-31
 showcase review, three reasoning errors passed a zero-warning audit and were found
 only by a human reading the report against its figures.
+
+`edit-prompt` prints the complementary editing prompt: a senior-author persona, a
+fidelity contract (every number, unit, entity, and boundary preserved), and a cut
+list of the eight machine-written forms measured in the 2026-09 A/B (process
+leakage, narrated non-inferences, repeated hedging, definitions the audience
+knows, exhaustive absence lists, if-then trees in place of a position, protocol
+formatting imitated as code spans, and list-shaped cadence). The draft is edited
+by a second model, then re-audited. The command exists because half of those
+forms were induced by the protocol itself; the contract rewrite removed the
+cause, and `edit-prompt` removes what still leaks through.
 
 All runtime commands use Python's standard library. Without a checkpoint, explicit
 route fields select values. A caller may select one `--profile`; `auto` derives it

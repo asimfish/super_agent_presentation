@@ -128,10 +128,10 @@ class ReportCtlTests(unittest.TestCase):
             "--module",
             "tables",
             "--max-chars",
-            "16000",
+            "20000",
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertLessEqual(len(result.stdout), 16000)
+        self.assertLessEqual(len(result.stdout), 20000)
         self.assertIn("Research profile: reinforcement-learning", result.stdout)
         self.assertNotIn("Research profile: embodied-ai", result.stdout)
         self.assertNotIn("Research profile: world-models", result.stdout)
@@ -162,7 +162,7 @@ class ReportCtlTests(unittest.TestCase):
             "--surface",
             "slide",
             "--max-chars",
-            "16000",
+            "20000",
         )
         self.assertEqual(bundled.returncode, 0, bundled.stdout + bundled.stderr)
         self.assertIn("Surface guide: slide", bundled.stdout)
@@ -273,10 +273,10 @@ class ReportCtlTests(unittest.TestCase):
             "--module",
             "tables",
             "--max-chars",
-            "16000",
+            "20000",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertLessEqual(len(result.stdout), 16000)
+        self.assertLessEqual(len(result.stdout), 20000)
         self.assertIn("Primary mode: `experiment-report`", result.stdout)
         self.assertIn("Display module: tables", result.stdout)
         self.assertNotIn("Display module: visuals", result.stdout)
@@ -306,7 +306,19 @@ class ReportCtlTests(unittest.TestCase):
         self.assertEqual(explicit.returncode, 0, explicit.stderr)
         self.assertEqual(json.loads(explicit.stdout)["modules"], ["conclusions"])
 
-    def test_default_experiment_bundle_stays_under_twelve_thousand_characters(self) -> None:
+    def test_every_mode_default_bundle_fits_the_default_retrieval_guard(self) -> None:
+        # Regression guard for contract growth: every mode's default route must
+        # still bundle under the CLI default --max-chars without the caller
+        # raising it. risk-report silently crossed the previous 16,000 guard
+        # after upstream protocol growth; nothing caught it because only a few
+        # modes were measured.
+        listed = json.loads(run_cli("list", "--json").stdout)
+        for mode in listed["modes"]:
+            result = run_cli("bundle", "--task", "Context-budget measurement.", "--mode", mode["id"])
+            self.assertEqual(result.returncode, 0, f"{mode['id']}: {result.stderr}")
+            self.assertLessEqual(len(result.stdout), 20000, mode["id"])
+
+    def test_default_experiment_bundle_stays_under_thirteen_and_a_half_thousand_characters(self) -> None:
         result = run_cli(
             "bundle",
             "--task",
@@ -314,10 +326,10 @@ class ReportCtlTests(unittest.TestCase):
             "--mode",
             "experiment-report",
             "--max-chars",
-            "12000",
+            "13500",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertLessEqual(len(result.stdout), 12000)
+        self.assertLessEqual(len(result.stdout), 13500)
         self.assertIn("Display module: tables", result.stdout)
         self.assertNotIn("Display module: conclusions", result.stdout)
 
@@ -1205,7 +1217,7 @@ class ReportCtlTests(unittest.TestCase):
             self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
             bundled = run_cli("bundle", "--checkpoint", str(checkpoint))
             self.assertEqual(bundled.returncode, 0, bundled.stdout + bundled.stderr)
-            self.assertLessEqual(len(bundled.stdout), 16_000)
+            self.assertLessEqual(len(bundled.stdout), 20_000)
 
     def test_checkpoint_writer_rejects_unreadable_task_and_audience_values(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1623,6 +1635,97 @@ class ReportCtlTests(unittest.TestCase):
             result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
             codes = {item["code"] for item in json.loads(result.stdout)["findings"]}
             self.assertNotIn("hedge-saturation", codes)
+
+    def test_audit_flags_narrated_non_inferences_but_not_plain_gaps(self) -> None:
+        narrated = (
+            "# 结果\n\n结论：λ=2 最低。\n\n"
+            "Recall 未报告，不能据此判断是否测量过，也不能视为零。"
+            "ImageNet 的 ± 含义未说明，不能解释为三种子标准差，也不能直接等同于 CIFAR-10 口径。"
+            "单一耗时汇总值不构成各配置的成本比较。\n"
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(narrated, encoding="utf-8")
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+            self.assertIn("non-inference-statement", codes)
+            report.write_text(
+                "# 结果\n\n结论：λ=2 最低。\n\nRecall 未报告。ImageNet 的 ± 含义未说明。耗时只有一个汇总值。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+            self.assertNotIn("non-inference-statement", codes)
+
+    def test_audit_flags_numbers_in_code_spans_but_spares_real_code(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# 结果\n\n结论：`λ=2` 的 FID 为 `2.87±0.03`，基线 `3.42±0.04`，改善 `16%`；Recall `0.58`。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+            self.assertIn("code-span-number", codes)
+            report.write_text(
+                "# 结果\n\n结论：λ=2 的 FID 为 2.87±0.03。复现：`python3 train.py --seed 1`、`configs/v2.json`、"
+                "`runs/2026-08-28/`、`CUDA_VISIBLE_DEVICES=0`、`--epochs 100`。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "experiment-report", "--json")
+            codes = [item["code"] for item in json.loads(result.stdout)["findings"]]
+            self.assertNotIn("code-span-number", codes)
+
+    def test_audit_flags_process_leakage_once_per_line(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "report.md"
+            report.write_text(
+                "# 状态\n\n状态：完成。\n\n"
+                "- 素材未提供修复方案细节，素材给定的时间为 14:00。\n"
+                "- The provided facts do not include a rollback owner.\n"
+                "- 本报告为无责复盘，聚焦系统性缺口。\n",
+                encoding="utf-8",
+            )
+            result = run_cli("audit", "--file", str(report), "--mode", "status-update", "--json")
+            self.assertNotIn("Traceback", result.stderr)
+            leaks = [item for item in json.loads(result.stdout)["findings"] if item["code"] == "process-leakage"]
+            self.assertEqual(len(leaks), 2, leaks)
+            self.assertEqual(sorted(item["line"] for item in leaks), [5, 6])
+
+    def test_bundle_strips_word_level_code_spans_but_keeps_real_code(self) -> None:
+        result = run_cli("bundle", "--task", "Report the five-seed ablation", "--mode", "experiment-report")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        # Status words that the protocol source wraps in backticks arrive as plain prose.
+        self.assertNotIn("`complete`", result.stdout)
+        self.assertNotIn("`state of the art`", result.stdout)
+        self.assertIn("Use complete only when", result.stdout)
+        # Real code stays code: flags, escapes, paths, the ± symbol.
+        for kept in ("`--mode`", "`\\![...]`", "`&lt;img ...>`", "`modes/experiment-report.md`"):
+            self.assertIn(kept, result.stdout)
+        self.assertIn("not a model for the report's formatting", result.stdout)
+
+    def test_edit_prompt_embeds_draft_fidelity_contract_and_cut_list(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "draft.md"
+            report.write_text("# 结果\n\n素材未提供 Recall，不能视为零。λ=2 的 FID 为 2.87。\n", encoding="utf-8")
+            result = run_cli("edit-prompt", "--file", str(report), "--mode", "experiment-report")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assert_terminal_safe(result.stdout)
+            for marker in (
+                "Primary mode: `experiment-report`",
+                "fidelity contract",
+                "Process leakage",
+                "Narrated non-inferences",
+                "Decision trees where a position belongs",
+                "Formatting imitation",
+                "The complete edited report only",
+                "<draft>\n# 结果\n\n素材未提供 Recall，不能视为零。λ=2 的 FID 为 2.87。\n</draft>",
+            ):
+                self.assertIn(marker, result.stdout)
+            result = run_cli("edit-prompt", "--file", str(report), "--mode", "not-a-mode")
+            self.assertEqual(result.returncode, 2)
 
     def test_review_prompt_embeds_report_facts_and_checklist(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

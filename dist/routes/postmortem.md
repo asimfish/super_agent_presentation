@@ -36,44 +36,61 @@ one-sentence answer.
 
 1. Lead with the answer, status, finding, or decision. Do not make the reader
    reconstruct it from a chronology of work.
-2. Give each visible section one job. Past about 2,000 characters, mark every
+2. Write for the reader's next decision, not for completeness. Omit what this
+   reader already knows: do not define a metric an expert audience uses daily,
+   do not list every absent detail when one sentence names the gap that matters.
+   What a report leaves out shows judgment as much as what it keeps.
+3. Give each visible section one job. Past about 2,000 characters, mark every
    semantic-role boundary with a heading or a bold lead-in sentence on any
    surface, chat included; omit that ceremony for bounded answers.
-3. Pair each consequential claim with nearby evidence or an unambiguous evidence
+4. Pair each consequential claim with nearby evidence or an unambiguous evidence
    reference. Put detailed logs and large supporting data outside the main reading
    path.
-4. State the comparison basis, scope, and time boundary before relying on them.
+5. State the comparison basis, scope, and time boundary before relying on them.
    State each boundary once, in its place; do not re-hedge every sentence.
-5. End with an action only when action is useful. Do not add generic offers or
+6. State what is known and stop. Do not narrate the inferences you decline to
+   make: "Recall was not reported" is complete; "Recall was not reported, so it
+   cannot be read as zero or as untested" is commentary the reader did not need.
+7. When the mode calls for a recommendation or decision, give one and name the
+   condition that would flip it. Do not hand the reader a tree of if-then
+   branches in place of a position.
+8. End with an action only when action is useful. Do not add generic offers or
    recommendations unsupported by the work.
 
 ## Truth and status boundaries
 
-- Distinguish `verified`, `observed`, `inferred`, `suspected`, `recommended`, and
-  `unknown` when the distinction changes interpretation.
-- Use `complete` only when the requested outcome and its material verification are
+These are working rules for the author, not sentences for the report.
+
+- Distinguish verified, observed, inferred, suspected, recommended, and unknown
+  when the distinction changes interpretation.
+- Use complete only when the requested outcome and its material verification are
   complete. A rollback, partial build, passing unit suite, or drafted file does
   not erase a later failure or unmet acceptance criterion.
-- Use `blocked` when progress requires a missing authority, dependency, credential,
+- Use blocked when progress requires a missing authority, dependency, credential,
   external state change, or user decision. Name the blocker and the smallest
   unblock action.
-- Use `partial` or `incomplete` when useful work exists but required work remains.
-- `zero`, `missing`, `not measured`, `not run`, and `not applicable` are different
-  values.
+- Use partial or incomplete when useful work exists but required work remains.
+- Zero, missing, not measured, not run, and not applicable are different values.
 - Never invent a source, citation, number, test result, file, comparison, cause,
   owner, deadline, or completion claim.
 
 ## Quantitative claims
 
-When material, provide the metric definition, direction, unit, denominator or
-population, time window, comparison baseline, number of independent observations,
-and uncertainty definition. Do not imply statistical, causal, practical, or
-state-of-the-art superiority from a larger displayed number alone.
+The reader must be able to recover, for each material number, the metric's
+direction, unit, denominator or population, time window, comparison baseline,
+number of independent observations, and what any interval means. Supply these
+only where the reader could not otherwise recover them: an arrow in a table
+header or one note beside the first table usually covers all of them. Do not
+imply statistical, causal, practical, or state-of-the-art superiority from a
+larger displayed number alone.
 
 ## Surface and proportionality
 
 - Use chat for direct and compact handoffs; use a durable artifact when the user
   requests one or the report must stand alone.
+- This protocol's own Markdown is not a model for the report's formatting. Write
+  numbers, metric names, and status words in plain prose; reserve code spans for
+  code, commands, paths, and identifiers.
 - Prefer a single-column reading path; use a dashboard grid only for monitoring
   that benefits from parallel scanning.
 - Use tables for exact lookup and audit detail, visuals for shape or relationship,
@@ -87,22 +104,18 @@ state-of-the-art superiority from a larger displayed number alone.
 
 ## Accessibility and safe presentation
 
-- Give meaningful images concise alternative text and complex visuals an adjacent
-  textual account of the essential data or trend.
-- Emit auditable Markdown images at column zero as independent, single-line,
-  top-level paragraphs bounded by blank lines or document boundaries; use
-  percent-encoded targets when a path contains spaces or parentheses.
-- Put auditable report images before raw triple-backtick/triple-tilde examples or
-  paragraph-sensitive raw HTML tags; required credit stops at the first such
-  marker, so link later logs instead. URI autolinks are not HTML markers.
-- In literal examples, escape a Markdown image's leading bang (`\![...]`) and
-  entity-encode a raw image tag (`&lt;img ...>`); the gate treats raw markers
-  conservatively even inside code or comments.
-- Do not use color, emoji, position, or typography as the only carrier of status or
-  meaning.
+- Give meaningful images concise alt text and complex visuals an adjacent textual
+  account of the essential data or trend.
+- Emit report images as standalone Markdown image paragraphs at column zero (blank
+  lines around, one per line, percent-encode spaces and parentheses in targets),
+  placed before any raw fenced-code example or raw HTML tag: the audit credits
+  images only up to the first such marker; URI autolinks are not markers. In
+  literal examples escape the image bang (`\![...]`) and entity-encode raw tags
+  (`&lt;img ...>`).
+- Never let color, emoji, position, or typography be the only carrier of meaning.
 - Keep table headers explicit and visual labels, units, legends, and scales
-  readable in the delivered surface.
-- Link to inspectable artifacts when safe. Never expose secrets, personal data,
+  readable on the delivered surface.
+- Link inspectable artifacts when safe; never expose secrets, personal data,
   private logs, or exploit details in a reader-facing report.
 
 ## Final boundary check
@@ -154,7 +167,7 @@ for a live incident update.
 
 ## Action quality
 
-Avoid vague actions such as `improve`, `be careful`, or `train everyone` without an
+Avoid vague actions such as improve, be careful, or train everyone without an
 observable end state. Prefer controls that prevent recurrence, bound blast radius,
 shorten detection, accelerate mitigation, or improve verification. Give every
 accepted action a single accountable owner or role and a tracking mechanism.
