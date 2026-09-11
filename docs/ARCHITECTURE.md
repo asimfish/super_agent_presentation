@@ -162,6 +162,8 @@ reportctl.py audit --file FILE --mode MODE [--json] [--strict]
 reportctl.py audit --file FILE --checkpoint FILE [--mode SAME_MODE] [--json] [--strict]
 reportctl.py review-prompt --file FILE --mode MODE [--facts FILE]
 reportctl.py edit-prompt --file FILE --mode MODE
+reportctl.py exemplar --list [--json]
+reportctl.py exemplar MODE
 reportctl.py validate-spec --file FILE
 reportctl.py render --file FILE [--output FILE]
 reportctl.py build-dist [--output DIR] [--force]
@@ -187,6 +189,18 @@ formatting imitated as code spans, and list-shaped cadence). The draft is edited
 by a second model, then re-audited. The command exists because half of those
 forms were induced by the protocol itself; the contract rewrite removed the
 cause, and `edit-prompt` removes what still leaks through.
+
+`exemplar` prints one finished passage in the target register for a mode
+(`assets/exemplars/<mode>.md`: status-update, experiment-report, decision-brief,
+research-idea), in English and Chinese, each under about 900 characters, with a
+short note on what the passage does and what it leaves out. The route plan and
+`list` point to it only for modes that ship one. Exemplars are retrieved one at a
+time like templates and are never folded into the protocol bundle, so the budget
+is unaffected; a test audits every passage under its own mode and allows only the
+whole-report keyword check `missing-semantic` to fire. They exist because rules
+describe a form and a model imitates what it is shown: the same A/B that found
+protocol Markdown copied into reports as code spans is the argument for showing
+the intended form directly.
 
 All runtime commands use Python's standard library. Without a checkpoint, explicit
 route fields select values. A caller may select one `--profile`; `auto` derives it

@@ -121,7 +121,11 @@ user-requested format (JSON, three sentences, a paper section) always wins.
   fidelity contract and the eight-item cut list. Re-run: narrated non-inferences
   11 to 1, code spans 77 to 0, report 25% shorter; the edited draft kept every
   number and audited clean. Default bundle budget 16,000 to 20,000 after a mode
-  was found silently over the old limit.
+  was found silently over the old limit. Same day: **finished exemplars**
+  (`reportctl exemplar MODE`) for status-update, experiment-report,
+  decision-brief, and research-idea — a passage in the target register, EN and
+  CN, read before the first sentence; rules describe the form, the exemplar
+  shows it. Each passage is audited under its own mode in the test suite.
 - **2026-09-07** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   🔍 **Cross-model semantic review** (`reportctl review-prompt`). The audit
   checks form; this step checks meaning: claim-versus-visual consistency,

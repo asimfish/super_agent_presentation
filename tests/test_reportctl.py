@@ -1727,6 +1727,62 @@ class ReportCtlTests(unittest.TestCase):
             result = run_cli("edit-prompt", "--file", str(report), "--mode", "not-a-mode")
             self.assertEqual(result.returncode, 2)
 
+    EXEMPLAR_MODES = ("status-update", "experiment-report", "decision-brief", "research-idea")
+
+    def test_exemplar_lists_and_prints_the_four_primary_mode_passages(self) -> None:
+        listed = run_cli("exemplar", "--list", "--json")
+        self.assertEqual(listed.returncode, 0, listed.stdout + listed.stderr)
+        payload = json.loads(listed.stdout)
+        self.assertEqual(payload["schema_version"], 1)
+        self.assertEqual(tuple(payload["exemplars"]), self.EXEMPLAR_MODES)
+        for mode in self.EXEMPLAR_MODES:
+            result = run_cli("exemplar", mode)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assert_terminal_safe(result.stdout)
+            self.assertTrue(result.stdout.startswith(f"# Exemplar: {mode}\n"))
+            self.assertIn("\n## English\n", result.stdout)
+            self.assertIn("\n## 中文\n", result.stdout)
+            # A passage, not a report: short enough to read before drafting.
+            self.assertLess(len(result.stdout), 2_600, mode)
+        missing = run_cli("exemplar", "postmortem")
+        self.assertEqual(missing.returncode, 2)
+        self.assertIn("No exemplar for mode postmortem", missing.stderr)
+        self.assertEqual(run_cli("exemplar", "not-a-mode").returncode, 2)
+        self.assertEqual(run_cli("exemplar", "--list", "status-update").returncode, 2)
+
+    def test_exemplar_passages_pass_their_own_mode_audit(self) -> None:
+        # Each language passage is audited alone so the file header does not
+        # count as the report's opening. `missing-semantic` is a keyword check for
+        # whole reports and is the only finding a finished passage may carry.
+        with tempfile.TemporaryDirectory() as temporary:
+            for mode in self.EXEMPLAR_MODES:
+                text = run_cli("exemplar", mode).stdout
+                for language in ("English", "中文"):
+                    match = re.search(rf"^## {language}\n(.*?)(?=^## |\Z)", text, re.S | re.M)
+                    self.assertIsNotNone(match, f"{mode} lacks a {language} passage")
+                    passage = Path(temporary) / f"{mode}-{language}.md"
+                    passage.write_text(match.group(1).strip() + "\n", encoding="utf-8")
+                    result = run_cli("audit", "--file", str(passage), "--mode", mode, "--json")
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    codes = sorted(
+                        {item["code"] for item in json.loads(result.stdout)["findings"]} - {"missing-semantic"}
+                    )
+                    self.assertEqual(codes, [], f"{mode} {language}: {codes}")
+
+    def test_route_and_list_point_to_an_exemplar_only_when_one_exists(self) -> None:
+        with_exemplar = run_cli("route", "--task", "Write the EGS experiment report for the team")
+        self.assertEqual(with_exemplar.returncode, 0, with_exemplar.stdout + with_exemplar.stderr)
+        self.assertIn("Exemplar: run `reportctl exemplar experiment-report` before drafting", with_exemplar.stdout)
+        without = run_cli("route", "--task", "Write the postmortem for last night's outage")
+        self.assertEqual(without.returncode, 0, without.stdout + without.stderr)
+        self.assertIn("Primary mode: `postmortem`", without.stdout)
+        self.assertNotIn("Exemplar:", without.stdout)
+        listed = run_cli("list")
+        self.assertIn("Finished exemplars (read one before drafting", listed.stdout)
+        self.assertEqual(
+            json.loads(run_cli("list", "--json").stdout)["exemplars"], list(self.EXEMPLAR_MODES)
+        )
+
     def test_review_prompt_embeds_report_facts_and_checklist(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             report = Path(temporary) / "report.md"

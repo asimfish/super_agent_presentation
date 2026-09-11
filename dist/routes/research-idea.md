@@ -8,6 +8,7 @@ Recommended exact templates: research-idea
 Required semantics: question, method, evidence, boundary, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/research-idea.md`
+Exemplar: run `reportctl exemplar research-idea` before drafting
 
 
 ## Universal contract

@@ -8,6 +8,7 @@ Recommended exact templates: experiment-report-detailed
 Required semantics: question, method, metrics, uncertainty, boundary
 Must show: none specified
 Read: `references/core-contract.md`, `modes/experiment-report.md`
+Exemplar: run `reportctl exemplar experiment-report` before drafting
 
 
 ## Universal contract
