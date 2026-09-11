@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Added finished exemplars for the four most-used modes (status-update,
+  experiment-report, decision-brief, research-idea) and `reportctl exemplar
+  [--list] [MODE]` to retrieve one. Each is a passage in the target register,
+  English and Chinese, under about 900 characters, with a note on what it does
+  and what it leaves out; numbers are illustrative. The route plan and `list`
+  point to the exemplar only for modes that ship one; SKILL.md step 5 reads it
+  before the first sentence. Exemplars are never folded into the protocol
+  bundle. A test audits every passage under its own mode and allows only the
+  whole-report keyword check `missing-semantic`. Writing them exposed two gaps
+  in `outcome-not-first`: an experiment opening that says a metric "falls" or
+  "降到", and a status opening that says "at risk" or "有风险", were flagged as
+  not leading with the outcome; both term lists were widened.
 - Rewrote the core contract around the reader's next decision instead of
   completeness, after measuring eight machine-written forms in the same-facts A/B
   and tracing half of them to the protocol itself. With the old contract a

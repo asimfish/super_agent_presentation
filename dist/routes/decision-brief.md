@@ -8,6 +8,7 @@ Recommended exact templates: executive-onepager
 Required semantics: decision, evidence, options, boundary, next_action
 Must show: none specified
 Read: `references/core-contract.md`, `modes/decision-brief.md`
+Exemplar: run `reportctl exemplar decision-brief` before drafting
 
 
 ## Universal contract

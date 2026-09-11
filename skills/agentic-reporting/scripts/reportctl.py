@@ -30,6 +30,9 @@ __version__ = "0.7.0"
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 REFERENCE_DIR = SKILL_DIR / "references"
+# Finished passages that show the target register for a mode. Retrieved one at a
+# time like templates; never bundled into the protocol pack.
+EXEMPLAR_DIR = SKILL_DIR / "assets" / "exemplars"
 CATALOG_PATH = REFERENCE_DIR / "protocols.json"
 CORE_PATH = REFERENCE_DIR / "core-contract.md"
 REPO_ROOT = SKILL_DIR.parent.parent
@@ -980,6 +983,11 @@ def _plan_markdown(plan: dict[str, Any], catalog: dict[str, Any]) -> str:
                 else []
             ),
             *(f"Read: `{item}`" for item in plan["module_references"]),
+            *(
+                [f"Exemplar: run `reportctl exemplar {plan['mode']}` before drafting"]
+                if plan["mode"] in exemplar_modes()
+                else []
+            ),
         ]
     )
 
@@ -1003,6 +1011,7 @@ def command_list(args: argparse.Namespace) -> int:
             for key in TEMPLATE_IDS
         ],
         "surfaces": list(SURFACES),
+        "exemplars": list(exemplar_modes()),
     }
     if args.json:
         print(_safe_json_dumps(payload))
@@ -1020,6 +1029,12 @@ def command_list(args: argparse.Namespace) -> int:
         for item in payload["templates"]:
             _safe_print(f"  {item['id']:<28} {item['summary']}")
         _safe_print("\nSurfaces: " + ", ".join(SURFACES), preserve_newlines=True)
+        if payload["exemplars"]:
+            _safe_print(
+                "\nFinished exemplars (read one before drafting; `exemplar MODE`): "
+                + ", ".join(payload["exemplars"]),
+                preserve_newlines=True,
+            )
     return 0
 
 
@@ -1217,6 +1232,47 @@ def command_template(args: argparse.Namespace) -> int:
         _safe_print(f"Copied exact template {args.template_id}: {args.output}")
     else:
         _safe_print(content, end="", preserve_newlines=True)
+    return 0
+
+
+def exemplar_modes() -> tuple[str, ...]:
+    """Modes that ship a finished exemplar passage, in catalog order."""
+    if not EXEMPLAR_DIR.is_dir():
+        return ()
+    return tuple(mode for mode in MODE_IDS if (EXEMPLAR_DIR / f"{mode}.md").is_file())
+
+
+def _exemplar_path(mode: str) -> Path:
+    if mode not in MODE_IDS:
+        raise ReportCtlError(f"Unknown mode: {mode}")
+    candidate = EXEMPLAR_DIR / f"{mode}.md"
+    available = ", ".join(exemplar_modes()) or "none"
+    if not candidate.is_file():
+        raise ReportCtlError(f"No exemplar for mode {mode}; available: {available}")
+    _reject_symlink_chain(candidate, "exemplar asset")
+    path = candidate.resolve(strict=True)
+    if SKILL_DIR.resolve() not in path.parents:
+        raise ReportCtlError(f"Invalid exemplar asset path for {mode}")
+    return path
+
+
+def command_exemplar(args: argparse.Namespace) -> int:
+    if args.list:
+        if args.mode:
+            raise ReportCtlError("--list cannot be combined with a mode")
+        modes = exemplar_modes()
+        if args.json:
+            print(_safe_json_dumps({"schema_version": 1, "exemplars": list(modes)}))
+        else:
+            for mode in modes:
+                _safe_print(mode)
+        return 0
+    if args.json:
+        raise ReportCtlError("--json is supported only with --list")
+    if not args.mode:
+        raise ReportCtlError("Provide a mode or pass --list")
+    content = _exemplar_path(args.mode).read_text(encoding="utf-8")
+    _safe_print(content, end="", preserve_newlines=True)
     return 0
 
 
@@ -1687,7 +1743,15 @@ def _audit_markdown_impl(
         # "result": "λ=2 lowers FID but costs Recall" is an outcome.
         "experiment-report": (
             "improve", "outperform", "trade-off", "tradeoff", "lower", "higher", "best", "worse",
-            "改善", "优于", "劣于", "权衡", "最低", "最高", "恶化", "下降", "提升", "上升",
+            "falls", "drops", "rises", "cost",
+            "改善", "优于", "劣于", "权衡", "最低", "最高", "最好", "最差", "恶化", "下降", "提升",
+            "上升", "降到", "升到", "降至", "升至",
+        ),
+        # A status opening usually names the state, not the word "status":
+        # "Retrieval v2 is at risk" or "检索 v2 有风险".
+        "status-update": (
+            "at risk", "on track", "off track", "delayed", "slipping", "shipped", "done",
+            "有风险", "按计划", "正常", "延期", "推迟", "已交付", "已上线",
         ),
     }
     outcome_terms += opening_terms_by_mode.get(mode, ())
@@ -3560,6 +3624,15 @@ def build_parser() -> argparse.ArgumentParser:
     edit_parser.add_argument("--file", required=True)
     edit_parser.add_argument("--mode", choices=MODE_IDS, required=True)
     edit_parser.set_defaults(handler=command_edit_prompt)
+
+    exemplar_parser = subparsers.add_parser(
+        "exemplar",
+        help="Print one finished exemplar passage showing the register for a mode",
+    )
+    exemplar_parser.add_argument("mode", nargs="?", choices=MODE_IDS)
+    exemplar_parser.add_argument("--list", action="store_true")
+    exemplar_parser.add_argument("--json", action="store_true")
+    exemplar_parser.set_defaults(handler=command_exemplar)
 
     validate_parser = subparsers.add_parser("validate-spec", help="Validate a structured report specification")
     validate_parser.add_argument("--file", required=True)

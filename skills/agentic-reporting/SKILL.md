@@ -62,6 +62,17 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    and PDF versions unless requested. A copied template is a starting artifact,
    not evidence that its placeholders, visuals, or claims are correct.
 
+   When the route names an exemplar, read it before writing the first sentence:
+
+   ```bash
+   python3 <skill-dir>/scripts/reportctl.py exemplar <mode>
+   ```
+
+   An exemplar is a finished passage in the target register, in English and
+   Chinese, with a note on what it does and what it leaves out. Match its
+   register, not its content; its numbers are illustrative and must not appear
+   in the report. Rules describe the form; the exemplar shows it.
+
    After the content is complete, give the prose an editing pass. For a report
    other people will read, hand it to a model other than the author:
 
