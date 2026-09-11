@@ -107,6 +107,21 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 
 ## 2. 📢 What's New
 
+- **2026-09-12** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  ✍️ **Human-form contract and cross-model editing** (`reportctl edit-prompt`).
+  Measured eight machine-written forms in the same-facts A/B and found half of
+  them induced by the protocol itself: a gpt-6-astra draft narrated eleven
+  inferences it declined to make (bare prompt: three); a gpt-5.5 draft wrapped
+  77 numbers in code spans because the protocol's own Markdown does. The core
+  contract is rewritten around the reader's next decision (omit what the reader
+  knows, state what is known and stop, give one position and the condition that
+  flips it), `bundle` strips the protocol's word-level code spans, and three
+  audits catch what survives (`non-inference-statement`, `code-span-number`,
+  `process-leakage`). New `edit-prompt` hands the draft to a second model with a
+  fidelity contract and the eight-item cut list. Re-run: narrated non-inferences
+  11 to 1, code spans 77 to 0, report 25% shorter; the edited draft kept every
+  number and audited clean. Default bundle budget 16,000 to 20,000 after a mode
+  was found silently over the old limit.
 - **2026-09-07** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   🔍 **Cross-model semantic review** (`reportctl review-prompt`). The audit
   checks form; this step checks meaning: claim-versus-visual consistency,

@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+- Rewrote the core contract around the reader's next decision instead of
+  completeness, after measuring eight machine-written forms in the same-facts A/B
+  and tracing half of them to the protocol itself. With the old contract a
+  gpt-6-astra draft narrated eleven inferences it declined to make (the bare
+  prompt: three), and a gpt-5.5 draft wrapped 77 numbers and metric names in
+  code spans because the protocol's own Markdown does; inclusion checklists
+  produced checklist-shaped articles. The contract now says: omit what this
+  reader already knows, state what is known and stop, give one position and the
+  condition that flips it, and treat the protocol's formatting as instructions
+  to the author rather than a model for the report. `bundle` strips word-level
+  code spans from protocol text at bundle time (`_plain_protocol`), leaving
+  real code, paths, and flags intact. The experiment-report metric contract no
+  longer asks for definitions a research audience does not need.
+- Three new audit warnings for the forms that survive the contract:
+  `non-inference-statement` (four or more "cannot be read as" sentences above
+  one per 1,000 characters), `code-span-number` (five or more numbers or status
+  words inside code spans, exempting paths, flags, and `KEY=value`), and
+  `process-leakage` (the report talking about "the provided facts" or "as
+  required"; once per line). Documented in `docs/AUDIT-CODES.md`; experiment
+  reports also gained opening-outcome terms (improve, outperform, trade-off,
+  优于, 权衡, 最低) so a draft that leads with the finding is not flagged.
+- Added `reportctl edit-prompt --file --mode`: a cross-model editing prompt with a
+  senior-author persona, a fidelity contract (every number, unit, entity, and
+  boundary preserved), and the eight-item cut list. SKILL.md step 5 now runs it
+  through a second model before the audit. End to end on the v3 draft the edit
+  removed all four process leaks, kept every number, cut 2,862 to 2,681
+  characters, and the audit came back clean.
+- Re-ran the A/B under the revised bundle: gpt-6-astra narrated non-inferences
+  fell from eleven to one, code-span numbers stayed at zero, the report shrank
+  25% with six section markers; gpt-5.5 code-span numbers fell from 77 to zero
+  with one remaining finding (`table-without-context`). Single runs.
+- Raised the default `bundle --max-chars` from 16,000 to 20,000 after finding
+  that the `risk-report` default bundle (16,432 characters) had exceeded the old
+  default undetected; a new test asserts every mode's default bundle fits the
+  default budget, and the experiment-report guard moved from 12,000 to 13,500
+  (currently 12,966).
 - Added `reportctl review-prompt --file --mode [--facts]`, which prints a bounded
   prompt for a cross-model semantic review: claim-versus-visual consistency,
   derived-number premises, reasoning validity, unsurfaced source contradictions,

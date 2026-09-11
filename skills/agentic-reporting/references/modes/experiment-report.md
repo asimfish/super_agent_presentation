@@ -19,13 +19,12 @@ or empirical studies. Organize around research questions, not run order.
 
 ## Metric and uncertainty contract
 
-For every decision-relevant metric, state:
-
-- definition, unit, and higher-is-better or lower-is-better direction;
-- evaluation population, denominator, and aggregation level;
-- number of independent runs, seeds, trials, samples, or tasks;
-- variability source, interval type (SD, SEM, CI, quantiles), and its
-  computation when that affects interpretation.
+For every decision-relevant metric the reader must be able to recover, without
+asking: which direction is better (an arrow in the table header suffices), the
+evaluation population and denominator, the number of independent runs, seeds,
+trials, samples, or tasks, and what any interval means (SD, SEM, CI, quantiles).
+Define a metric only when this audience may not know it; a research audience
+does not need FID or Recall explained.
 
 Call a difference statistically significant only with a defined supporting
 analysis; significance is not practical importance.

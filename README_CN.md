@@ -26,6 +26,17 @@ CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 for
 
 ## 📢 最近更新
 
+- **2026-09-12** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
+  ✍️ **人类形式合同与跨模型编辑**（`reportctl edit-prompt`）。在同事实对照里量了
+  八种"机器写法"，发现一半是协议自己诱发的：gpt-6-astra 的稿子念了 11 句"不能据此
+  推断"（裸提示只有 3 句）；gpt-5.5 把 77 个数字和指标名包进代码段，因为协议自己
+  的 Markdown 就是这么写的。核心合同按"读者的下一个决定"重写（读者已知的不写、
+  说完已知的就停、给一个立场并说明什么条件会翻转），`bundle` 打包时去掉协议里
+  词级的反引号，三条新审计管漏网的（`non-inference-statement`、`code-span-number`、
+  `process-leakage`）。新命令 `edit-prompt` 把初稿交给第二个模型，带保真合同和
+  八项删减清单。重跑对照：拒绝推断 11 句降到 1 句，代码段 77 个降到 0，报告短
+  25%；编辑后的稿子数字一个没丢、审计零告警。默认打包预算 16,000 提到 20,000，
+  因为发现有一个模式默认包早已悄悄超限。
 - **2026-09-07** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   🔍 **跨模型语义复核**（`reportctl review-prompt`）：审计管结构，这一步管意思——
   图注与图是否矛盾、派生数字的前提是否成立、推理是否跟得上、素材矛盾是否被

@@ -42,7 +42,7 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    python3 <skill-dir>/scripts/reportctl.py bundle \
      --task "<what must be communicated>" --mode <mode> --surface <surface> \
      [--profile <profile>] [--module <module>] [--module <module>] \
-     --max-chars 16000
+     --max-chars 20000
    ```
 
    If resuming a long task, pass `--checkpoint <path>` instead of reconstructing
@@ -62,11 +62,24 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    and PDF versions unless requested. A copied template is a starting artifact,
    not evidence that its placeholders, visuals, or claims are correct.
 
-   After the content is complete, give the prose a de-AI tone pass: cut
-   sycophantic openers, performative summaries, inflated jargon, and template
-   rhetoric under the `natural-tone` module's fidelity contract. Tone edits never
-   change facts, relations, scope, or numbers; the audit's `ai-tone-boilerplate`
-   warnings catch only the highest-precision residue.
+   After the content is complete, give the prose an editing pass. For a report
+   other people will read, hand it to a model other than the author:
+
+   ```bash
+   python3 <skill-dir>/scripts/reportctl.py edit-prompt --file <draft.md> --mode <mode>
+   # Hand the printed prompt to a second model; it returns the edited report.
+   ```
+
+   The prompt carries the `natural-tone` fidelity contract (facts, relations,
+   scope, numbers never change) and the cut list that separates machine-written
+   form from a human author's: process leakage ("the source material did not
+   provide"), narrated non-inferences, repeated hedging, definitions the reader
+   already knows, exhaustive absence lists, decision trees where a position
+   belongs, formatting imitation, machine cadence. Verify the edit before using
+   it: every number and identifier present, every boundary still stated once. The
+   audit's `process-leakage`, `non-inference-statement`, `code-span-number`,
+   `hedge-saturation`, and `ai-tone-boilerplate` warnings catch only the
+   highest-precision residue of that list.
 
    In the research modes (experiment-report, academic-synthesis, research-idea),
    also check that every success rate carries `k/n` and a binomial interval, every

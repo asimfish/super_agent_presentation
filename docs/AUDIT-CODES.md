@@ -71,6 +71,9 @@ the wrong severity.
 | `deep-list-nesting` | A list item sits three or more levels deep. | Flattening or restructuring the list. |
 | `cjk-halfwidth-punctuation` | Halfwidth `,.;:!?` directly between two CJK characters. | Using fullwidth marks (`，。：；！？`) in CJK prose; code stays verbatim. |
 | `ai-tone-boilerplate` | One of the highest-precision boilerplate phrases (`值得注意的是`, `综上所述`, `worth noting`, `delve`, `game-changer`, `in today's ...`). One finding per line. | Deleting the phrase or stating the concrete point; the `natural-tone` module carries the full pass. |
+| `non-inference-statement` | Four or more sentences narrate an inference the report declines to make (`不能据此`, `不视为`, `不能解释为`, `cannot be read as`, `does not by itself`), at more than 1 per 1,000 characters. Measured: a bare-prompt report had 3, protocol-driven output 7. | Stating what is known and stopping; "not reported" is complete without the list of conclusions not drawn. |
+| `code-span-number` | Five or more inline code spans that hold a number or short value (`` `λ=2` ``, `` `2.87±0.03` ``, `` `16%` ``). Spans shaped like paths, flags, calls, or `KEY=value` are exempt. Measured: a weaker model imitating the protocol's own backticks produced 77 in one report. | Writing numbers and metric names in plain prose; code spans are for code, commands, paths, and identifiers. |
+| `process-leakage` | Wording that only makes sense to someone who watched the draft being written from a fact sheet (`素材未提供`, `素材给定`, `所提供的事实`, `按要求不`, `the provided facts`, `as instructed`, `the source material`). One finding per line. Plain `本报告` is not flagged. | Naming the gap from the reader's side (`尚无数据`, `not measured`, `待确认`). |
 
 ## Warnings: displays (any mode)
 
