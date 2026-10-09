@@ -14,6 +14,14 @@ separately in [REPORTING-STANDARDS.md](REPORTING-STANDARDS.md). The repository i
 structures and checks; it does not redistribute third-party slide decks, paper
 text, figures, CSS, or other template assets.
 
+The 2026-10-09 research-judgment update rechecked GEN-1 and the primary preprint for
+GEN-6 ([arXiv](https://arxiv.org/abs/1807.03341)). It independently adds a
+question-led argument, preserves the distinction between measured effect and
+explanation, and makes follow-up controls discriminate remaining hypotheses.
+The doctoral audience and narrative order are local design choices, not venue
+requirements or a validated universal PhD standard. See
+[RESEARCH-REPORTING.md](RESEARCH-REPORTING.md).
+
 ## Selection criteria
 
 Sources were retained when they satisfied at least one of these tests:

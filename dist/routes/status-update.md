@@ -168,6 +168,29 @@ For a material metric, identify target, actual, unit, period, comparison basis, 
 status rationale. Do not put incomparable metrics into one synthetic score. Use text
 labels in addition to any color or icon.
 
+## Research progress and lab meetings
+
+For a research audience, progress means a change in knowledge or a reduced
+uncertainty. Start with the research question and the current answer, then relate
+new evidence to the previous working hypothesis or decision when that history is
+known. Do not invent an earlier belief to manufacture progress.
+For a durable lab update, retrieve the research-progress template separately.
+
+Use this spine: question -> what was learned -> what remains open -> next
+discriminating experiment or help needed. Training a model, reading papers, and
+running a sweep are activities; explain what they establish. A negative result
+counts as progress when it rules out a route or changes the plan. If nothing
+conclusive was learned, say which uncertainty remains and why.
+
+Keep the decisive comparison and its counterevidence visible. Explain whether a
+result supports the proposed mechanism or only performance under this protocol.
+Relate literature to the project's assumption or design choice, rather than
+listing paper summaries. When more work is needed, end with the experiment or
+decision that can change the view; name the control and possible outcomes. A
+completed answer needs no artificial next test. Ask the supervisor a
+specific scientific or resource question only when a decision is actually needed.
+Schedules and owners supplement this argument; they do not replace it.
+
 ## Avoid
 
 - Listing every task or meeting.

@@ -93,7 +93,13 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    highest-precision residue of that list.
 
    In the research modes (experiment-report, academic-synthesis, research-idea),
-   also check that every success rate carries `k/n` and a binomial interval, every
+   first check the scientific argument: what question is answered, which comparison
+   supports the interpretation, what competing explanation remains, and which test
+   would change the view if more work is needed. A metric list is not an analysis.
+   For research status updates, report knowledge gained rather than runs completed.
+   Preserve decisive counterevidence; move full numeric detail to supporting
+   material instead of inventing a mechanism or deleting inconvenient results.
+   Also check that every success rate carries `k/n` and a binomial interval, every
    `significant` carries its test and effect size in the same sentence, and no
    verb attributes understanding or intent to a system. The audit's
    `success-rate-without-denominator`, `significance-without-statistic`, and
@@ -138,6 +144,10 @@ Never invent evidence, tests, citations, metrics, files, owners, dates, or compl
    reasoning validity, unsurfaced source contradictions, fidelity to the facts,
    the reader contract, and domain-term correctness, and returns a fixed
    `FINDINGS / VERDICT` structure. Treat `revise` as blocking.
+   Research modes and research status updates also receive R1-R5 checks for the
+   research question, knowledge change, attribution, alternatives, discriminating
+   next test, and information hierarchy. Source fidelity without a fact sheet is
+   unverified; a reasoning pass never substitutes for checking original evidence.
 8. Manually verify the latest state, scientific or technical claims, numbers,
    evidence links, uncertainty, visual interpretation, and user-specified format.
 

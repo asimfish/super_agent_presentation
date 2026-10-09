@@ -57,6 +57,17 @@
       "tags": ["natural", "experiment"]
     },
     {
+      "id": "activate-natural-research-progress",
+      "category": "natural_positive",
+      "prompt": "Give a research progress status update for our lab meeting: what we learned about the transfer hypothesis, what remains open, and which controlled test would change our view.",
+      "expected_activation": true,
+      "expected_route": {"mode": "status-update", "modules": []},
+      "reason": "A lab progress report requires a knowledge change and a scientific next test, rather than an activity log or an operational escalation.",
+      "expected_behavior": ["Use the research-progress exact template if a durable report is needed.", "Separate observed comparisons from mechanisms and proposed work; retain counterevidence."],
+      "rubric_categories": ["discoverability", "correctness", "effectiveness", "efficiency"],
+      "tags": ["natural", "research-progress"]
+    },
+    {
       "id": "activate-natural-vla-research-idea",
       "category": "natural_positive",
       "prompt": "Present this VLA paper idea with the current research gap, hypothesis, closest alternative, decisive experiment, falsifier, and feasibility risks.",

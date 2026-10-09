@@ -190,9 +190,24 @@ by a second model, then re-audited. The command exists because half of those
 forms were induced by the protocol itself; the contract rewrite removed the
 cause, and `edit-prompt` removes what still leaks through.
 
+Research modes and research status updates add scientific-argument editing and
+R1-R5 semantic checks: question/knowledge change, evidence-to-interpretation,
+attribution/closest alternative, a discriminating next test when needed, and
+information hierarchy. These checks are prompt instructions, not regex verdicts.
+The reviewer distinguishes newly reasoned interpretations and proposed experiments
+from invented observations. Source fidelity without a fact sheet is explicitly
+unverified. Editing may relocate complete supporting data, but cannot invent missing
+reasoning or discard counterevidence. See `docs/RESEARCH-REPORTING.md` and the
+synthetic paired examples for the contract and its limits.
+
+For `status-update`, research task wording or a selected research profile recommends
+the `research-progress` exact asset; ordinary operational status keeps SBAR. Slide
+selection continues to recommend the academic presentation assets. No new primary
+mode or extra automatically loaded display module is needed.
+
 `exemplar` prints one finished passage in the target register for a mode
 (`assets/exemplars/<mode>.md`: status-update, experiment-report, decision-brief,
-research-idea), in English and Chinese, each under about 900 characters, with a
+academic-synthesis, research-idea), in English and Chinese, with a
 short note on what the passage does and what it leaves out. The route plan and
 `list` point to it only for modes that ship one. Exemplars are retrieved one at a
 time like templates and are never folded into the protocol bundle, so the budget

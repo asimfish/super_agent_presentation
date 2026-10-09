@@ -1,6 +1,6 @@
 # Provenance and upstream boundary
 
-- Review date: 2026-08-24
+- Review date: 2026-10-09
 - Relationship: independent synthesis; no vendored or adapted third-party assets
 - Detailed repository ledger: `docs/TEMPLATE-SOURCES.md` (outside the installed
   Skill); the portable source list below remains with the Skill
@@ -69,3 +69,9 @@ research trail and which statements are source facts versus design inferences.
 There is no imported upstream package, pinned upstream commit, or compatibility
 claim. Future imports must record exact source, revision, license, local changes,
 and revalidation before release.
+
+The research-judgment update independently synthesizes question-led reporting,
+distinguishing explanation from speculation, and discriminating controls. The
+NeurIPS checklist and Lipton/Steinhardt primary essay informed the concepts;
+no third-party prose or templates were copied. Existing package capabilities
+remain local reads/writes and Python execution, with no network or model calls.

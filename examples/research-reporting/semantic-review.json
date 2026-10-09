@@ -1,0 +1,106 @@
+{
+  "review_date": "2026-10-09",
+  "reviewer": "gpt-6-astra, independent cross-model semantic review",
+  "method": "Generated reportctl review-prompt for each dump/report with its synthetic fact sheet; assessed source fidelity, reasoning, and R1-R5. Rechecked corrected passages separately.",
+  "claim_boundary": "Public hand-authored synthetic teaching fixtures; not controlled model effectiveness evidence or independent human ratings.",
+  "cases": [
+    {
+      "case": "transfer",
+      "artifacts": {
+        "examples/research-reporting/transfer-facts.md": {
+          "sha256": "6c1835b51fa2af9a06e8ce6fab67cdc3e13f534aba7ad9542309ca3e0d2fc4cd"
+        },
+        "examples/research-reporting/transfer-dump.md": {
+          "sha256": "9ec54e5f601ea1fed6ac27d135d0b9b7d930c6d97caa7270b8027c4087e20885"
+        },
+        "examples/research-reporting/transfer-report.md": {
+          "sha256": "bcdc77bedf83454cc890a44435d5b5e7f0daf5946db0efc7fe6b1f58395a12b5"
+        }
+      },
+      "dump_verdict": "revise",
+      "report_verdict": "pass",
+      "reason": "The dump gives directions without interpreting the transfer hypothesis or a discriminating next control.",
+      "structural_audit": {
+        "command": "python3 skills/agentic-reporting/scripts/reportctl.py audit --file examples/research-reporting/transfer-report.md --mode experiment-report --json",
+        "errors": 0,
+        "warning_codes": [
+          "table-without-context",
+          "missing-semantic"
+        ],
+        "disposition": "The independent semantic pass verified the actual research question, result, scope and caption. Keyword/proximity warnings are retained as heuristic limits, not resolved by adding filler or unsupported content."
+      }
+    },
+    {
+      "case": "compute",
+      "artifacts": {
+        "examples/research-reporting/compute-facts.md": {
+          "sha256": "9f987b56e525f5e047eeea6862cdc204da122fc1085ae90d85db508b4b4ba4f3"
+        },
+        "examples/research-reporting/compute-dump.md": {
+          "sha256": "d706d0a0d4d7246a28a13f11b5fede9cea63c5d13063bdb79f400319cad86ff6"
+        },
+        "examples/research-reporting/compute-report.md": {
+          "sha256": "c2933378603c08bc65d3dc60faf5db935f4c90b05f4ef610b96e46a63a048edc"
+        }
+      },
+      "dump_verdict": "revise",
+      "report_verdict": "pass",
+      "reason": "The dump omits the two-factor attribution problem and a matched-token control.",
+      "structural_audit": {
+        "command": "python3 skills/agentic-reporting/scripts/reportctl.py audit --file examples/research-reporting/compute-report.md --mode experiment-report --json",
+        "errors": 0,
+        "warning_codes": [
+          "outcome-not-first",
+          "table-without-context",
+          "missing-semantic"
+        ],
+        "disposition": "The independent semantic pass verified the actual research question, result, scope and caption. Keyword/proximity warnings are retained as heuristic limits, not resolved by adding filler or unsupported content."
+      }
+    },
+    {
+      "case": "null",
+      "artifacts": {
+        "examples/research-reporting/null-facts.md": {
+          "sha256": "07d7a92141bfd93512f09c318c0e1808a7e5217d0aa84ccdd5051cc3f1f0d4a8"
+        },
+        "examples/research-reporting/null-dump.md": {
+          "sha256": "fe977425217edece3a07c70cbef2e2ad2f19c7b6e2e76926639482641387fa4c"
+        },
+        "examples/research-reporting/null-report.md": {
+          "sha256": "627a158d2def5087a3d543ca2124bb04eb2d477713769175fde746fc51e0f855"
+        }
+      },
+      "dump_verdict": "revise",
+      "report_verdict": "pass",
+      "reason": "The dump proposes more seeds without stating superiority/equivalence remains unresolved or a precision objective.",
+      "structural_audit": {
+        "command": "python3 skills/agentic-reporting/scripts/reportctl.py audit --file examples/research-reporting/null-report.md --mode experiment-report --json",
+        "errors": 0,
+        "warning_codes": [
+          "table-without-context",
+          "missing-semantic"
+        ],
+        "disposition": "The independent semantic pass verified the actual research question, result, scope and caption. Keyword/proximity warnings are retained as heuristic limits, not resolved by adding filler or unsupported content."
+      }
+    }
+  ],
+  "initial_major_findings": [
+    {
+      "artifact": "skills/agentic-reporting/assets/exemplars/academic-synthesis.md",
+      "finding": "Token budget was treated as total compute.",
+      "resolution": "Scoped the question to inference tokens and explicitly retained retrieval overhead as a separate cost.",
+      "status": "resolved"
+    },
+    {
+      "artifact": "skills/agentic-reporting/references/modes/status-update.md",
+      "finding": "A next experiment was unconditional even for a completed answer.",
+      "resolution": "Made further work conditional and allowed a completed answer without an artificial test.",
+      "status": "resolved"
+    }
+  ],
+  "final_verdict": "pass",
+  "limits": [
+    "External citations were not checked by this reviewer; the parent checked the primary sources separately.",
+    "No source-fidelity verdict for real research; all supplied facts are invented fixtures."
+  ]
+}

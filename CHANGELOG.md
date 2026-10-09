@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Reworked research reports around the question, decisive comparison, supported
+  interpretation, counterevidence, and a discriminating next test when needed.
+  Research progress reports explain knowledge gained rather than runs completed;
+  paper discussions separate authors' claims, measured evidence, and assessment.
+- Added the `research-progress` exact template for lab/supervisor updates, selected
+  for research wording or a research profile. Operational status and slide asset
+  selection keep their existing behavior.
+- Added R1-R5 scientific judgment checks to research review prompts and conditional
+  research status review; interpretations/proposed tests are distinguished from
+  invented observations. With no fact sheet, source fidelity is unverified.
+  Research editing preserves reasoning/counterevidence and may move full data to
+  an appendix; it cannot invent missing substantive analysis.
+- Added a bilingual academic-synthesis exemplar and replaced the experiment
+  passage with a question-led transfer example. Added three public synthetic
+  measurement-list/research-argument pairs and a research reporting guide. These
+  are teaching and workflow fixtures, not controlled model effectiveness evidence.
+
 - Added finished exemplars for the four most-used modes (status-update,
   experiment-report, decision-brief, research-idea) and `reportctl exemplar
   [--list] [MODE]` to retrieve one. Each is a passage in the target register,

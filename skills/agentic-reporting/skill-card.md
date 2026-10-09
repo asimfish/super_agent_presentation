@@ -37,6 +37,10 @@ execution and reload it at the reporting boundary.
 - Optional artifacts: checkpoint JSON, report-spec JSON, rendered Markdown, and
   audit JSON/text. The separately invoked `template` command can print or copy one
   exact registered Markdown, HTML, or Quarto source asset.
+- Research reports receive question-to-evidence-to-interpretation guidance;
+  research progress can select the `research-progress` exact asset. The separately
+  printed review/edit prompts add scientific judgment checks and preserve
+  counterevidence. They invoke no model and establish no effectiveness result.
 - The skill never changes domain facts and never treats its corpus as evidence.
 
 ## Capability manifest
