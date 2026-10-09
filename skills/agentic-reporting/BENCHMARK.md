@@ -1,7 +1,7 @@
 # Skill benchmark status
 
 This package includes a declarative activation contract; repository-level tests add
-deterministic CLI checks, a seven-scenario fixture harness, and a private study
+deterministic CLI checks, a nine-scenario fixture harness, and a private study
 controller. The contract encodes expected host boundaries and locally testable
 post-activation routes. Neither it nor the fixture harness invokes a host or model,
 so neither can establish activation accuracy or improved Agent output.
@@ -33,6 +33,9 @@ Current defensible claims are limited to:
 - five modes ship separately retrieved bilingual exemplars; research review prompts
   include question, interpretation, attribution, discriminating-test, and hierarchy
   checks. Public synthetic examples illustrate those checks, not model effectiveness.
+- repository-level public DPO and RLiable cases exercise source-bounded paper
+  discussion. Their strong fact packets and structural checks cannot establish
+  scientific validity or held-out full-paper reading quality.
 
 Do not convert those structural facts into a measured readability, correctness,
 token-efficiency, or long-context-retention claim.

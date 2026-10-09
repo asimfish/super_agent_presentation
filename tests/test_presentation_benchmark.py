@@ -374,6 +374,46 @@ raise SystemExit(1)
         self.assertNotIn("visual_oracle", completed.stdout)
         self.assertNotIn("required_image", completed.stdout)
 
+    def test_public_research_suite_is_separate_and_prompt_neutral(self) -> None:
+        completed = self.run_cli("list", "--suite", "public-research-pilot", "--json")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertEqual(
+            {case["id"] for case in payload["cases"]},
+            {"paper-dpo-scope", "paper-rliable-ranking"},
+        )
+        for case in payload["cases"]:
+            with self.subTest(case=case["id"]):
+                prompt = self.run_cli("prompt", case["id"])
+                self.assertEqual(prompt.returncode, 0, prompt.stderr)
+                self.assertIn("selected paraphrased facts", prompt.stdout)
+                self.assertNotIn("required_semantic_slots", prompt.stdout)
+                self.assertNotIn("machine_checks", prompt.stdout)
+                self.assertNotIn("expected_route", prompt.stdout)
+
+    def test_clean_research_overclaim_still_requires_semantic_review(self) -> None:
+        # A correct source link and format cannot certify the scientific argument.
+        # Deliberately false claims pass the declared structural checks, making
+        # this limitation executable rather than implying regexes judge meaning.
+        data = load_benchmark(CASES)
+        claims = {
+            "paper-dpo-scope": "DPO proves all reinforcement learning is obsolete.",
+            "paper-rliable-ranking": "Ten runs guarantee reliable rankings for every task.",
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            for case in data["cases"]:
+                if case["id"] not in claims:
+                    continue
+                with self.subTest(case=case["id"]):
+                    response = Path(temporary) / "report.md"
+                    response.write_text(
+                        claims[case["id"]] + " " + case["allowed_citations"][0],
+                        encoding="utf-8",
+                    )
+                    result = evaluate_response(case, response)
+                    self.assertTrue(result["passed"])
+                    self.assertIn("do not establish factual truth", result["semantic_limit"])
+
     def test_every_known_good_fixture_passes(self) -> None:
         for case_id in self.case_ids():
             with self.subTest(case_id=case_id):

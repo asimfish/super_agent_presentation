@@ -90,6 +90,12 @@ domain protocol fields and failure boundaries; they do not replace the primary
 narrative mode. A surface guide is loaded only for a surface with non-generic
 requirements, currently `slide`.
 
+When a task uses the benchmark's labeled fact-packet sections, mode and display
+selection use the request before those sections. A paper's figure/table mentions
+or quoted review vocabulary are evidence, not requests for a chart or an audit.
+Profiles may still use the material to identify the research domain. This parsing
+is a bounded intent heuristic, not an instruction-isolation or security boundary.
+
 Exact copyable Markdown, HTML, and Quarto assets are registered separately. A
 route recommends compatible template IDs, but a normal bundle never inlines their
 contents. `reportctl template` retrieves one selected asset only. This avoids a

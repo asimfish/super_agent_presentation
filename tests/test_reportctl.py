@@ -233,6 +233,32 @@ class ReportCtlTests(unittest.TestCase):
                 self.assertEqual(payload["mode"], mode)
                 self.assertEqual(payload["modules"], modules)
 
+    def test_paper_discussion_intent_and_displays_ignore_fact_packet_keywords(self) -> None:
+        facts = (
+            "\n\nSupplied facts:\n- The paper review discusses experiment benchmarks."
+            " Figure 2 is a training curve; Table 1 lists evaluation results."
+            " The authors do not use evidence or citations in that example."
+        )
+        cases = {
+            "For a doctoral lab meeting, explain whether this paper justifies abandoning reinforcement learning.":
+                ("academic-synthesis", ["evidence", "academic-display"]),
+            "请解读这篇论文，介绍它的实验及结论。":
+                ("academic-synthesis", ["conclusions", "evidence"]),
+            "Review this paper for unsupported claims.":
+                ("review-report", ["evidence"]),
+            "Give an experiment report without tables.":
+                ("experiment-report", []),
+            "Explain this paper and include a diagram.":
+                ("academic-synthesis", ["visuals", "evidence"]),
+        }
+        for request, (mode, modules) in cases.items():
+            with self.subTest(request=request):
+                result = run_cli("route", "--task", request + facts, "--json")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                route = json.loads(result.stdout)
+                self.assertEqual(route["mode"], mode)
+                self.assertEqual(route["modules"], modules)
+
     def test_double_negative_display_requests_are_not_suppressed(self) -> None:
         for task in (
             "请给出实验汇报，不要省略表格。",
@@ -245,6 +271,16 @@ class ReportCtlTests(unittest.TestCase):
                 result = run_cli("route", "--task", task, "--json")
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertIn("tables", json.loads(result.stdout)["modules"])
+
+    def test_long_fact_packet_does_not_change_short_request_fallback(self) -> None:
+        for marker in ("Supplied facts:", "Evidence boundary:", "Supplied artifacts:"):
+            with self.subTest(marker=marker):
+                task = "Tell me.\n\n" + marker + "\n" + "context " * 200
+                result = run_cli("route", "--task", task, "--json")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                route = json.loads(result.stdout)
+                self.assertEqual(route["mode"], "concise-answer")
+                self.assertEqual(route["modules"], [])
 
     def test_explicit_route_limits_modules(self) -> None:
         result = run_cli(

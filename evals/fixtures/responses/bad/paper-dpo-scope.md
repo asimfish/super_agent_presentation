@@ -1,0 +1,1 @@
+DPO proves reinforcement learning is obsolete for language-model alignment. Its dialogue result is a matched successful PPO comparison, and all evaluation is human-only. See [an unsupported source](https://example.invalid/dpo).

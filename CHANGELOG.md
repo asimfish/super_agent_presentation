@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added two versioned public-paper discussion cases (DPO and RLiable) with
+  source/semantic review separate from structural checks. Fixed automatic routing
+  so labeled fact-packet vocabulary cannot change the requested narrative or
+  force figure/table modules. Paper-discussion intent now recognizes explanation
+  requests; academic synthesis also preserves evidence that weakens a critique.
 - Reworked research reports around the question, decisive comparison, supported
   interpretation, counterevidence, and a discriminating next test when needed.
   Research progress reports explain knowledge gained rather than runs completed;

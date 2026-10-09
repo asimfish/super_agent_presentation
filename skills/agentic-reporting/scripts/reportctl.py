@@ -545,19 +545,37 @@ def _leading_imperative_mode(text: str) -> str | None:
     return None
 
 
-def infer_mode(task: str, catalog: dict[str, Any]) -> tuple[str, dict[str, int]]:
+def _request_focus(task: str) -> str:
+    """Separate the request from the standard fact-packet sections, if present.
+
+    This is an intent hint, not a trust boundary or a general prompt parser.
+    Paper figure/table mentions and quoted review language describe evidence;
+    they do not ask the reader to receive a chart or a review report.
+    """
     request_focus = task
     for marker in ("\n\nSupplied facts:", "\n\nEvidence boundary:", "\n\nSupplied artifacts:"):
         if marker in request_focus:
             request_focus = request_focus.split(marker, 1)[0]
+    return request_focus
+
+
+def infer_mode(task: str, catalog: dict[str, Any]) -> tuple[str, dict[str, int]]:
+    request_focus = _request_focus(task)
     intent_scores = {
         mode_id: _signal_score(request_focus, catalog["modes"][mode_id].get("intent_signals", []))
         for mode_id in MODE_IDS
     }
+    if re.search(
+        r"\b(?:explain|present|discuss|summari[sz]e)\b[^\n.!?]{0,200}"
+        r"\b(?:this|the|these)\s+papers?\b"
+        r"|(?:讲解|介绍|解读|总结|讨论)(?:这篇|该|这几篇)?论文",
+        request_focus,
+        re.IGNORECASE,
+    ):
+        intent_scores["academic-synthesis"] += 1
     imperative_mode = _leading_imperative_mode(request_focus)
     scores = {
-        mode_id: _signal_score(task, catalog["modes"][mode_id].get("signals", []))
-        + 3 * _signal_score(request_focus, catalog["modes"][mode_id].get("signals", []))
+        mode_id: 4 * _signal_score(request_focus, catalog["modes"][mode_id].get("signals", []))
         + 100 * intent_scores[mode_id]
         + 10_000 * _leading_signal_score(
             request_focus,
@@ -568,7 +586,7 @@ def infer_mode(task: str, catalog: dict[str, Any]) -> tuple[str, dict[str, int]]
     }
     best = max(scores, key=lambda item: (scores[item], -MODE_IDS.index(item)))
     if scores[best] == 0:
-        compact = re.sub(r"\s+", " ", task).strip()
+        compact = re.sub(r"\s+", " ", request_focus).strip()
         best = "concise-answer" if len(compact) <= 120 else "investigation-report"
     return best, scores
 
@@ -647,6 +665,7 @@ def select_modules(
             raise ReportCtlError(f"Unknown module(s): {', '.join(unknown)}")
         selected = list(dict.fromkeys(explicit))
     else:
+        task = _request_focus(task)
         suppressed: set[str] = set()
         clauses = re.findall(
             r"\b(?:no|without|do not|don't|must not|avoid)\b[^.;\n]{0,120}",

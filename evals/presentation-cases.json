@@ -18,6 +18,11 @@
         "ablation-component-contribution",
         "benchmark-speedup-honest"
       ]
+    },
+    {
+      "id": "public-research-pilot",
+      "kind": "generation",
+      "case_ids": ["paper-dpo-scope", "paper-rliable-ranking"]
     }
   ],
   "cases": [
@@ -383,6 +388,63 @@
         {"id": "protocol-disclosed", "type": "required_regex", "pattern": "median of 20|20 runs|warm-?up", "message": "Disclose the repetition and warm-up protocol."},
         {"id": "baseline-tuning-disclosed", "type": "required_regex", "pattern": "retuned|re-tuned|tuned baseline|published numbers", "message": "Disclose that the baseline was retuned and how it compares with its published numbers."},
         {"id": "benchmark-budget", "type": "max_words", "value": 400, "message": "Keep the write-up bounded."}
+      ]
+    },
+    {
+      "id": "paper-dpo-scope",
+      "scenario": "academic_paper_summary",
+      "request": "For a doctoral lab meeting, explain what DPO changes about preference learning and whether this paper justifies abandoning reinforcement learning for language-model alignment. Use only the supplied paper facts; cite the versioned source. Write at most 400 words in English.",
+      "facts": [
+        "Source: Rafailov et al., Direct Preference Optimization: Your Language Model is Secretly a Reward Model, arXiv:2305.18290v3 (29 July 2024), https://arxiv.org/html/2305.18290v3. These are selected paraphrased facts, not a complete paper review.",
+        "Sections 3-4: the starting objective maximizes expected reward with a KL penalty relative to a reference policy. Under the Bradley-Terry preference model, a change of variables expresses reward through the optimal-policy/reference-policy log ratio. The prompt-dependent partition term cancels when comparing two completions, producing a policy-only classification loss.",
+        "Section 4: DPO trains on an offline preference dataset and does not need a separately fitted reward model or policy sampling within the fine-tuning loop. Constructing a preference dataset can still require sampled completions and human labels.",
+        "Section 6.1 and Figure 2 left: in controlled IMDb sentiment generation, a sentiment classifier supplies the known reward. The authors compare reward-versus-KL frontiers, not reward alone, and report DPO ahead of tested PPO variants in that setting.",
+        "Section 6.2 and Figure 2 right: TL;DR compares DPO, PPO and Preferred-FT from the same GPT-J SFT model. GPT-4 compares each method's summaries with test-set reference summaries; a win rate against that reference is not a direct DPO-versus-PPO win rate.",
+        "Section 6.2 dialogue: the authors cannot obtain useful performance from a sourced PPO model and use Best of 128 as a rough proxy for PPO-level performance. This is not a matched successful PPO comparison.",
+        "Section 6.4 and Table 2: the authors directly compare DPO and PPO summaries in human evaluation, using DPO temperature 0.25 and PPO temperature 0; humans prefer DPO more often. They also compare agreement with GPT-4. Thus the paper includes head-to-head human evidence, not only reference-based model judgments.",
+        "Section 6.3 and Table 1: the TL;DR-trained policies are evaluated on CNN/DailyMail news articles. DPO has higher GPT-4 win rates against reference summaries than PPO at both tested temperatures. This is a specific distribution-shift comparison, not universal generalization evidence.",
+        "Section 7: the authors identify broader out-of-distribution generalization and iterative training with self-labeled preferences as future questions. This packet contains no controlled result for long-horizon interactive tasks or universal superiority over RL methods."
+      ],
+      "evidence_boundary": "Separate the mathematical reparameterization, the tested empirical comparisons, and your assessment. Attribute the dialogue proxy and evaluator correctly. Do not turn a gap in this selected packet into a claim that the full paper performed no such analysis. Any suggested follow-up is a proposal, not a reported result.",
+      "artifacts": [],
+      "report_profile": "academic-synthesis+evidence+academic-display",
+      "expected_route": {"mode": "academic-synthesis", "modules": ["evidence", "academic-display"]},
+      "required_semantic_slots": ["question_and_bounded_answer", "derivation_and_assumptions", "decisive_reward_kl_comparison", "reference_vs_head_to_head", "dialogue_proxy_boundary", "assessment_and_decision"],
+      "visual_oracle": {"necessity": "optional", "allowed_types": ["conceptual_diagram"], "rationale": "A short derivation and assessment can be explained in prose; a small transformation diagram may help but a score table is unnecessary."},
+      "budgets": {"max_output_words": 400},
+      "allowed_citations": ["https://arxiv.org/html/2305.18290v3"],
+      "machine_checks": [
+        {"id": "word-budget", "type": "max_words", "value": 400, "message": "Respect the explicit word budget."},
+        {"id": "source-link", "type": "required_regex", "pattern": "https://arxiv\\.org/html/2305\\.18290v3", "message": "Cite the supplied versioned source."},
+        {"id": "no-placeholder", "type": "forbidden_placeholder", "message": "Deliver a finished report."}
+      ]
+    },
+    {
+      "id": "paper-rliable-ranking",
+      "scenario": "academic_paper_summary",
+      "request": "For a doctoral reinforcement-learning lab meeting, explain whether a higher aggregate score establishes that an algorithm is better and what this paper changes about our evaluation practice. Use only the supplied paper facts; cite the versioned source. Write at most 400 words in English.",
+      "facts": [
+        "Source: Agarwal et al., Deep Reinforcement Learning at the Edge of the Statistical Precipice, arXiv:2108.13264v4 (5 January 2022), https://arxiv.org/pdf/2108.13264v4. These are selected paraphrased facts, not our own experiments or a complete paper review.",
+        "Sections 1-3: few training runs and variable task scores make point-estimate rankings unreliable. The Atari 100k analysis finds conclusions can change when statistical uncertainty is considered. Figure 5 also links apparent gains of some methods over DER to non-standard evaluation protocols.",
+        "Section 4.1: stratified bootstrap resamples runs independently within each task and recomputes an aggregate. In the Atari 100k coverage check, percentile intervals work well with as few as ten runs; Figure 6 notes that with three runs bootstrap intervals underestimate true 95% intervals. Bootstrapping relies on empirical resampling approximating the true distribution.",
+        "Section 4.3: IQM trims the lowest and highest quarters of pooled run/task scores and averages the middle half. It balances robustness to outliers and statistical efficiency; it does not preserve every task-specific behavior.",
+        "Figure 2 caption: when marginal confidence intervals overlap, comparison should use confidence intervals for score differences (Figure A.15). Overlap alone does not settle a difference or establish equivalence.",
+        "Sections 4.2-4.3 and 5: performance profiles reveal distributions of scores across runs/tasks. For pairs whose profiles cross, neither dominates across all thresholds. Other analyses include probability of improvement and rank uncertainty.",
+        "Section 5: the authors re-examine ALE, DeepMind Control and Procgen. Some prior ranking/improvement claims become less clear after accounting for uncertainty; this is not a finding that every published gain is false.",
+        "This packet supplies no new scores from our lab and no evidence about deployment beyond these evaluated benchmarks."
+      ],
+      "evidence_boundary": "Distinguish the paper's observed evaluation failures, its proposed statistical tools, and your recommendation for our lab. Do not treat IQM or a confidence interval as a cure for mismatched protocols. Do not infer equivalence from overlapping intervals or prescribe ten runs as a universal sufficient sample size.",
+      "artifacts": [],
+      "report_profile": "academic-synthesis+evidence+academic-display",
+      "expected_route": {"mode": "academic-synthesis", "modules": ["evidence", "academic-display"]},
+      "required_semantic_slots": ["question_and_knowledge_change", "noise_and_protocol_alternatives", "bootstrap_assumption_and_small_sample_limit", "iqm_tradeoff", "difference_interval_not_overlap", "bounded_lab_recommendation"],
+      "visual_oracle": {"necessity": "optional", "allowed_types": ["conceptual_diagram"], "rationale": "The packet gives no per-run values from which to draw a legitimate quantitative chart; a small evaluation-workflow diagram is optional."},
+      "budgets": {"max_output_words": 400},
+      "allowed_citations": ["https://arxiv.org/pdf/2108.13264v4"],
+      "machine_checks": [
+        {"id": "word-budget", "type": "max_words", "value": 400, "message": "Respect the explicit word budget."},
+        {"id": "source-link", "type": "required_regex", "pattern": "https://arxiv\\.org/pdf/2108\\.13264v4", "message": "Cite the supplied versioned source."},
+        {"id": "no-placeholder", "type": "forbidden_placeholder", "message": "Deliver a finished report."}
       ]
     }
   ]

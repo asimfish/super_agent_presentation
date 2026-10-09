@@ -183,6 +183,11 @@ actually distinguishes that explanation from the closest alternative. Separate
 the authors' claim, demonstrated evidence, and your assessment in ordinary prose.
 If the study measures performance only, leave the mechanism unresolved.
 
+Preserve evidence that supports and challenges the assessment. Before calling a
+comparison indirect or a question untested, check for direct comparisons and
+relevant results elsewhere in the inspected source. A cautious report can also
+mislead by omitting positive evidence.
+
 End with a bounded implication for the reader's research: an assumption worth
 adopting, a missing control, or a testable open question. An interesting technique
 is not automatically novel or relevant. Say when the inspected evidence is too
