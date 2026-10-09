@@ -59,6 +59,11 @@ adopting, a missing control, or a testable open question. An interesting techniq
 is not automatically novel or relevant. Say when the inspected evidence is too
 thin to judge; never fabricate a comparator or an author-reported limitation.
 
+If proposing a follow-up experiment, state the material controls, the outcome to
+measure, and how different results would change the decision, including an
+inconclusive result when relevant. Do not invent a numerical threshold. A completed
+synthesis can end with its warranted implication instead of a generic next test.
+
 ## Multi-paper synthesis
 
 Prefer a concept-first narrative over one paragraph per paper. Use an evidence map
