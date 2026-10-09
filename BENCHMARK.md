@@ -60,6 +60,12 @@ scientific claim can pass those checks; independent source and semantic review i
 required. These strong prompts are public development material, not held-out
 full-paper reading tasks.
 
+The [2026-10-10 research development probe](evals/runs/pilot/research-20261010/README.md)
+executed these cases and a targeted adaptive recheck. It preserves source-review
+corrections, semantic failures that structural checks missed, and observed cost.
+Sanitized controller aggregates remain `insufficient_evidence`; independent model
+review is not a frozen human rating batch or general effectiveness evidence.
+
 ## Commands
 
 Run from the repository root:

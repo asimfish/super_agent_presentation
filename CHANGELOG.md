@@ -7,6 +7,14 @@
   so labeled fact-packet vocabulary cannot change the requested narrative or
   force figure/table modules. Paper-discussion intent now recognizes explanation
   requests; academic synthesis also preserves evidence that weakens a critique.
+- An independent review of actual generated paper reports found generic proposed
+  comparisons without decision-changing outcomes. Academic synthesis now requires
+  a proposed experiment to connect controls, readout and possible results to a
+  decision, while allowing a completed discussion to end without a new experiment.
+- Recorded sanitized actual-host public-paper pilot aggregates, independent source
+  and semantic findings, and an adaptive DPO recheck. The original semantic failures
+  and higher observed framework overhead remain visible; both pilot summaries are
+  gated to insufficient evidence and make no general quality or efficiency claim.
 - Reworked research reports around the question, decisive comparison, supported
   interpretation, counterevidence, and a discriminating next test when needed.
   Research progress reports explain knowledge gained rather than runs completed;

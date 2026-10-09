@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Sanitized independent model-review development record; not human ratings or effectiveness evidence.",
+  "source_review": {
+    "verdict": "pass_after_revision",
+    "corrections": [
+      "Restore DPO direct human comparison and limited distribution-shift evidence.",
+      "Limit crossing-profile interpretation to the compared method pairs."
+    ],
+    "cases_sha256": "76c5273f7d4507b4d55646a1e75ec1c419afe7f477fb49716a028c4e411b0cc8"
+  },
+  "review": {
+    "drafting_model": "gpt-6.1-sol",
+    "reviewing_model": "gpt-6-astra",
+    "condition_labels_masked": true,
+    "human_ratings": false,
+    "preference_scores": false,
+    "protocol": "reportctl review-prompt, academic-synthesis, supplied facts and R1-R5"
+  },
+  "phases": [
+    {
+      "id": "corrected_two_case_pilot",
+      "framework_commit": "b1d760e55cfad83d4c4b78ce9350dc014bef7a26",
+      "record_count": 4,
+      "response_set_sha256": "60e39cb78e12f63cd7f1b2fd79e4ec18079bc64ec1d229d1e4b253e43ed42bff",
+      "findings": [
+        "Both DPO reports need revision: proposed experiments lack result-dependent decisions (R4).",
+        "Both RLiable reports pass; completed synthesis requires no invented experiment."
+      ],
+      "semantic_verdict_counts": {
+        "pass": 2,
+        "revise": 2
+      }
+    },
+    {
+      "id": "adaptive_dpo_followup",
+      "framework_commit": "9b0aae00b78b34c9664d79528b07d94e73dd5106",
+      "record_count": 2,
+      "response_set_sha256": "1b8cd6ccb9081f718afade044906e132f4ec80d6f24470dd73d871f50d0d8c0d",
+      "findings": [
+        "Framework report passes by completing the bounded synthesis without a generic experimental proposal.",
+        "Baseline still needs revision for an optional follow-up with no readout or result-dependent decision."
+      ],
+      "semantic_verdict_counts": {
+        "pass": 1,
+        "revise": 1
+      }
+    }
+  ],
+  "hand_authored_fixture_review": {
+    "paper-dpo-scope": "pass_including_R4_after_revision",
+    "paper-rliable-ranking": "pass"
+  },
+  "claim_boundary": "Public source-bounded prompts, one repeat, one unpinned author-model alias, one model reviewer; adaptive development recheck. No general quality or efficiency inference."
+}

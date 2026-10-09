@@ -36,12 +36,22 @@ as work still running; do not turn activity into knowledge gained.
 For a paper discussion, explain the problem's bottleneck, the method's proposed
 move, and the experiment that tests it against the closest alternative. Keep the
 authors' explanation distinct from demonstrated evidence and your assessment.
+Preserve evidence that weakens your critique as well as evidence that supports it.
+Before calling a comparison indirect, check for a direct comparison elsewhere;
+before calling transfer untested, check the inspected source's transfer results.
 For several papers, organize around a disagreement or assumption rather than
 giving each paper a disconnected summary. A source gap is not proof of novelty.
 
 For an idea, explain why the proposed change could address the bottleneck, then
 name a test that separates it from a plausible alternative. An engineering
 combination may be useful without being a new scientific explanation.
+
+When proposing a follow-up, connect its readout to a choice. “Compare DPO and RL
+on interactive tasks” is a topic. A useful proposal names the material controls,
+the task outcome to measure, and what would support DPO, retain RL, or leave the
+choice unresolved in that tested setting. Use justified criteria rather than
+invented numerical cutoffs. A paper discussion can also finish with its warranted
+implication and no new experiment.
 
 ## Put numbers where they do work
 
@@ -98,6 +108,14 @@ transfer failure, a compute confound, and an inconclusive comparison. They test
 whether the review workflow distinguishes information from interpretation. They
 are public teaching fixtures, not held-out model evaluations or evidence of a
 measured readability improvement.
+
+[The public-paper development probe](../evals/runs/pilot/research-20261010/README.md)
+uses actual generated reports on selected, versioned DPO and RLiable facts. Source
+review corrected omitted positive evidence; semantic review caught proposed
+experiments without a result-dependent decision despite passing structural checks.
+A targeted adaptive recheck passed the framework's completed synthesis. This is
+development feedback on public strong prompts, with higher observed framework
+overhead, not a held-out quality or efficiency result.
 
 This design draws on claims/scope alignment and explicit experimental assumptions
 in the [NeurIPS Paper Checklist](https://neurips.cc/public/guides/PaperChecklist),

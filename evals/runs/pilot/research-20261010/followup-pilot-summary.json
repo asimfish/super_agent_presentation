@@ -1,0 +1,47 @@
+{
+  "$schema": "pilot-summary.schema.json",
+  "claim": {
+    "effectiveness_claim_eligible": false,
+    "reason": "A pilot generation summary has no frozen independent blind ratings, private held-out design, or preregistered full-study evidence.",
+    "status": "insufficient_evidence"
+  },
+  "generation": {
+    "conditions": {
+      "baseline": {
+        "checkpoint_audit_pass_count": 0,
+        "machine_check_pass_rate": 1.0,
+        "machine_response_pass_count": 1,
+        "median_latency_ms": 27603.0,
+        "median_output_tokens": 589.0,
+        "record_count": 1,
+        "skill_read_count": 0
+      },
+      "framework": {
+        "checkpoint_audit_pass_count": 0,
+        "machine_check_pass_rate": 1.0,
+        "machine_response_pass_count": 1,
+        "median_latency_ms": 85267.0,
+        "median_output_tokens": 2279.0,
+        "record_count": 1,
+        "skill_read_count": 1
+      }
+    },
+    "pair_count": 1,
+    "paired_output_token_overhead_median": 2.869269949066214,
+    "record_count": 2
+  },
+  "input_receipts": {
+    "cases_sha256": "dd15b8a255c0582383334e1bc41a49dcc920d6ab851eb4c8a5940fde59ad5314",
+    "input_artifacts_sha256": "591b59add045da2873b9729a66dd5ec2cc3cc8e994ccf624f1a7d2256b69d06a",
+    "plan_sha256": "16e909dcba7234dcbb34e6f9b282eb3bbcfa702f05db0777ad85531407a55db7"
+  },
+  "limitations": [
+    "Machine checks assess declared structural invariants, not truth or human readability.",
+    "Host traces are conservative observations and do not prove complete instruction isolation.",
+    "A planned output-token value is not evidence of a provider-enforced cap.",
+    "A model revision label is not evidence of immutable provider behavior without an external receipt."
+  ],
+  "schema_version": "1.0",
+  "study_id": "research-public-pilot-20261010-v3-followup",
+  "study_kind": "pilot"
+}
