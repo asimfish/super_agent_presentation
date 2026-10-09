@@ -539,6 +539,8 @@
         "provenance",
         "cannot identify the cause",
         "causal limitation",
+        "inventing its cause",
+        "不编造原因",
         "引用",
         "来源",
         "日志",
@@ -801,6 +803,13 @@
       "modes": ["implementation-handoff"],
       "profiles": [],
       "surfaces": ["markdown", "document"]
+    },
+    "research-progress": {
+      "summary": "Lab or supervisor progress report organized around the research question, knowledge gained, remaining explanations, and a discriminating next test.",
+      "path": "assets/templates/research-progress.md",
+      "modes": ["status-update"],
+      "profiles": [],
+      "surfaces": ["chat", "markdown", "document", "issue-pr"]
     }
   },
   "surfaces": [

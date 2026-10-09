@@ -32,6 +32,12 @@ testable program, not an abstract for work that has already succeeded.
 - Define what negative or null evidence would make the idea change or stop.
 - Avoid fabricated expected gains, target venues, timelines, or implementation
   ease.
+- Explain which existing assumption or bottleneck the idea changes, and why the
+  mechanism would address it. Distinguish a new scientific explanation from an
+  engineering combination; either can be useful without an invented novelty claim.
+- Make the first experiment separate the proposed explanation from the closest
+  plausible alternative, not merely beat a baseline. State what stays fixed and
+  how each outcome changes the hypothesis or the decision to continue.
 
 ## Useful displays
 

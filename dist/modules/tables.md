@@ -22,6 +22,9 @@ Every column must help answer the question or audit the result.
 - Define abbreviations, symbols, bolding, arrows, uncertainty, and footnotes.
 - Keep a self-contained caption or note for a table that may be read out of context.
 - Provide a nearby takeaway; the table does not write its own conclusion.
+- In research reports, select rows by the scientific comparison they answer.
+  Interpret the relationship or counterexample instead of paraphrasing each cell;
+  keep the full sweep in supporting material with the same protocol and provenance.
 
 ## Quantitative comparisons
 

@@ -26,6 +26,14 @@ CLI。没有数据库、没有 Docker、没有依赖要装——可以直接 for
 
 ## 📢 最近更新
 
+- **2026-10-09** — **科研汇报围绕研究判断组织。** 实验、论文讨论和研究想法明确
+  研究问题、关键对照、证据解释、反例及下一项判别实验；组会进展以认识变化为主线，
+  新增 `research-progress` 模板。语义复核补 R1–R5 科研判断检查，区分事实、推断和
+  实验建议；编辑可搬移完整数据，保留反例，不补造机制。新增论文讨论成品范例和
+  [三组同事实教学对照](examples/research-reporting/README.md)。详见
+  [科研汇报指南](docs/RESEARCH-REPORTING.md)。这些示例用于检验汇报与复核流程，
+  尚不构成模型可读性提升的实证。
+
 - **2026-09-12** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   ✍️ **人类形式合同与跨模型编辑**（`reportctl edit-prompt`）。在同事实对照里量了
   八种"机器写法"，发现一半是协议自己诱发的：gpt-6-astra 的稿子念了 11 句"不能据此
@@ -343,7 +351,7 @@ text，且不能使用 Markdown delimiter 形式。它不是语义或事实验�
 
 图片、图表、表格、结论、证据、学术展示、消融设计、性能基准和去 AI 味
 （natural-tone）作为正交模块按需加入，不是每份汇报的固定装饰。完整清单
-（12 模式 / 8 模块 / 4 profile / 5 表面 / 12 模板）见
+（12 模式 / 8 模块 / 4 profile / 5 表面 / 13 模板）见
 [docs/CATALOG.md](docs/CATALOG.md)。框架吸收了 30 余个
 具名汇报标准与研究文献（ASA p 值声明、CONSORT/PRISMA 数量账、benchmarking
 crimes、误差条与不确定性可视化研究、Model Cards / Datasheets、审稿回应

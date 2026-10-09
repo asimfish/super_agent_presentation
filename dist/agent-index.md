@@ -57,5 +57,6 @@ Open exactly one compatible asset only after selecting it; assets are not part o
 - [`executive-onepager`](../skills/agentic-reporting/assets/templates/executive-onepager.md) — Pyramid-structured executive one-pager: governing-thought title, two to four evidence-backed reasons, costs and revisit triggers, decision requested.
 - [`rebuttal-response`](../skills/agentic-reporting/assets/templates/rebuttal-response.md) — Point-by-point response to reviewers: quote each comment, answer with outcome-first sentences and precise revision locations, no unverifiable promises.
 - [`release-card`](../skills/agentic-reporting/assets/templates/release-card.md) — Model-card and datasheet style release summary: identity, intended use, provenance with exclusion accounting, disaggregated evaluation, limitations, reproduction.
+- [`research-progress`](../skills/agentic-reporting/assets/templates/research-progress.md) — Lab or supervisor progress report organized around the research question, knowledge gained, remaining explanations, and a discriminating next test.
 
 Before delivery, manually verify facts, latest state, evidence, numbers, uncertainty, and the user's requested format. A repository link is not an installation or instruction-elevation mechanism.

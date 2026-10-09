@@ -43,6 +43,27 @@ For one paper, cover bibliographic identity, research question, thesis, method a
 assumptions, evaluation protocol, main evidence, limitations, and relationship to the
 reader's question. A summary is not an endorsement or a review.
 
+For a doctoral seminar, explain the move the paper makes: which bottleneck or
+assumption it changes, why the mechanism could address it, and which experiment
+actually distinguishes that explanation from the closest alternative. Separate
+the authors' claim, demonstrated evidence, and your assessment in ordinary prose.
+If the study measures performance only, leave the mechanism unresolved.
+
+Preserve evidence that supports and challenges the assessment. Before calling a
+comparison indirect or a question untested, check for direct comparisons and
+relevant results elsewhere in the inspected source. A cautious report can also
+mislead by omitting positive evidence.
+
+End with a bounded implication for the reader's research: an assumption worth
+adopting, a missing control, or a testable open question. An interesting technique
+is not automatically novel or relevant. Say when the inspected evidence is too
+thin to judge; never fabricate a comparator or an author-reported limitation.
+
+If proposing a follow-up experiment, state the material controls, the outcome to
+measure, and how different results would change the decision, including an
+inconclusive result when relevant. Do not invent a numerical threshold. A completed
+synthesis can end with its warranted implication instead of a generic next test.
+
 ## Multi-paper synthesis
 
 Prefer a concept-first narrative over one paragraph per paper. Use an evidence map

@@ -1,10 +1,16 @@
 # Examples
 
-Real, end-to-end outputs produced by this framework, kept with their full
-generation and audit receipts. Nothing here is a blank template: every report was
-generated through the actual CLI workflow
-(`route → checkpoint → bundle → write → strict audit → semantic oracle`) and the
-receipts for each step are preserved next to the finished artifact.
+Finished examples and teaching fixtures. The historical showcase directories keep
+their generation and audit receipts. The research-reporting directory contains
+hand-authored synthetic pairs; it is not a model-generation study.
+
+## research-reporting
+
+[Three paired examples](research-reporting/README.md) distinguish measurement lists
+from scientific arguments using the same fact sheets: transfer failure, a compute
+confound, and unresolved uncertainty. Full measurements remain inspectable. Use
+them with the R1-R5 semantic review checks; structural audit does not grade the
+scientific argument. See [the research guide](../docs/RESEARCH-REPORTING.md).
 
 ## templates-20260828
 

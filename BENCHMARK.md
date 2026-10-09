@@ -26,11 +26,11 @@ or universal headings. Explicit user formatting remains authoritative.
 ## Suites
 
 - `harness-smoke` uses checked-in known-good and deliberately mutated responses for
-  seven scenarios. It calls no model and proves only that the evaluator catches the
+  nine scenarios. It calls no model and proves only that the evaluator catches the
   declared mutations.
 - `skills/agentic-reporting/evals/activation.json` is a declarative activation
-  contract with eight cases. CI validates four boundary categories and five
-  governance rubrics, then checks only the five positive cases' internal routes
+  contract with ten cases. CI validates four boundary categories and five
+  governance rubrics, then checks only the seven positive cases' internal routes
   after activation. It does not observe whether a real host invokes the Skill.
 - `presentation_study.py` now implements the `core` mechanics: immutable inputs,
   generation ingest, typed host receipts, blinding, rating freeze, paired case
@@ -50,7 +50,21 @@ or universal headings. Explicit user formatting remains authoritative.
 
 The smoke scenarios are concise answer, long engineering handoff, experiment
 analysis, image presentation, multi-table presentation, academic-paper synthesis,
-and failure/risk reporting.
+failure/risk reporting, ablation studies, and performance benchmarking.
+
+`public-research-pilot` is a separate generation suite with two versioned public
+paper fact packets (DPO and RLiable). Its semantic slots require reasoning about
+assumptions, comparisons, counterevidence, and scope. Its machine checks establish
+only word budget, source-link presence, and absence of placeholders. Even a false
+scientific claim can pass those checks; independent source and semantic review is
+required. These strong prompts are public development material, not held-out
+full-paper reading tasks.
+
+The [2026-10-10 research development probe](evals/runs/pilot/research-20261010/README.md)
+executed these cases and a targeted adaptive recheck. It preserves source-review
+corrections, semantic failures that structural checks missed, and observed cost.
+Sanitized controller aggregates remain `insufficient_evidence`; independent model
+review is not a frozen human rating batch or general effectiveness evidence.
 
 ## Commands
 

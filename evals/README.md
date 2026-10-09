@@ -9,6 +9,10 @@ that the reporting framework improves quality or efficiency.
 - `presentation-cases.json` is the versioned public case catalog. It records case
   facts, requested surfaces, expected routing, and deterministic machine checks;
   it is not a collection of model outputs or human judgments.
+  The `public-research-pilot` generation suite adds source-bounded DPO and RLiable
+  discussion tasks. Versioned links and section/figure locators accompany the
+  paraphrased facts. Structural success never certifies their scientific claims;
+  source coverage and semantic reasoning are checked separately.
 - `schema/` contains the JSON Schema contracts for case catalogs, frozen study
   plans, caller generation records, controller-stored generation records, blind
   assignments, rating batches, controller checkpoint-artifact receipts, aggregate

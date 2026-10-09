@@ -107,6 +107,15 @@ user-requested format (JSON, three sentences, a paper section) always wins.
 
 ## 2. 📢 What's New
 
+- **2026-10-09** — **Research judgment before metric inventories.** Research modes
+  now connect a question to its decisive comparison, interpretation, counterevidence,
+  and a discriminating next test when needed. Lab progress uses the new
+  `research-progress` asset. Semantic review adds R1-R5 scientific checks; editing
+  preserves the argument and complete supporting data. Added a paper-discussion
+  exemplar and [three synthetic paired examples](examples/research-reporting/README.md).
+  See the [research reporting guide](docs/RESEARCH-REPORTING.md). The examples
+  illustrate the contract; they do not establish measured model improvement.
+
 - **2026-09-12** — ![NEW](https://img.shields.io/badge/NEW-red?style=flat-square)
   ✍️ **Human-form contract and cross-model editing** (`reportctl edit-prompt`).
   Measured eight machine-written forms in the same-facts A/B and found half of
@@ -266,7 +275,7 @@ Full detail in [CHANGELOG.md](CHANGELOG.md).
   fact-preserving de-AI pass) — loaded only when the report needs them.
 - **4 bounded research profiles** — reinforcement learning, embodied AI, world
   models, VLA — domain protocol cards without hardcoding any benchmark's habits.
-- **12 exact template assets** — detailed experiment reports per domain,
+- **13 exact template assets** — detailed experiment reports per domain,
   paper-idea brief, dependency-free HTML/PPT-style academic deck, Quarto
   Reveal.js source, SBAR handoff, executive one-pager, reviewer response, and
   model/dataset release card — retrieved one at a time, never bundled into
@@ -395,7 +404,7 @@ flowchart LR
 
 ## 7. 🗂️ Catalog
 
-12 modes · 8 display modules · 4 research profiles · 5 surfaces · 12 exact
+12 modes · 8 display modules · 4 research profiles · 5 surfaces · 13 exact
 templates — the full inventory with per-item summaries, bounded route files, and
 finished-example links lives in [docs/CATALOG.md](docs/CATALOG.md).
 

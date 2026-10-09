@@ -6,7 +6,7 @@
   "claim_boundary": "This one-case public development pilot validates the study pipeline only and cannot support an effectiveness claim.",
   "benchmark": {
     "benchmark_id": "agentic-reporting-presentation-v1",
-    "cases_sha256": "aeb411bf221f5e6615b8744f770925b4c4e45aa32f8ca488fd60fe595adc4a89",
+    "cases_sha256": "76c5273f7d4507b4d55646a1e75ec1c419afe7f477fb49716a028c4e411b0cc8",
     "case_ids": ["experiment-null-result"],
     "heldout": false,
     "preregistration_receipt": null

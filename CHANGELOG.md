@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+- Added two versioned public-paper discussion cases (DPO and RLiable) with
+  source/semantic review separate from structural checks. Fixed automatic routing
+  so labeled fact-packet vocabulary cannot change the requested narrative or
+  force figure/table modules. Paper-discussion intent now recognizes explanation
+  requests; academic synthesis also preserves evidence that weakens a critique.
+- An independent review of actual generated paper reports found generic proposed
+  comparisons without decision-changing outcomes. Academic synthesis now requires
+  a proposed experiment to connect controls, readout and possible results to a
+  decision, while allowing a completed discussion to end without a new experiment.
+- Recorded sanitized actual-host public-paper pilot aggregates, independent source
+  and semantic findings, and an adaptive DPO recheck. The original semantic failures
+  and higher observed framework overhead remain visible; both pilot summaries are
+  gated to insufficient evidence and make no general quality or efficiency claim.
+- Reworked research reports around the question, decisive comparison, supported
+  interpretation, counterevidence, and a discriminating next test when needed.
+  Research progress reports explain knowledge gained rather than runs completed;
+  paper discussions separate authors' claims, measured evidence, and assessment.
+- Added the `research-progress` exact template for lab/supervisor updates, selected
+  for research wording or a research profile. Operational status and slide asset
+  selection keep their existing behavior.
+- Added R1-R5 scientific judgment checks to research review prompts and conditional
+  research status review; interpretations/proposed tests are distinguished from
+  invented observations. With no fact sheet, source fidelity is unverified.
+  Research editing preserves reasoning/counterevidence and may move full data to
+  an appendix; it cannot invent missing substantive analysis.
+- Added a bilingual academic-synthesis exemplar and replaced the experiment
+  passage with a question-led transfer example. Added three public synthetic
+  measurement-list/research-argument pairs and a research reporting guide. These
+  are teaching and workflow fixtures, not controlled model effectiveness evidence.
+
 - Added finished exemplars for the four most-used modes (status-update,
   experiment-report, decision-brief, research-idea) and `reportctl exemplar
   [--list] [MODE]` to retrieve one. Each is a passage in the target register,

@@ -137,63 +137,62 @@ format yourself; the audit checks form, not truth, citations, causality, or visu
 Use this mode for benchmarks, ablations, controlled evaluations, model comparisons,
 or empirical studies. Organize around research questions, not run order.
 
+## Scientific argument
+
+Lead with the answer to a research question, not a list of improved metrics.
+Name the uncertainty, assumption, or limitation it addresses. A useful result can
+narrow a hypothesis or rule out a route without improving a score.
+
+For each main finding, connect the discriminating comparison to an interpretation
+and scope. Say what changed in the working view and what remains unresolved.
+Separate a measured effect from a proposed mechanism; an ablation can isolate a
+component's contribution without establishing why it works. Name the strongest
+plausible competing explanation when material; do not invent one to fill a slot.
+
+Give the reader the comparison and practical consequence, not a recital of cells.
+Keep counterexamples and decisive controls in the main reading path. Move full
+sweeps, logs, and reproducibility detail to an appendix; omission must not hide
+contradictory evidence or weaken the comparison basis.
+
+End with a position, including "unresolved". If needed, propose a discriminating test:
+what changes, what stays fixed, and how different outcomes change the decision.
+"More seeds" addresses uncertainty; it does not by itself identify a mechanism.
+
 ## Semantic order
 
-1. **Main result:** state the supported result and its most important trade-off or
-   caveat.
-2. **Research question:** define the proposition each experiment tests.
-3. **Protocol:** identify methods, baselines, data, splits, selection procedure,
-   metrics, compute, and material controls.
-4. **Results:** present exact evidence with the tables or visuals needed to read it.
-5. **Analysis:** explain patterns, exceptions, practical magnitude, and competing
-   interpretations.
-6. **Boundary:** report uncertainty, null results, failed runs, limitations, and the
-   domain the evidence covers.
-7. **Conclusion and next experiment:** state only what the protocol supports.
+Finding/question -> decisive comparison -> interpretation/counterevidence ->
+bounded conclusion -> next test if needed. Methods needed to read evidence go
+beside it; full detail can follow. These are roles, not mandatory headings.
 
 ## Metric and uncertainty contract
 
-For every decision-relevant metric the reader must be able to recover, without
-asking: which direction is better (an arrow in the table header suffices), the
-evaluation population and denominator, the number of independent runs, seeds,
-trials, samples, or tasks, and what any interval means (SD, SEM, CI, quantiles).
-Define a metric only when this audience may not know it; a research audience
-does not need FID or Recall explained.
-
-Call a difference statistically significant only with a defined supporting
-analysis; significance is not practical importance.
+For material metrics, make direction, unit, population/denominator, aggregation,
+independent run count, and variability source/interval (SD, SEM, CI, quantiles)
+recoverable. Define unfamiliar metrics only. Explain interval computation when
+it affects interpretation. Statistical significance needs a stated analysis;
+practical importance needs a research or decision criterion.
 
 ## Comparability and selection
 
-- Rank or highlight methods only within one evaluation protocol.
-- Expose material differences in data, supervision, pretraining, compute, hardware,
-  tuning budget, test-time resources, and privileged information.
-- State how hyperparameters, checkpoints, prompts, seeds, and reported runs were
-  selected; never compare a selected best run with a baseline mean silently.
-- Account for every candidate run and sample: counts and reasons at each
-  exclusion step.
-- Keep zero, missing, not reported, failed, and not applicable distinct.
-- Declare leakage controls: split construction, train-only fitting of
-  data-dependent steps, duplicate and temporal checks, and the contamination
-  check for pretrained components (not checked is an answer; omission is not).
-  An unresolved leak makes a number an upper bound.
+- Rank only comparable protocols; disclose material data, supervision,
+  pretraining, compute/hardware, tuning, test-time, and privileged-access differences.
+- State hyperparameter, checkpoint, prompt, seed, and run selection. Account for
+  exclusion counts/reasons and failed runs; never compare a best with a baseline mean.
+- Distinguish zero, missing, not reported, failed, and not applicable.
+- Disclose split construction, train-only preprocessing, duplicate/temporal
+  checks, and pretrained contamination checks. "Not checked" is a valid status;
+  an unresolved leak prevents an unqualified performance claim.
 
 ## Analysis discipline
 
-- Report verified values before explaining them.
-- Discuss results that contradict the narrative, not only the best row.
-- Treat nearly equal means with untested uncertainty as unresolved, not a winner.
-- With opposing metrics, report the Pareto trade-off; collapse it into one ranking
-  only when the decision supplies a utility, budget, or threshold.
 - Separate descriptive, diagnostic, predictive, causal, and deployment claims.
-- State compute and resource needs when they affect reproducibility or
-  comparison.
+- Untested uncertainty does not establish a winner or equivalence.
+- Opposing metrics require a trade-off; a single ranking needs a stated utility,
+  budget, or threshold. Name the closest relevant baseline before attributing gains.
 
 ## Avoid
 
-- A leaderboard mixing different tasks or protocols.
-- Boldface as a substitute for analysis.
-- state of the art without a named benchmark, metric, comparison set, and
-  verified result.
-- A conclusion broader than the tested data, seeds, environments, or
-  deployment conditions.
+- Metric recitation, unexplained boldface, or a leaderboard of incompatible tasks.
+- A causal story inferred from a score increase; significance used as importance.
+- state of the art without a verified benchmark and comparison set.
+- Conclusions broader than the tested data, runs, or deployment conditions.
